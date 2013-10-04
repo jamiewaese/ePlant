@@ -89,10 +89,18 @@
 				width: 46px;
 				height: 46px;
 				margin: 3px;
+				
+				transition:All .25s ease;
+				-webkit-transition:All .25s ease;
+				-moz-transition:All .25s ease;
+				-o-transition:All .25s ease;
 			}
 			.icon:hover img {
-				width: 52px;
-				height: 52px;
+				transform:scale(1.1);
+				transform:scale(1.1);
+				-webkit-transform:scale(1.1);
+				-moz-transform:scale(1.1);
+				-o-transform:scale(1.1);
 				margin: 0px;
 			}
 		</style>
@@ -129,8 +137,10 @@
 				<tr>
 					<td valign="top">
 						<div id="navigation_container">
-							Enter AGI ID or gene alias:<br>
-							<input type="text" name="AGI" style="padding:5px;"><br><br>
+							Enter gene identifier or gene alias:<br>
+							<input type="text" name="GeneID" style="padding:5px;">
+							<input type="button" value="Get">
+							<br><br>
 							<select id="savedGenes" style="width:180px;">
 								<option disabled="disabled">Currently loaded genes:</option>
 							</select>
