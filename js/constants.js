@@ -1,0 +1,6 @@
+var COLOR = {
+	LIGHT_GREY : "#B4B4B4",
+	MED_GREY : "#787878",
+	DARK_GREY : "#3C3C3C",
+	WHITE : "#FFFFFF",
+};

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>ePlant</title>
+		<meta name="keywords" content="" />
+
+		<!--[if lt IE 9]>
+			<script type="text/javascript">alert("Sorry but your browser does not support the canvas tag. Try using a recent version of Firefox, Chrome or Safari.");</script>
+		<![endif]-->
+
+
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+		<script type="text/javascript" src="lib/processing-1.4.1.min.js"></script>
+
+		<!-- Tooltip Pop-Up Stylesheet. (From: https://github.com/chinchang/hint.css) -->
+		<link rel="stylesheet" href="style/hint.css"></link>
+
+
+		<!-- Google Analytics -->
+		<script type="text/javascript">
+			var _gaq = _gaq || [];
+			_gaq.push(['_setAccount', 'UA-44555001-1']);
+			_gaq.push(['_trackPageview']);
+			(function() {
+				var ga = document.createElement('script');
+				ga.type = 'text/javascript';
+				ga.async = true;
+				ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+				var s = document.getElementsByTagName('script')[0];
+				s.parentNode.insertBefore(ga, s);
+			})();
+		</script>
+
+		<!-- Facebook Like Button -->
+
+		<!-- CSS -->
+		<style type="text/css">
+			body {
+				background-color: #FFF;
+				color: #666;
+				line-height: normal;
+				font-family: Lucida Grande, Lucida Sans, Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
+				font-size: 12px;
+				font-weight: normal;
+				text-decoration: none;
+				line-height: 1.5em;
+			}
+			h1 {
+				font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
+				width: 100%;
+				letter-spacing: 0em;
+				margin-bottom: 0.5em;
+				font-size: 2.5em;
+			}
+			#content {
+				margin: 5px auto 0px auto;
+				padding: 0px 5px 5px 5px;
+				width: 1000px;
+				min-width: 300px;
+				border: 0px solid #DDD;
+				background-color: #FFF;
+			}
+			#logo {
+				width: 56px;
+				height: 56px;
+				margin: 3px;
+			}
+			#logo:hover {
+				width: 62px;
+				height: 62px;
+				margin: 0px;
+			}
+			.icon {
+				width: 52px;
+				height: 52px;
+				position: relative;
+			}
+			.icon .overlay {
+				z-index: 1;
+				width: 46px;
+				height: 46px;
+				position: fixed;
+				top: 0px;
+				left: 0px;
+				background: rgba(0, 255, 255, 0.5);
+			}
+			.icon img {
+				width: 46px;
+				height: 46px;
+				margin: 3px;
+			}
+			.icon:hover img {
+				width: 52px;
+				height: 52px;
+				margin: 0px;
+			}
+		</style>
+	</head>
+
+
+	<body>
+		<div id="content">
+			<!-- Title strip -->
+			<table width="100%">
+				<tr>
+					<td>
+						<a href='http://bar.utoronto.ca'><img id="logo" src='img/BAR.png' alt='To the Bio-Array Resource Homepage' align=absmiddle}"></a>&nbsp;&nbsp;
+					</td>
+					<td>
+						<h1>ePlant</h1>
+					</td>
+					<td>
+						<img src="img/verticalGreenBar.png" style="float: left; padding: 0px 50px 0px 50px;"/>
+					</td>
+					<td>
+						<div style="padding: 17px 0px 0px 0px">
+							You may load an ePlant session file: 
+							<div class="hint--left  hint--success  hint--rounded" data-hint="Load a file from your hard drive."><input type="file" id="fileinput" onchange="readFile(this);"></div>
+							<div class="hint--left  hint--success  hint--rounded" data-hint="Load an example from our server."><input type="button" id="example" value="Example" onclick="loadFile('group1_dna_clustal.fas');"></div>
+							<div class="hint--left  hint--success  hint--rounded" data-hint="Save your work session."><input type="button" value="Save" onclick="saveFile();"/></div>
+						</div>
+					</td>
+				</tr>
+			</table>
+
+			<!-- Application contents -->
+			<table width="100%" style="padding:20px 0 0 0;">
+				<tr>
+					<td valign="top">
+						<div id="navigation_container">
+							Enter AGI ID or gene alias:<br>
+							<input type="text" name="AGI" style="padding:5px;"><br><br>
+							<select id="savedGenes" style="width:180px;">
+								<option disabled="disabled">Currently loaded genes:</option>
+							</select>
+							<br><br><br>
+							<div id="speciesIcon" class="icon hint--right hint--success hint--rounded" data-hint="Select the species of your interest.">
+								<img src="img/species.png"></img>
+								<div class="overlay"></div>
+							</div>
+							<br>
+							<div id="geneSelectorIcon" class="icon hint--right hint--success hint--rounded" data-hint="Select genes by identifier or from chromosomes.">
+								<img src="img/geneSelector.png"></img>
+								<div class="overlay"></div>
+							</div>
+							<br>
+							<div id="worldEFPIcon" class="icon hint--right hint--success hint--rounded" data-hint="View global distributions of your plant.">
+								<img src="img/worldEFP.png"></img>
+								<div class="overlay"></div>
+							</div>
+							<br>
+							<div id="plantEFPIcon" class="icon hint--right hint--success hint--rounded" data-hint="View tissues expression profile of your gene.">
+								<img src="img/plantEFP.png"></img>
+								<div class="overlay"></div>
+							</div>
+							<br>
+							<div id="cellEFPIcon" class="icon hint--right hint--success hint--rounded" data-hint="View subcellular expression profile of your gene.">
+								<img src="img/cellEFP.png"></img>
+								<div class="overlay"></div>
+							</div>
+							<br>
+							<div id="cytoscapeIcon" class="icon hint--right hint--success hint--rounded" data-hint="View protein-protein interactions of your gene product.">
+								<img src="img/cytoscape.png"></img>
+								<div class="overlay"></div>
+							</div>
+							<div id="reactomeIcon" class="icon hint--right hint--success hint--rounded" data-hint="View metabolic pathways that your gene product participates in.">
+								<img src="img/reactome.png"></img>
+								<div class="overlay"></div>
+							</div>
+							<br>
+							<div id="JSmolIcon" class="icon hint--right hint--success hint--rounded" data-hint="View structure of the protein encoded by your gene.">
+								<img src="img/JSmol.png"></img>
+								<div class="overlay"></div>
+							</div>
+							<br>
+							<div id="tracksIcon" class="icon hint--right hint--success hint--rounded" data-hint="View annotations for your gene sequence.">
+								<img src="img/tracks.png"></img>
+								<div class="overlay"></div>
+							</div>
+						</div>
+					</td>
+					<td valign="top">
+						<div id="ZUI_container" style="width:800px;height:600px;margin:0 auto;position:relative;">
+							<canvas id="ZUI_canvas" width="800px" height="600px" style="position:absolute;left:0;top:0;outline:none;">
+								Canvas is not supported by your browser, please upgrade.
+							</canvas>
+						</div>
+						<div id="settings_container">
+							<span align="center" style="display:block;"><b>------------------------------------------------------Insert settings UI here------------------------------------------------------</b></span>
+						</div>
+					</td>
+				</tr>
+			</table>
+
+
+			
+			<script type="text/javascript" src="js/framework.js"></script>
+			<script type="text/javascript" src="js/constants.js"></script>
+			<script type="text/javascript" src="js/views/chromosome.js"></script>
+			<script type="text/javascript">
+				ZUI.attachProcessing("ZUI_canvas", new ChromosomeView());
+			</script>
+		</div>
+
+		<!-- Tabs -->
+		<script src="lib/tabcontent.js" type="text/javascript"></script>
+		<link href="style/tabcontent-template2/tabcontent.css" rel="stylesheet" type="text/css"></link>
+		<ul class="tabs" data-persist="true">
+			<li><a href="#view1">Welcome</a></li>
+			<li><a href="#view2">About</a></li>
+			<li><a href="#view3">Example Gallery</a></li>
+			<li><a href="#view4">Help</a></li>
+		</ul>
+		<div class="tabcontents">
+			<div id="view1">
+				Welcome
+			</div>
+			<div id="view2">
+				About
+			</div>
+			<div id="view3">
+				Example Gallery
+			</div>
+			<div id="view4">
+				Help
+			</div>
+		</div>
+	</body>
+</html>
