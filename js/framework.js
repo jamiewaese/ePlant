@@ -115,6 +115,10 @@ ZUI.drawViewObject = function(viewObject) {
 		viewObject.attributes.screenY = point.y;
 		viewObject.attributes.screenWidth = ZUI.camera.projectDistance(viewObject.attributes.width);
 		viewObject.attributes.screenHeight = ZUI.camera.projectDistance(viewObject.attributes.height);
+		viewObject.screenX = point.x;
+		viewObject.screenY = point.y;
+		viewObject.screenWidth = ZUI.camera.projectDistance(viewObject.attributes.width);
+		viewObject.screenHeight = ZUI.camera.projectDistance(viewObject.attributes.width);
 		ZUI.processing.rect(viewObject.attributes.screenX, viewObject.attributes.screenY, viewObject.attributes.screenWidth, viewObject.attributes.screenHeight);
 	}
 	else if (viewObject.shape == ZUI.ViewObject.Shape.ROUNDED_RECT) {
@@ -124,6 +128,11 @@ ZUI.drawViewObject = function(viewObject) {
 		viewObject.attributes.screenWidth = ZUI.camera.projectDistance(viewObject.attributes.width);
 		viewObject.attributes.screenHeight = ZUI.camera.projectDistance(viewObject.attributes.height);
 		viewObject.attributes.screenRadius = ZUI.camera.projectDistance(viewObject.attributes.radius);
+		viewObject.screenX = point.x;
+		viewObject.screenY = point.y;
+		viewObject.screenWidth = ZUI.camera.projectDistance(viewObject.attributes.width);
+		viewObject.screenHeight = ZUI.camera.projectDistance(viewObject.attributes.height);
+		viewObject.screenRadius = ZUI.camera.projectDistance(viewObject.attributes.radius);
 		ZUI.processing.rect(viewObject.attributes.screenX, viewObject.attributes.screenY, viewObject.attributes.screenWidth, viewObject.attributes.screenHeight, viewObject.attributes.screenRadius);
 	}
 	else if (viewObject.shape == ZUI.ViewObject.Shape.CIRCLE) {
@@ -285,6 +294,7 @@ ZUI.doubleClick = function(event) {
 };
 
 ZUI.mouseWheel = function(event) {
+	event.preventDefault();
 	var scroll = Math.max(-1, Math.min(1, (event.wheelDelta || -event.detail)));
 	ZUI.activeView.mouseWheel(scroll);
 };
