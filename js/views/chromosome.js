@@ -158,6 +158,42 @@ ChromosomeView.prototype.draw = function() {
 				//loop through bin index start -> end
 					//add bin count by one
 			//draw heatmap based on bin counts
+			var binSize = chromosome.getBpPerPixel();
+			var numberOfBins = chromosome.viewObjects[0].screenHeight;
+			var centerX1 = chromosome.viewObjects[0].screenX + chromosome.viewObjects[0].screenWidth / 4;
+			var centerX2 = chromosome.viewObjects[0].screenX + chromosome.viewObjects[0].screenWidth / 4 * 3;
+			//initialize bins
+			var bins = [];
+			for (var m = 0; m < numberOfBins; m++) {
+				bins.push(0);
+			}
+			for (m = 0; m < chromosome.genes.length; m++) {
+				var gene = chromosome.genes[m];
+				var startBin = Math.floor(gene.start / binSize);
+				var endBin = Math.floor(gene.end / binSize);
+				for (var o = startBin; o <= endBin; o++) {
+					bins[o]++;
+				}
+			}
+			var startPixel = 0;
+			if (chromosome.viewObjects[0].screenY < 0) startPixel -= Math.round(chromosome.viewObjects[0].screenY);
+			var endPixel = chromosome.viewObjects[0].screenHeight;
+			if (chromosome.viewObjects[0].screenY + chromosome.viewObjects[0].screenHeight > ZUI.height) endPixel -= Math.round(chromosome.viewObjects[0].screenY + chromosome.viewObjects[0].screenHeight - ZUI.height);
+			/* Get highest count */
+			var maximum = 0;
+			for (m = 0; m < bins.length; m++) {
+				if (bins[m] > maximum) maximum = bins[m];
+			}
+			/* Normalize bin counts */
+			for (m = 0; m < bins.length; m++) {
+				bins[m] = (maximum - bins[m]) / maximum;
+			}
+			for (m = startPixel; m < endPixel; m++) {
+				var y = m + chromosome.viewObjects[0].screenY;
+				ZUI.processing.fill(bins[m] * 255);
+				ZUI.processing.stroke(bins[m] * 255);
+				ZUI.processing.line(centerX1, y, centerX2, y);
+			}
 
 			/* Get screen coordinates of chromosome tips */
 			var halfWidth = chromosome.viewObjects[1].attributes.screenWidth / 2;
@@ -182,16 +218,19 @@ ChromosomeView.prototype.draw = function() {
 			ZUI.processing.textSize(12);
 			ZUI.processing.fill(ZUI.hexToColor(COLOR.LIGHT_GREY));
 			if (topTip.y < 0) {
-				/* Draw top base pair value */
 				var bpPerPixel = chromosome.length / (Math.round(chromosome.viewObjects[0].attributes.screenHeight) - 1);
 				visibleStart = (0 - Math.floor(chromosome.viewObjects[0].attributes.screenY) - 1) * bpPerPixel;
-				var mb = Math.round(visibleStart / 10000) / 100;
-				ZUI.processing.text(mb + " Mb", topTip.x + halfWidth + 10, 12);
+				if (visibleStart <= chromosome.length) {
+					/* Draw top base pair value */
+					var mb = Math.round(visibleStart / 10000) / 100;
+					ZUI.processing.text(mb + " Mb", topTip.x + halfWidth + 10, 12);
 
-				/* Draw clipped top */
-				ZUI.processing.fill(ZUI.hexToColor(COLOR.WHITE));
-				ZUI.processing.triangle(topTip.x, 0, topTip.x + halfWidth + 1, 0, topTip.x + halfWidth + 1, halfWidth);
-				ZUI.processing.triangle(topTip.x, 0, topTip.x - halfWidth - 1, 0, topTip.x - halfWidth - 1, halfWidth);
+					/* Draw clipped top */
+					ZUI.processing.fill(ZUI.hexToColor(COLOR.WHITE));
+					ZUI.processing.stroke(ZUI.hexToColor(COLOR.WHITE));
+					ZUI.processing.triangle(topTip.x, 0, topTip.x + halfWidth + 1, 0, topTip.x + halfWidth + 1, halfWidth);
+					ZUI.processing.triangle(topTip.x, 0, topTip.x - halfWidth - 1, 0, topTip.x - halfWidth - 1, halfWidth);
+				}
 			}
 			else {
 				/* Draw top base pair value */
@@ -199,21 +238,40 @@ ChromosomeView.prototype.draw = function() {
 			}
 			ZUI.processing.fill(ZUI.hexToColor(COLOR.LIGHT_GREY));
 			if (bottomTip.y > ZUI.height) {
-				/* Draw bottom base pair value */
 				var bpPerPixel = chromosome.length / (Math.round(chromosome.viewObjects[0].attributes.screenHeight) - 1);
 				visibleEnd = (ZUI.height - Math.ceil(chromosome.viewObjects[0].attributes.screenY)) * bpPerPixel + 1;
-				var mb = Math.round(visibleEnd / 10000) / 100;
-				ZUI.processing.text(mb + " Mb", bottomTip.x + halfWidth + 10, ZUI.height - 2);
+				if (visibleEnd >= 1) {
+					/* Draw bottom base pair value */
+					var mb = Math.round(visibleEnd / 10000) / 100;
+					ZUI.processing.text(mb + " Mb", bottomTip.x + halfWidth + 10, ZUI.height - 2);
 
-				/* Draw clipped bottom */
-				ZUI.processing.fill(ZUI.hexToColor(COLOR.WHITE));
-				ZUI.processing.triangle(bottomTip.x, ZUI.height, bottomTip.x + halfWidth + 1, ZUI.height, bottomTip.x + halfWidth + 1, ZUI.height - halfWidth);
-				ZUI.processing.triangle(bottomTip.x, ZUI.height, bottomTip.x - halfWidth - 1, ZUI.height, bottomTip.x - halfWidth - 1, ZUI.height - halfWidth);
+					/* Draw clipped bottom */
+					ZUI.processing.fill(ZUI.hexToColor(COLOR.WHITE));
+					ZUI.processing.stroke(ZUI.hexToColor(COLOR.WHITE));
+					ZUI.processing.triangle(bottomTip.x, ZUI.height, bottomTip.x + halfWidth + 1, ZUI.height, bottomTip.x + halfWidth + 1, ZUI.height - halfWidth);
+					ZUI.processing.triangle(bottomTip.x, ZUI.height, bottomTip.x - halfWidth - 1, ZUI.height, bottomTip.x - halfWidth - 1, ZUI.height - halfWidth);
+				}
 			}
 			else {
 				/* Draw bottom base pair value */
 				var mb = Math.round(chromosome.length / 10000) / 100;
 				ZUI.processing.text(mb + " Mb", bottomTip.x + halfWidth + 10, bottomTip.y - 2);
+			}
+
+			/* Draw mini chromosome at bottom right */
+			if (visibleStart > 0 || visibleEnd < chromosome.length) {
+				if (visibleStart > chromosome.length) visibleStart = chromosome.length;
+				if (visibleEnd < 0) visibleEnd = 0;
+				ZUI.processing.stroke(ZUI.hexToColor(COLOR.LIGHT_GREY));
+				var y1 = ZUI.height / 2 - 50;
+				var y2 = y1 + visibleStart / chromosome.length * 100;
+				var y3 = y1 + visibleEnd / chromosome.length * 100;
+				var y4 = y1 + 100;
+				ZUI.processing.fill(ZUI.hexToColor(COLOR.WHITE));
+				ZUI.processing.rect(bottomTip.x + halfWidth + 10, y1, 20, y2 - y1);
+				ZUI.processing.rect(bottomTip.x + halfWidth + 10, y3 , 20, y4 - y3);
+				ZUI.processing.fill(ZUI.hexToColor(COLOR.LIGHT_GREY));
+				ZUI.processing.rect(bottomTip.x + halfWidth + 10, y2 , 20, y3 - y2);
 			}
 		}
 	}
@@ -233,6 +291,10 @@ ChromosomeView.prototype.draw = function() {
 			lineX + lineWidth,
 			lineY
 		);
+
+		/* Draw label */
+		ZUI.processing.text(gene.agi, lineX - 67, lineY + 5);
+		//TODO change this to a ZUI text object, so that its position and size can be tracked to allow for mouse interactions
 	}
 
 	/* If gene list is active */
@@ -319,7 +381,7 @@ ChromosomeView.prototype.mouseMove = function() {
 		/* Check whether to clear annotation */
 		if (!(this.annotation.isActive && 
 		      y >= this.annotation.y + this.annotation.yOffset && y <= this.annotation.y + this.annotation.yOffset + this.annotation.height &&
-		      x >= this.annotation.x - 30 && x <= this.annotation.x)) {
+		      x >= this.annotation.x - 25 && x <= this.annotation.x)) {
 			/* Clear annotation */
 			this.annotation.hide();
 		}
@@ -423,7 +485,7 @@ ChromosomeView.GeneList = function(annotation) {
 		}
 
 		/* Set list size */
-		this.height = this.items.length * 16 + 10;
+		this.height = this.items.length * 18 + 10;
 		if (this.height > 200) this.height = 200;
 		this.element.style.height = (this.height - 10) + "px";
 
@@ -446,6 +508,7 @@ ChromosomeView.GeneList = function(annotation) {
 		this.element.style.cursor = "default";
 		this.element.style.fontFamily = "Helvetica";
 		this.element.style.fontSize = "14px";
+		this.element.style.lineHeight = "18px";
 		this.element.style.color = COLOR.DARK_GREY;
 		this.element.style.display = "block";
 		this.element.style.textIndent = "-10px";
@@ -470,9 +533,8 @@ ChromosomeView.GeneList = function(annotation) {
 			geneList.annotation.populate(this.gene, this);
 
 			/* Set annotation position */
-			geneList.annotation.x = geneList.x + 220;
-			var boundingRect = this.element.getBoundingClientRect();
-			geneList.annotation.y = boundingRect.top;
+			geneList.annotation.x = geneList.x + 217;
+			geneList.annotation.y = this.element.offsetTop + geneList.element.offsetTop + this.element.offsetHeight / 2;
 			geneList.annotation.yOffset = -70 * 0.3;
 			geneList.annotation.height = 70;
 			geneList.annotation.element.style.left = geneList.annotation.x + "px";
@@ -685,11 +747,16 @@ ChromosomeView.Chromosome = function(name, length, centromeres, index) {
 	));
 };
 
+	/* Calculates and returns the number of base pairs per pixel */
+	ChromosomeView.Chromosome.prototype.getBpPerPixel = function() {
+		return (this.length - 1) / (this.viewObjects[0].screenHeight);
+	};
+
 	/* Centromere class constructor */
 	ChromosomeView.Chromosome.Centromere = function(start, end) {
 		this.start = start;
 		this.end = end;
-	}
+	};
 
 	/* Gene class constructor */
 	ChromosomeView.Chromosome.Gene = function(agi, aliases, start, end, chromosome) {
