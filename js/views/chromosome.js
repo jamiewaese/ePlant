@@ -121,43 +121,12 @@ ChromosomeView.prototype.draw = function() {
 		if (chromosome.isLoaded) {
 			/* Draw chromosome */
 			ZUI.processing.fill(ZUI.hexToColor(COLOR.MED_GREY));
-			ZUI.processing.noStroke();
+			ZUI.processing.stroke(ZUI.hexToColor(COLOR.MED_GREY));
 			for (var m = 0; m < chromosome.viewObjects.length; m++) {
 				ZUI.drawViewObject(chromosome.viewObjects[m]);
 			}
 
-			/* Draw heat map */
-/*			var bpPerPixel = chromosome.length / (Math.round(chromosome.viewObjects[0].attributes.screenHeight) - 1);
-			var center = chromosome.viewObjects[1].attributes.screenX + chromosome.viewObjects[1].attributes.screenWidth / 2;
-			var y = Math.floor(chromosome.viewObjects[0].attributes.screenY) + 1;
-			if (y < 0) {
-				y = 0;
-			}
-			for (var m = bpPerPixel + 1; m < chromosome.length; m += bpPerPixel) {
-				//check if pixel is in tip or centromere
-					//if true then calculate width
-					//else use regular width
-				var geneCount = 0;
-				var _start = m - bpPerPixel;
-				for (var i = 0; i < chromosome.genes.length; i++) {
-					var gene = chromosome.genes[i];
-					if (gene.start > _start && gene.start < m ||
-					    gene.end > _start && gene.end < m) {
-						geneCount ++;
-					}
-				}
-				ZUI.processing.fill(255 - geneCount * 7);
-				ZUI.processing.stroke(255 - geneCount * 7);
-				ZUI.processing.rect(center - 3, y, 6, 1);
-				y += 1;
-			}*/
-			//calculate bpPerPixel and use as bin size
-			//calculate number of bins and create array of that size
-			//for each gene
-				//calculate Math.floor(gene.start / binSize) as start, Math.floor(gene.end / binSize) as end
-				//loop through bin index start -> end
-					//add bin count by one
-			//draw heatmap based on bin counts
+			/* Draw heatmap */
 			var binSize = chromosome.getBpPerPixel();
 			var numberOfBins = chromosome.viewObjects[0].screenHeight;
 			var centerX1 = chromosome.viewObjects[0].screenX + chromosome.viewObjects[0].screenWidth / 4;
@@ -189,7 +158,7 @@ ChromosomeView.prototype.draw = function() {
 				bins[m] = (maximum - bins[m]) / maximum;
 			}
 			for (m = startPixel; m < endPixel; m++) {
-				var y = m + chromosome.viewObjects[0].screenY;
+				var y = m + 1 + chromosome.viewObjects[0].screenY;
 				ZUI.processing.fill(bins[m] * 255);
 				ZUI.processing.stroke(bins[m] * 255);
 				ZUI.processing.line(centerX1, y, centerX2, y);
@@ -279,21 +248,22 @@ ChromosomeView.prototype.draw = function() {
 	/* Draw marked genes */
 	for (n = 0; n < this.markedGenes.length; n++) {
 		var gene = this.markedGenes[n];
-		var pixelsPerBp = gene.chromosome.viewObjects[0].attributes.screenHeight / gene.chromosome.length;
-		var lineX = gene.chromosome.viewObjects[1].attributes.screenX - 5;
-		var lineY = Math.floor(gene.chromosome.viewObjects[0].attributes.screenY + (Number(gene.start) + Number(gene.end)) / 2 * pixelsPerBp) + 1;
-		var lineWidth = gene.chromosome.viewObjects[1].attributes.screenWidth + 10;
+		var pixelsPerBp = 1 / chromosome.getBpPerPixel();
+		var x = gene.chromosome.viewObjects[1].attributes.screenX - 5;
+		var y = Math.round(gene.chromosome.viewObjects[0].attributes.screenY) + Math.floor((gene.start - 1) * pixelsPerBp);
+		var height = Math.floor((gene.end - gene.start) * pixelsPerBp);
+		var width = gene.chromosome.viewObjects[1].attributes.screenWidth + 10;
 		ZUI.processing.stroke(ZUI.hexToColor(COLOR.LIGHT_GREY));
-		ZUI.processing.strokeWeight(1);
-		ZUI.processing.line(
-			lineX,
-			lineY,
-			lineX + lineWidth,
-			lineY
+		ZUI.processing.fill(ZUI.hexToColor(COLOR.LIGHT_GREY));
+		ZUI.processing.rect(
+			x,
+			y,
+			width,
+			height
 		);
 
 		/* Draw label */
-		ZUI.processing.text(gene.agi, lineX - 67, lineY + 5);
+		ZUI.processing.text(gene.agi, x - 67, y + height / 2 + 5);
 		//TODO change this to a ZUI text object, so that its position and size can be tracked to allow for mouse interactions
 	}
 
@@ -358,13 +328,12 @@ ChromosomeView.prototype.mouseMove = function() {
 				var chromosome = this.chromosomes[n];
 				if (chromosome.isLoaded &&
 				    x > chromosome.viewObjects[1].attributes.screenX - 2 && x < chromosome.viewObjects[1].attributes.screenX + chromosome.viewObjects[1].attributes.screenWidth + 2 &&
-				    y > Math.floor(chromosome.viewObjects[0].attributes.screenY) && y < Math.floor(chromosome.viewObjects[0].attributes.screenY) + Math.round(chromosome.viewObjects[0].attributes.screenHeight)) {
+				    y >= Math.round(chromosome.viewObjects[0].attributes.screenY) && y < Math.round(chromosome.viewObjects[0].attributes.screenY) + Math.round(chromosome.viewObjects[0].attributes.screenHeight)) {
 					/* Translate screen position to chromosome position */
-					var bpPerPixel = chromosome.length / (Math.round(chromosome.viewObjects[0].attributes.screenHeight) - 1);
-					start = (y - Math.floor(chromosome.viewObjects[0].attributes.screenY) - 1) * bpPerPixel;
-					if (start < 1) start = 1;
+					var bpPerPixel = chromosome.getBpPerPixel();
+					start = (y - Math.round(chromosome.viewObjects[0].attributes.screenY)) * bpPerPixel + 1;
 					end = start + bpPerPixel;
-					if (start > chromosome.length) start = chromosome.length;
+					if (end > chromosome.length) end = chromosome.length;
 
 					/* Populate gene list */
 					this.geneList.populate(chromosome, start, end);
@@ -477,9 +446,9 @@ ChromosomeView.GeneList = function(annotation) {
 		/* Get genes and add them to list */
 		for (var n = 0; n < this.chromosome.genes.length; n++) {
 			var gene = this.chromosome.genes[n];
-			if (gene.start >= this.start && gene.start <= this.end ||
-			    gene.end >= this.start && gene.end <= this.end ||
-			    gene.start <= this.start && gene.end >= this.end) {
+			if (gene.start >= this.start && gene.start < this.end ||
+			    gene.end >= this.start && gene.end < this.end ||
+			    gene.start < this.start && gene.end >= this.end) {
 				this.items.push(new ChromosomeView.GeneList.Item(gene, this));
 			}
 		}
@@ -513,7 +482,6 @@ ChromosomeView.GeneList = function(annotation) {
 		this.element.style.display = "block";
 		this.element.style.textIndent = "-10px";
 		this.element.style.paddingLeft = "10px";
-		this.element.style.width = geneList.innerWidth;
 		this.element.style.whiteSpace = "nowrap";
 		this.element.style.overflow = "hidden";
 		this.element.style.textOverflow = "ellipsis";
@@ -534,13 +502,10 @@ ChromosomeView.GeneList = function(annotation) {
 
 			/* Set annotation position */
 			geneList.annotation.x = geneList.x + 217;
-			geneList.annotation.y = this.element.offsetTop + geneList.element.offsetTop + this.element.offsetHeight / 2;
-			geneList.annotation.yOffset = -70 * 0.3;
-			geneList.annotation.height = 70;
+			geneList.annotation.y = this.element.offsetTop + geneList.element.offsetTop - geneList.element.scrollTop + this.element.offsetHeight / 2;
+			geneList.annotation.yOffset = -geneList.annotation.height * 0.3;
 			geneList.annotation.element.style.left = geneList.annotation.x + "px";
 			geneList.annotation.element.style.top = (geneList.annotation.y + geneList.annotation.yOffset) + "px";
-			geneList.annotation.contentElement.style.height = geneList.annotation.height + "px";
-			geneList.annotation.element.style.height = (geneList.annotation.height + 35) + "px";
 
 			/* Show annotation */
 			geneList.annotation.show();
@@ -579,7 +544,7 @@ ChromosomeView.Annotation = function(markedGenes) {
 	this.x = null;
 	this.y = null;
 	this.yOffset = null;
-	this.height = null;
+	this.height = 210;
 
 	/* Whether annotation is active */
 	this.isActive = false;
@@ -590,7 +555,7 @@ ChromosomeView.Annotation = function(markedGenes) {
 	this.element.style.left = "0px";
 	this.element.style.top = "0px";
 	this.element.style.width = "350px";
-	this.element.style.height = "105px";
+	this.element.style.height = "210px";
 	this.element.style.borderStyle = "solid";
 	this.element.style.borderWidth = "1px";
 	this.element.style.borderColor = COLOR.LIGHT_GREY;
@@ -600,44 +565,139 @@ ChromosomeView.Annotation = function(markedGenes) {
 
 	/* Create content HTML element for text */
 	this.contentElement = document.createElement("div");
-	this.contentElement.style.width = this.element.innerWidth;
-	this.contentElement.style.height = "70px";
+	this.contentElement.style.height = "110px";
 	this.contentElement.style.padding = "5px";
 	this.contentElement.style.backgroundColor = COLOR.WHITE;
-	this.contentElement.style.fontFamily = "Helvetica";
-	this.contentElement.style.fontSize = "14px";
 	this.contentElement.style.overflow = "auto";
 	this.element.appendChild(this.contentElement);
 
-	/* Create buttons */
-	this.markElement = document.createElement("span");
-	this.markElement.style.width = "75px";
-	this.markElement.style.padding = "1px";
-	this.markElement.style.margin = "4px";
-	this.markElement.style.display = "block";
-	this.markElement.style.cursor = "default";
-	this.markElement.style.fontFamily = "Helvetica";
-	this.markElement.style.textAlign = "center";
-	this.markElement.style.fontSize = "12px";
-	this.markElement.style.borderStyle = "solid";
-	this.markElement.style.borderWidth = "1px";
-	this.markElement.style.borderRadius = "5px";
-	this.markElement.style.borderColor = COLOR.MED_GREY;
-	this.markElement.style.color = COLOR.MED_GREY;
-	this.markElement.style.backgroundColor = COLOR.LIGHT_GREY;
-	this.markElement.textContent = "Mark";
-	this.markElement.onmouseover = $.proxy(function() {
-		this.markElement.style.backgroundColor = COLOR.MED_GREY;
-		this.markElement.style.color = COLOR.LIGHT_GREY;
-	}, this);
-	this.markElement.onmouseout = $.proxy(function() {
-		this.markElement.style.backgroundColor = COLOR.LIGHT_GREY;
-		this.markElement.style.color = COLOR.MED_GREY;
-	}, this);
-	this.markElement.onclick = $.proxy(function() {
-		this.markedGenes.push(this.gene);
-	}, this);
-	this.element.appendChild(this.markElement);
+		/* Create span element for identifier */
+		this.identifierElement = document.createElement("span");
+		this.identifierElement.style.fontFamily = "Helvetica";
+		this.identifierElement.style.fontSize = "14px";
+		this.identifierElement.style.display = "block";
+		this.identifierElement.style.textIndent = "-30px";
+		this.identifierElement.style.paddingLeft = "30px";
+		this.contentElement.appendChild(this.identifierElement);
+
+		/* Create span element for aliases */
+		this.aliasElement = document.createElement("span");
+		this.aliasElement.style.fontFamily = "Helvetica";
+		this.aliasElement.style.fontSize = "14px";
+		this.aliasElement.style.display = "block";
+		this.aliasElement.style.textIndent = "-30px";
+		this.aliasElement.style.paddingLeft = "30px";
+		this.contentElement.appendChild(this.aliasElement);
+
+		/* Create span element for annotation */
+		this.annotationElement = document.createElement("span");
+		this.annotationElement.style.fontFamily = "Helvetica";
+		this.annotationElement.style.fontSize = "14px";
+		this.annotationElement.style.display = "block";
+		this.annotationElement.style.textIndent = "-30px";
+		this.annotationElement.style.paddingLeft = "30px";
+		this.contentElement.appendChild(this.annotationElement);
+
+	/* Create controls HTML element for buttons */
+	this.controlElement = document.createElement("div");
+	this.controlElement.style.padding = "5px";
+	this.controlElement.style.backgroundColor = COLOR.WHITE;
+	this.element.appendChild(this.controlElement);
+
+		/* Create button for getting data */
+		this.getDataElement = document.createElement("input");
+		this.getDataElement.type = "button";
+		this.getDataElement.value = "Get Data";
+		this.getDataElement.onclick = function() {
+		};
+		this.controlElement.appendChild(this.getDataElement);
+
+		/* Create button for dropping gene */
+		this.dropGeneElement = document.createElement("input");
+		this.dropGeneElement.type = "button";
+		this.dropGeneElement.value = "Drop Gene";
+		this.dropGeneElement.onclick = function() {
+		};
+		this.controlElement.appendChild(this.dropGeneElement);
+
+		/* Create button for top 50 similar */
+		this.top50Element = document.createElement("input");
+		this.top50Element.type = "button";
+		this.top50Element.value = "Top 50";
+		this.top50Element.onclick = function() {
+		};
+		this.controlElement.appendChild(this.top50Element);
+
+	/* Create loading HTML element for loading status */
+	this.loadingElement = document.createElement("div");
+	this.controlElement.style.backgroundColor = COLOR.WHITE;
+	this.element.appendChild(this.loadingElement);
+		/* Create loading view elements */
+		this.loadingViewElements = [];
+		var loadingViewElement;
+
+		/* World EFP */
+		loadingViewElement = document.createElement("img");
+		loadingViewElement.src = "img/worldEFP.png";
+		loadingViewElement.style.width = "40px";
+		loadingViewElement.style.height = "40px";
+		loadingViewElement.style.margin = "5px";
+		this.loadingViewElements.push(loadingViewElement);
+		this.loadingElement.appendChild(loadingViewElement);
+
+		/* Plant EFP */
+		loadingViewElement = document.createElement("img");
+		loadingViewElement.src = "img/plantEFP.png";
+		loadingViewElement.style.width = "40px";
+		loadingViewElement.style.height = "40px";
+		loadingViewElement.style.margin = "5px";
+		this.loadingViewElements.push(loadingViewElement);
+		this.loadingElement.appendChild(loadingViewElement);
+
+		/* Cell EFP */
+		loadingViewElement = document.createElement("img");
+		loadingViewElement.src = "img/cellEFP.png";
+		loadingViewElement.style.width = "40px";
+		loadingViewElement.style.height = "40px";
+		loadingViewElement.style.margin = "5px";
+		this.loadingViewElements.push(loadingViewElement);
+		this.loadingElement.appendChild(loadingViewElement);
+
+		/* Cytoscape */
+		loadingViewElement = document.createElement("img");
+		loadingViewElement.src = "img/cytoscape.png";
+		loadingViewElement.style.width = "40px";
+		loadingViewElement.style.height = "40px";
+		loadingViewElement.style.margin = "5px";
+		this.loadingViewElements.push(loadingViewElement);
+		this.loadingElement.appendChild(loadingViewElement);
+
+		/* Reactome */
+		loadingViewElement = document.createElement("img");
+		loadingViewElement.src = "img/reactome.png";
+		loadingViewElement.style.width = "40px";
+		loadingViewElement.style.height = "40px";
+		loadingViewElement.style.margin = "5px";
+		this.loadingViewElements.push(loadingViewElement);
+		this.loadingElement.appendChild(loadingViewElement);
+
+		/* JSmol */
+		loadingViewElement = document.createElement("img");
+		loadingViewElement.src = "img/JSmol.png";
+		loadingViewElement.style.width = "40px";
+		loadingViewElement.style.height = "40px";
+		loadingViewElement.style.margin = "5px";
+		this.loadingViewElements.push(loadingViewElement);
+		this.loadingElement.appendChild(loadingViewElement);
+
+		/* Tracks */
+		loadingViewElement = document.createElement("img");
+		loadingViewElement.src = "img/tracks.png";
+		loadingViewElement.style.width = "40px";
+		loadingViewElement.style.height = "40px";
+		loadingViewElement.style.margin = "5px";
+		this.loadingViewElements.push(loadingViewElement);
+		this.loadingElement.appendChild(loadingViewElement);
 };
 
 	/* Makes annotation visible */
@@ -655,7 +715,9 @@ ChromosomeView.Annotation = function(markedGenes) {
 		}
 
 		this.element.style.visibility = "hidden";
-		this.contentElement.innerHTML = "";
+		this.identifierElement.innerHTML = "";
+		this.aliasElement.innerHTML = "";
+		this.annotationElement.innerHTML = "";
 		this.gene = null;
 		this.geneListItem = null;
 		this.isActive = false;
@@ -667,9 +729,10 @@ ChromosomeView.Annotation = function(markedGenes) {
 		this.geneListItem = geneListItem;
 
 		/* Populate with annotation */
-		this.contentElement.innerHTML = "<b>Identifier:</b> " + this.gene.agi + "<br><b>Aliases:</b> " + this.gene.aliases.join(", ");
+		this.identifierElement.innerHTML = "Identifier: <b>" + this.gene.agi + "</b><br>";
+		this.aliasElement.innerHTML = "Aliases: <b>" + (this.gene.aliases.join(", ") || "Not available") + "</b><br>";
 		if (gene.annotation != null) {
-			this.contentElement.innerHTML += "<br><b>Annotation</b>: " + gene.annotation;
+			this.annotationElement.innerHTML = "Annotation: <b>" + (gene.annotation || "Not available") + "</b>";
 		}
 		else {
 			/* Query annotation if not available */
@@ -682,7 +745,7 @@ ChromosomeView.Annotation = function(markedGenes) {
 					var annotation = response.split("__");
 					this.gene.annotation = annotation[1] || annotation[0];
 					if (this.geneList.annotation.gene == this.gene) {
-						this.geneList.annotation.contentElement.innerHTML += "<br><b>Annotation</b>: " + this.geneList.annotation.gene.annotation;
+						this.geneList.annotation.annotationElement.innerHTML = "Annotation: <b>" + (this.geneList.annotation.gene.annotation || "Not available") + "</b>";
 					}
 				}
 			}, geneListItem));
