@@ -65,31 +65,28 @@
 				width: 56px;
 				height: 56px;
 				margin: 3px;
+
+				transition:All .25s ease;
+				-webkit-transition:All .25s ease;
+				-moz-transition:All .25s ease;
+				-o-transition:All .25s ease;
 			}
 			#logo:hover {
-				width: 62px;
-				height: 62px;
-				margin: 0px;
+				transform:scale(1.1);
+				-webkit-transform:scale(1.1);
+				-moz-transform:scale(1.1);
+				-o-transform:scale(1.1);
 			}
 			.icon {
 				width: 52px;
 				height: 52px;
 				position: relative;
 			}
-			.icon .overlay {
-				z-index: 1;
-				width: 46px;
-				height: 46px;
-				position: fixed;
-				top: 0px;
-				left: 0px;
-				background: rgba(0, 255, 255, 0.5);
-			}
 			.icon img {
 				width: 46px;
 				height: 46px;
 				margin: 3px;
-				
+
 				transition:All .25s ease;
 				-webkit-transition:All .25s ease;
 				-moz-transition:All .25s ease;
@@ -97,11 +94,9 @@
 			}
 			.icon:hover img {
 				transform:scale(1.1);
-				transform:scale(1.1);
 				-webkit-transform:scale(1.1);
 				-moz-transform:scale(1.1);
 				-o-transform:scale(1.1);
-				margin: 0px;
 			}
 		</style>
 	</head>
@@ -137,6 +132,10 @@
 				<tr>
 					<td valign="top">
 						<div id="navigation_container">
+							<select id="selectSpecies" style="width:180px;">
+								<option >Arabidopsis thaliana</option>
+							</select>
+							<br><br>
 							Enter gene identifier or gene alias:<br>
 							<input type="text" name="GeneID" style="padding:5px;">
 							<input type="button" value="Get">
@@ -144,49 +143,40 @@
 							<select id="savedGenes" style="width:180px;">
 								<option disabled="disabled">Currently loaded genes:</option>
 							</select>
-							<br><br><br>
+							<br><br>
 							<div id="speciesIcon" class="icon hint--right hint--success hint--rounded" data-hint="Select the species of your interest.">
 								<img src="img/species.png"></img>
-								<div class="overlay"></div>
 							</div>
 							<br>
-							<div id="geneSelectorIcon" class="icon hint--right hint--success hint--rounded" data-hint="Select genes by identifier or from chromosomes.">
+							<div id="geneSelectorIcon" class="icon hint--right hint--success hint--rounded" data-hint="View chromosomes and select genes.">
 								<img src="img/geneSelector.png"></img>
-								<div class="overlay"></div>
 							</div>
 							<br>
 							<div id="worldEFPIcon" class="icon hint--right hint--success hint--rounded" data-hint="View global distributions of your plant.">
 								<img src="img/worldEFP.png"></img>
-								<div class="overlay"></div>
 							</div>
 							<br>
 							<div id="plantEFPIcon" class="icon hint--right hint--success hint--rounded" data-hint="View tissues expression profile of your gene.">
 								<img src="img/plantEFP.png"></img>
-								<div class="overlay"></div>
 							</div>
 							<br>
 							<div id="cellEFPIcon" class="icon hint--right hint--success hint--rounded" data-hint="View subcellular expression profile of your gene.">
 								<img src="img/cellEFP.png"></img>
-								<div class="overlay"></div>
 							</div>
 							<br>
 							<div id="cytoscapeIcon" class="icon hint--right hint--success hint--rounded" data-hint="View protein-protein interactions of your gene product.">
 								<img src="img/cytoscape.png"></img>
-								<div class="overlay"></div>
 							</div>
 							<div id="reactomeIcon" class="icon hint--right hint--success hint--rounded" data-hint="View metabolic pathways that your gene product participates in.">
 								<img src="img/reactome.png"></img>
-								<div class="overlay"></div>
 							</div>
 							<br>
 							<div id="JSmolIcon" class="icon hint--right hint--success hint--rounded" data-hint="View structure of the protein encoded by your gene.">
 								<img src="img/JSmol.png"></img>
-								<div class="overlay"></div>
 							</div>
 							<br>
 							<div id="tracksIcon" class="icon hint--right hint--success hint--rounded" data-hint="View annotations for your gene sequence.">
 								<img src="img/tracks.png"></img>
-								<div class="overlay"></div>
 							</div>
 						</div>
 					</td>
