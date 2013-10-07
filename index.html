@@ -1,4 +1,18 @@
 <!DOCTYPE html>
+<!--
+
+Welcome to ePlant, a unique data visualization tool for integrating and exploring multiple levels of biological data.
+
+This project was produced in Nicholas Provart's lab in the department of Cell & Systems Biology, University of Toronto.
+
+Design & UI by Jamie Waese
+Code by Zhenming Yu
+
+It is theoretically based on an earlier version of ePlant by Nicholas Provart: http://bar.utoronto.ca/eplant/
+
+-->
+
+
 <html>
 	<head>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -53,6 +67,14 @@
 				margin-bottom: 0.5em;
 				font-size: 2.5em;
 			}
+			h3 {
+				font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
+				width: 100%;
+				letter-spacing: 0em;
+				margin-bottom: 0.5em;
+				margin-top: 0em;
+				font-size: 1.5em;
+			}
 			#content {
 				margin: 5px auto 0px auto;
 				padding: 0px 5px 5px 5px;
@@ -105,10 +127,12 @@
 	<body>
 		<div id="content">
 			<!-- Title strip -->
-			<table width="100%">
+			<table width="90%">
 				<tr>
 					<td>
-						<a href='http://bar.utoronto.ca'><img id="logo" src='img/BAR.png' alt='To the Bio-Array Resource Homepage' align=absmiddle}"></a>&nbsp;&nbsp;
+						<div class="hint--right  hint--success  hint--rounded" data-hint="See more bio visualization tools at the BAR.">
+							<a href='http://bar.utoronto.ca'><img id="logo" src='img/BAR.png' alt='To the Bio-Array Resource Homepage' align=absmiddle}"></a>&nbsp;&nbsp;
+						</div>
 					</td>
 					<td>
 						<h1>ePlant</h1>
@@ -117,11 +141,9 @@
 						<img src="img/verticalGreenBar.png" style="float: left; padding: 0px 50px 0px 50px;"/>
 					</td>
 					<td>
-						<div style="padding: 17px 0px 0px 0px">
-							You may load an ePlant session file: 
-							<div class="hint--left  hint--success  hint--rounded" data-hint="Load a file from your hard drive."><input type="file" id="fileinput" onchange="readFile(this);"></div>
-							<div class="hint--left  hint--success  hint--rounded" data-hint="Load an example from our server."><input type="button" id="example" value="Example" onclick="loadFile('group1_dna_clustal.fas');"></div>
+						<div style="float: right; padding: 17px 0px 0px 0px">
 							<div class="hint--left  hint--success  hint--rounded" data-hint="Save your work session."><input type="button" value="Save" onclick="saveFile();"/></div>
+							<div class="hint--left  hint--success  hint--rounded" data-hint="Load a previously saved session."><input type="file" id="fileinput" value="Load" onchange="readFile(this);"></div>
 						</div>
 					</td>
 				</tr>
@@ -132,19 +154,25 @@
 				<tr>
 					<td valign="top">
 						<div id="navigation_container">
-							<select id="selectSpecies" style="width:180px;">
-								<option >Arabidopsis thaliana</option>
-							</select>
-							<br><br>
-							Enter gene identifier or gene alias:<br>
-							<input type="text" name="GeneID" style="padding:5px;">
-							<input type="button" value="Get">
-							<br><br>
-							<select id="savedGenes" style="width:180px;">
-								<option disabled="disabled">Currently loaded genes:</option>
-							</select>
-							<br><br>
-							<div id="speciesIcon" class="icon hint--right hint--success hint--rounded" data-hint="Select the species of your interest.">
+							<h3>
+								<!-- Plant name should update when user changes species -->
+								Arabidopsis thaliana
+							</h3>							
+							Enter gene identifier or alias:<br>
+							<input type="text" name="GeneID" style="width:122px; padding:5px;">
+							<div class="hint--right hint--success hint--rounded" data-hint="Download all available data for this gene.">
+									<input type="button" value="Get">
+								</div>
+							<br>
+							<br>
+							<div class="hint--right hint--success hint--rounded" data-hint="Quickly switch between loaded genes.">
+								<select disabled id="savedGenes" style="width:180px;">
+									<option value="Currently loaded genes:" >Currently loaded genes:</option>
+								</select>
+ 							</div>
+							<br>
+							<br>
+							<div id="speciesIcon" class="icon hint--right hint--success hint--rounded" data-hint="Select your species of interest.">
 								<img src="img/species.png"></img>
 							</div>
 							<br>
@@ -187,7 +215,9 @@
 							</canvas>
 						</div>
 						<div id="settings_container">
-							<span align="center" style="display:block;"><b>------------------------------------------------------Insert settings UI here------------------------------------------------------</b></span>
+							<span style="text-align:center; display:block;">-------------------------- UI Toolbar Goes Here --------------------------
+							</span>
+							<br>
 						</div>
 					</td>
 				</tr>

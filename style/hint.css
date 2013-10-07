@@ -218,13 +218,13 @@
   background-color: #99CC00;
   /* text-shadow: 0 -1px 0px #1a331a; */ }
 .hint--success.hint--top:before {
-  border-top-color: #5C7900; }
+  border-top-color: #99CC00; }
 .hint--success.hint--bottom:before {
-  border-bottom-color: #5C7900; }
+  border-bottom-color: #99CC00; }
 .hint--success.hint--left:before {
   border-left-color: #99CC00; }
 .hint--success.hint--right:before {
-  border-right-color: #5C7900; }
+  border-right-color: #99CC00; }
 
 /**
  * source: hint-always.scss
