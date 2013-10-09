@@ -101,15 +101,28 @@ ZUI.camera = function() {};
 		return distance / pixelsPerUnit;
 	};
 
+	/* Resets camera */
+	ZUI.camera.reset = function() {
+		/* True position */
+		ZUI.camera._x = 0;
+		ZUI.camera._y = 0;
+		ZUI.camera._distance = (ZUI.width / 2) / Math.tan(ZUI.camera.fov / 2);
+
+		/* Move-to position */
+		ZUI.camera.x = 0;
+		ZUI.camera.y = 0;
+		ZUI.camera.distance = ZUI.camera._distance;
+	};
+
 /* Draws a list of view objects */
 ZUI.drawViewObject = function(viewObject) {
-	if (viewObject.shape == ZUI.ViewObject.Shape.POINT) {
+	if (viewObject.type == ZUI.ViewObject.Type.POINT) {
 	}
-	else if (viewObject.shape == ZUI.ViewObject.Shape.POINT) {
+	else if (viewObject.type == ZUI.ViewObject.Type.POINT) {
 	}
-	else if (viewObject.shape == ZUI.ViewObject.Shape.LINE) {
+	else if (viewObject.type == ZUI.ViewObject.Type.LINE) {
 	}
-	else if (viewObject.shape == ZUI.ViewObject.Shape.RECT) {
+	else if (viewObject.type == ZUI.ViewObject.Type.RECT) {
 		var point = ZUI.camera.projectPoint(viewObject.attributes.x, viewObject.attributes.y);
 		viewObject.attributes.screenX = point.x;
 		viewObject.attributes.screenY = point.y;
@@ -121,7 +134,7 @@ ZUI.drawViewObject = function(viewObject) {
 		viewObject.screenHeight = ZUI.camera.projectDistance(viewObject.attributes.width);
 		ZUI.processing.rect(viewObject.attributes.screenX, viewObject.attributes.screenY, viewObject.attributes.screenWidth, viewObject.attributes.screenHeight);
 	}
-	else if (viewObject.shape == ZUI.ViewObject.Shape.ROUNDED_RECT) {
+	else if (viewObject.type == ZUI.ViewObject.Type.ROUNDED_RECT) {
 		var point = ZUI.camera.projectPoint(viewObject.attributes.x, viewObject.attributes.y);
 		viewObject.attributes.screenX = point.x;
 		viewObject.attributes.screenY = point.y;
@@ -135,17 +148,25 @@ ZUI.drawViewObject = function(viewObject) {
 		viewObject.screenRadius = ZUI.camera.projectDistance(viewObject.attributes.radius);
 		ZUI.processing.rect(viewObject.attributes.screenX, viewObject.attributes.screenY, viewObject.attributes.screenWidth, viewObject.attributes.screenHeight, viewObject.attributes.screenRadius);
 	}
-	else if (viewObject.shape == ZUI.ViewObject.Shape.CIRCLE) {
+	else if (viewObject.type == ZUI.ViewObject.Type.CIRCLE) {
 	}
-	else if (viewObject.shape == ZUI.ViewObject.Shape.ELLIPSE) {
+	else if (viewObject.type == ZUI.ViewObject.Type.ELLIPSE) {
 	}
-	else if (viewObject.shape == ZUI.ViewObject.Shape.TRIANGLE) {
+	else if (viewObject.type == ZUI.ViewObject.Type.TRIANGLE) {
 	}
-	else if (viewObject.shape == ZUI.ViewObject.Shape.QUAD) {
+	else if (viewObject.type == ZUI.ViewObject.Type.QUAD) {
 	}
-	else if (viewObject.shape == ZUI.ViewObject.Shape.POLYGON) {
+	else if (viewObject.type == ZUI.ViewObject.Type.POLYGON) {
 	}
-	else if (viewObject.shape == ZUI.ViewObject.Shape.SHAPE) {
+	else if (viewObject.type == ZUI.ViewObject.Type.SHAPE) {
+		var point = ZUI.camera.projectPoint(viewObject.x, viewObject.y);
+		viewObject.screenX = point.x;
+		viewObject.screenY = point.y;
+		viewObject.screenXOffset = ZUI.camera.projectDistance(viewObject.xOffset);
+		viewObject.screenYOffset = ZUI.camera.projectDistance(viewObject.yOffset);
+		viewObject.screenWidth = ZUI.camera.projectDistance(viewObject.width);
+		viewObject.screenHeight = ZUI.camera.projectDistance(viewObject.height);
+		ZUI.processing.shape(viewObject.shape, viewObject.screenX + viewObject.screenXOffset, viewObject.screenY + viewObject.screenYOffset, viewObject.screenWidth, viewObject.screenHeight);
 	}
 };
 
@@ -200,7 +221,7 @@ ZUI.sketchProc = function(processing) {
 };
 
 /* Attaches Processing to canvas */
-ZUI.attachProcessing = function(canvas, firstView) {
+ZUI.attachProcessing = function(canvas) {
 	/* Get handles to canvas and container */
 	ZUI.canvas = document.getElementById(canvas);
 	ZUI.container = ZUI.canvas.parentNode;
@@ -210,7 +231,7 @@ ZUI.attachProcessing = function(canvas, firstView) {
 	ZUI.height = ZUI.canvas.height;
 
 	/* Set first view */
-	ZUI.activeView = firstView;
+	ZUI.activeView = new ZUI.View();
 
 	/* Add listeneres for user input events */
 	ZUI.canvas.addEventListener("mousedown", ZUI.mouseDown, false);
@@ -226,6 +247,19 @@ ZUI.attachProcessing = function(canvas, firstView) {
 
 	/* Activate first view */
 	ZUI.activeView.active();
+};
+
+ZUI.changeActiveView = function(view, exitAnimation, entryAnimation) {
+	/* Exit old active view */
+	//TODO call exit animation
+	ZUI.activeView.inactive();
+
+	/* Change active view */
+	ZUI.activeView = view;
+
+	/* Enter new active view */
+	ZUI.activeView.active();
+	//TODO call entry animation
 };
 
 /* Callback for mouse down event */
@@ -312,7 +346,7 @@ ZUI.getMousePosition = function(event) {
 ZUI.contextMenu = function(event) {
 };
 
-/* View superclass with overridable methods */
+/* View superclass with abstract and overridable methods */
 ZUI.View = function() {};
 	ZUI.View.prototype.active = function() {};
 	ZUI.View.prototype.inactive = function() {};
@@ -330,18 +364,21 @@ ZUI.View = function() {};
 	ZUI.View.prototype.leftDoubleClick = function() {};
 	ZUI.View.prototype.middleDoubleClick = function() {};
 	ZUI.View.prototype.mouseWheel = function(scroll) {};
+	ZUI.View.prototype.animateEntry = function(mode, frame) {};	//return frameRemainder (Number)
+	ZUI.View.prototype.animateExit = function(mode, frame) {};	//return frameRemainder (Number)
+	ZUI.View.prototype.getLoadProgress = function() {};		//return Number between 0 and 1, inclusive
 
 /* View object class */
-ZUI.ViewObject = function(shape, attributes) {
-	/* Shape of view object, should be one of the definitions in ZUI.ViewObject.Shape */
-	this.shape = shape;
+ZUI.ViewObject = function(type, attributes) {
+	/* Type of view object, should be one of the definitions in ZUI.ViewObject.Type */
+	this.type = type;
 
 	/* Attributes of view object */
 	this.attributes = attributes;
 };
 
-	/* View object shape enum */
-	ZUI.ViewObject.Shape = {
+	/* View object types */
+	ZUI.ViewObject.Type = {
 		POINT: 0,
 		LINE: 1,
 		RECT: 2,

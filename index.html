@@ -228,8 +228,10 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			<script type="text/javascript" src="js/framework.js"></script>
 			<script type="text/javascript" src="js/constants.js"></script>
 			<script type="text/javascript" src="js/views/chromosome.js"></script>
+			<script type="text/javascript" src="js/views/species.js"></script>
 			<script type="text/javascript">
-				ZUI.attachProcessing("ZUI_canvas", new ChromosomeView());
+				ZUI.attachProcessing("ZUI_canvas");
+				ZUI.changeActiveView(new SpeciesView(), null, null);
 			</script>
 		</div>
 

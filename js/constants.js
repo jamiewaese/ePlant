@@ -3,4 +3,6 @@ var COLOR = {
 	MED_GREY : "#787878",
 	DARK_GREY : "#3C3C3C",
 	WHITE : "#FFFFFF",
+	GREEN: "#B4FFB4",
+	BLACK: "#000000",
 };
