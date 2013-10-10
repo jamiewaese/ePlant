@@ -75,6 +75,17 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 				margin-top: 0em;
 				font-size: 1.5em;
 			}
+			label {
+				font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
+				width: 100%;
+				letter-spacing: 0em;
+				margin-bottom: 0.5em;
+				margin-top: 0em;
+				margin-left: 3px;
+				font-size: 0.9em;
+				color: #999;
+				vertical-align: text-bottom;				
+			}
 			#content {
 				margin: 5px auto 0px auto;
 				padding: 0px 5px 5px 5px;
@@ -119,6 +130,27 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 				-moz-transform:scale(1.1);
 				-o-transform:scale(1.1);
 			}
+			.button {
+				background-color: #EEE;
+				border: 1px solid #CCC;
+				border-radius: 7px;
+				font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
+				letter-spacing: 0em;
+				margin-bottom: 0.5em;
+				margin-top: 0em;
+				margin-left: 3px;
+				font-size: 0.9em;
+				color: #666;
+				text-decoration: none;
+				padding-left: .5em;
+				padding-right: .5em;
+			}
+			.button:hover {
+				background-color: #99CC00;
+				border: 1px solid #99CC00;
+			    color: #FFF;
+			}
+
 		</style>
 	</head>
 
@@ -141,8 +173,8 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 					</td>
 					<td>
 						<div style="float: right; padding: 17px 0px 0px 0px">
-							<div class="hint--left  hint--success  hint--rounded" data-hint="Save your work session."><input type="button" value="Save" onclick="saveFile();"/></div>
-							<div class="hint--left  hint--success  hint--rounded" data-hint="Load a previously saved session."><input type="file" id="fileinput" value="Load" onchange="readFile(this);"></div>
+							<div class="hint--left  hint--success  hint--rounded" data-hint="Save your work session."><input type="button" class="button" value="Save" onclick="saveFile();"/></div>
+							<div class="hint--left  hint--success  hint--rounded" data-hint="Load a previously saved session."><input type="button" class="button" id="fileinput" value="Load" onchange="readFile(this);"></div>
 						</div>
 					</td>
 				</tr>
@@ -158,9 +190,9 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 								Arabidopsis thaliana
 							</h3>							
 							Enter gene identifier or alias:<br>
-							<input type="text" name="GeneID" style="width:122px; padding:5px;">
+							<input type="text" name="GeneID" style="width:121px; padding:5px;">
 							<div class="hint--right hint--success hint--rounded" data-hint="Download all available data for this gene.">
-									<input type="button" value="Get">
+									<input type="button" class="button" value="Get">
 								</div>
 							<br>
 							<br>

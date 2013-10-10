@@ -20,8 +20,8 @@ function ChromosomeView() {
 	this.userAnnotationButtonElement = document.createElement("input");
 	this.userAnnotationButtonElement.type = "button";
 	this.userAnnotationButtonElement.value = "Annotate";
-	this.userAnnotationButtonElement.className = "button"; /* JW confirm this works */
 	this.userAnnotationWrapperElement.appendChild(this.userAnnotationButtonElement);
+
 	/* Toggle heatmap element */
 	this.toggleHeatmapElement = document.createElement("div");
 	var img = document.createElement("img");
@@ -684,8 +684,6 @@ ChromosomeView.Annotation = function(markedGenes) {
 		this.getDataElement = document.createElement("input");
 		this.getDataElement.type = "button";
 		this.getDataElement.value = "Get Data";
-		this.getDataElement.className = "button";
-
 		for (var n = 0; n < this.markedGenes.length; n++) {	//Disable button if data already loaded
 			if (this.markedGenes[n].gene == this.gene) {
 				this.getDataElement.disabled = true;
@@ -702,7 +700,6 @@ ChromosomeView.Annotation = function(markedGenes) {
 		this.dropGeneElement = document.createElement("input");
 		this.dropGeneElement.type = "button";
 		this.dropGeneElement.value = "Drop Gene";
-		this.dropGeneElement.className = "button"; /* JW confirm this works */
 		this.dropGeneElement.onclick = function() {
 		};
 		this.controlElement.appendChild(this.dropGeneElement);
@@ -710,8 +707,7 @@ ChromosomeView.Annotation = function(markedGenes) {
 		/* Create button for top 50 similar */
 		this.top50Element = document.createElement("input");
 		this.top50Element.type = "button";
-		this.top50Element.value = "Top 50 Similar";
-		this.top50Element.className = "button"; /* JW confirm this works */
+		this.top50Element.value = "Top 50";
 		this.top50Element.onclick = function() {
 		};
 		this.controlElement.appendChild(this.top50Element);
@@ -817,10 +813,10 @@ ChromosomeView.Annotation = function(markedGenes) {
 		this.geneListItem = geneListItem;
 
 		/* Populate with annotation */
-		this.identifierElement.innerHTML = "<label>Identifier:</label> &nbsp&nbsp&nbsp&nbsp" + this.gene.agi + "<br>";
-		this.aliasElement.innerHTML = "<label>Aliases:</label> &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp" + (this.gene.aliases.join(", ") || "Not available") + "<br>";
+		this.identifierElement.innerHTML = "Identifier: &nbsp&nbsp&nbsp&nbsp<b>" + this.gene.agi + "</b><br>";
+		this.aliasElement.innerHTML = "Aliases: &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<b>" + (this.gene.aliases.join(", ") || "Not available") + "</b><br>";
 		if (gene.annotation != null) {
-			this.annotationElement.innerHTML = "<label>Annotation:</label> " + (gene.annotation || "Not available");
+			this.annotationElement.innerHTML = "Annotation: <b>" + (gene.annotation || "Not available") + "</b>";
 		}
 		else {
 			/* Query annotation if not available */
