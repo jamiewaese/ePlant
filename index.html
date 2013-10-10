@@ -102,7 +102,6 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			.icon {
 				width: 52px;
 				height: 52px;
-				position: relative;
 			}
 			.icon img {
 				width: 46px;
@@ -153,7 +152,7 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			<table width="100%" style="padding:20px 0 0 0;">
 				<tr>
 					<td valign="top">
-						<div id="navigation_container">
+						<div id="navigation_container" style="visibility:hidden;">
 							<h3>
 								<!-- Plant name should update when user changes species -->
 								Arabidopsis thaliana
@@ -214,17 +213,28 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 								Canvas is not supported by your browser, please upgrade.
 							</canvas>
 						</div>
-						<div id="settings_container">
-							<span style="text-align:center; display:block;">-------------------------- UI Toolbar Goes Here --------------------------
-							</span>
-							<br>
+						<div id="settings_container" style="visibility:hidden;">
+							<table>
+								<tr>
+									<td id="specificApplicationUI_container" style="width:600px;vertical-align:middle;">
+									</td>
+									<td id="crossApplicationUI_container" style="width:200px;vertical-align:middle;">
+										<div id="labelsColorIcon" class="icon hint--left hint--success hint--rounded" data-hint="Labels: off / light / dark." style="padding:5px;">
+											<img src="img/labelscolor.png"></img>
+										</div>
+										<div id="getImageIcon" class="icon hint--left hint--success hint--rounded" data-hint="Save current screen as high resolution image." style="padding:5px;">
+											<img src="img/getimage.png"></img>
+										</div>
+										<div id="paletteIcon" class="icon hint--left hint--success hint--rounded" data-hint="Color palette." style="padding:5px;">
+											<img src="img/palette.png"></img>
+										</div>
+									</td>
+								</tr>
+							</table>
 						</div>
 					</td>
 				</tr>
 			</table>
-
-
-			
 			<script type="text/javascript" src="js/framework.js"></script>
 			<script type="text/javascript" src="js/constants.js"></script>
 			<script type="text/javascript" src="js/views/chromosome.js"></script>

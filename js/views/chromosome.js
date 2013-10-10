@@ -6,6 +6,32 @@
 
 /* Constructor */
 function ChromosomeView() {
+	/* User annotation element */
+	this.userAnnotationWrapperElement = document.createElement("div");
+	this.userAnnotationWrapperElement.className = "hint--right hint--success hint--rounded";
+	this.userAnnotationWrapperElement.setAttribute("data-hint", "Annotate genes.");
+	this.userAnnotationWrapperElement.style.padding = "5px";
+	/* User annotation text element */
+	this.userAnnotationTextElement = document.createElement("input");
+	this.userAnnotationTextElement.type = "text";
+	this.userAnnotationTextElement.style.width = "150px";
+	this.userAnnotationWrapperElement.appendChild(this.userAnnotationTextElement);
+	/* User annotation button element */
+	this.userAnnotationButtonElement = document.createElement("input");
+	this.userAnnotationButtonElement.type = "button";
+	this.userAnnotationButtonElement.value = "Annotate";
+	this.userAnnotationWrapperElement.appendChild(this.userAnnotationButtonElement);
+
+	/* Toggle heatmap element */
+	this.toggleHeatmapElement = document.createElement("div");
+	var img = document.createElement("img");
+	img.src = "img/heatmap.png";
+	this.toggleHeatmapElement.appendChild(img);
+	this.toggleHeatmapElement.className = "icon hint--right hint--success hint--rounded";
+	this.toggleHeatmapElement.setAttribute("data-hint", "Toggle heatmap.");
+	this.toggleHeatmapElement.style.padding = "5px";
+	this.toggleHeatmapElement.style.verticalAlign = "middle";
+
 	/* Array of chromosomes */
 	this.chromosomes = [];
 
@@ -105,6 +131,12 @@ ChromosomeView.prototype.active = function() {
 
 	/* Append annotation HTML element to view */
 	ZUI.container.appendChild(this.annotation.element);
+
+	/* Set application specific UI */
+	var specificApplicationUI_container = document.getElementById("specificApplicationUI_container");
+	specificApplicationUI_container.innerHTML = "";
+	specificApplicationUI_container.appendChild(this.userAnnotationWrapperElement);
+	specificApplicationUI_container.appendChild(this.toggleHeatmapElement);
 };
 
 /* Override inactive */
@@ -250,32 +282,32 @@ ChromosomeView.prototype.draw = function() {
 		var centerX1 = chromosome.viewObjects[0].screenX + chromosome.viewObjects[0].screenWidth / 4;
 		var centerX2 = chromosome.viewObjects[0].screenX + chromosome.viewObjects[0].screenWidth / 4 * 3;
 		for (m = heatmapData[n].startPixel; m < heatmapData[n].endPixel; m++) {
-			var y = m + 1 + chromosome.viewObjects[0].screenY;
+			var y = m + chromosome.viewObjects[0].screenY;
 			ZUI.processing.fill(heatmapData[n].bins[m] * 255);
 			ZUI.processing.stroke(heatmapData[n].bins[m] * 255);
 			ZUI.processing.line(centerX1, y, centerX2, y);
 		}
 	}
 
-	/* Draw marked genes */
+	/* Draw marked genes */ //TODO CHANGE
 	for (n = 0; n < this.markedGenes.length; n++) {
-		var gene = this.markedGenes[n];
-		var pixelsPerBp = 1 / chromosome.getBpPerPixel();
-		var x = gene.chromosome.viewObjects[1].attributes.screenX - 5;
-		var y = Math.round(gene.chromosome.viewObjects[0].attributes.screenY) + Math.floor((gene.start - 1) * pixelsPerBp);
+		var gene = this.markedGenes[n].gene;
+		var pixelsPerBp = 1 / gene.chromosome.getBpPerPixel();
+		var x = gene.chromosome.viewObjects[1].attributes.screenX + gene.chromosome.viewObjects[1].attributes.screenWidth / 2;
+		var y = Math.floor(gene.chromosome.viewObjects[0].attributes.screenY) + Math.floor((gene.start - 1) * pixelsPerBp) + 1;
 		var height = Math.floor((gene.end - gene.start) * pixelsPerBp);
-		var width = gene.chromosome.viewObjects[1].attributes.screenWidth + 10;
-		ZUI.processing.stroke(ZUI.hexToColor(COLOR.LIGHT_GREY));
-		ZUI.processing.fill(ZUI.hexToColor(COLOR.LIGHT_GREY));
+		var width = gene.chromosome.viewObjects[1].attributes.screenWidth * this.markedGenes[n].markerWidth;
+		ZUI.processing.stroke(ZUI.hexToColor(this.markedGenes[n].markerColor));
+		ZUI.processing.fill(ZUI.hexToColor(this.markedGenes[n].markerColor));
 		ZUI.processing.rect(
-			x,
+			x - width / 2,
 			y,
 			width,
 			height
 		);
 
 		/* Draw label */
-		ZUI.processing.text(gene.agi, x - 67, y + height / 2 + 5);
+		ZUI.processing.text(gene.agi, x - width / 2 - 70, y + height / 2 + 5);
 		//TODO change this to a ZUI text object, so that its position and size can be tracked to allow for mouse interactions
 	}
 
@@ -390,14 +422,6 @@ ChromosomeView.prototype.leftClick = function() {
 
 /* Override leftDoubleClick */
 ChromosomeView.prototype.leftDoubleClick = function() {
-	/* Get mouse status */
-	var x = ZUI.mouseStatus.x;
-	var y = ZUI.mouseStatus.y;
-
-	/* Move to clicked position */
-	var point = ZUI.camera.unprojectPoint(x, y);
-	ZUI.camera.x = point.x;
-	ZUI.camera.y = point.y;
 };
 
 /* Override mouseWheel */
@@ -628,8 +652,8 @@ ChromosomeView.Annotation = function(markedGenes) {
 		this.identifierElement.style.fontFamily = "Helvetica";
 		this.identifierElement.style.fontSize = "14px";
 		this.identifierElement.style.display = "block";
-		this.identifierElement.style.textIndent = "-30px";
-		this.identifierElement.style.paddingLeft = "30px";
+		this.identifierElement.style.textIndent = "-77px";
+		this.identifierElement.style.paddingLeft = "77px";
 		this.contentElement.appendChild(this.identifierElement);
 
 		/* Create span element for aliases */
@@ -637,8 +661,8 @@ ChromosomeView.Annotation = function(markedGenes) {
 		this.aliasElement.style.fontFamily = "Helvetica";
 		this.aliasElement.style.fontSize = "14px";
 		this.aliasElement.style.display = "block";
-		this.aliasElement.style.textIndent = "-30px";
-		this.aliasElement.style.paddingLeft = "30px";
+		this.aliasElement.style.textIndent = "-77px";
+		this.aliasElement.style.paddingLeft = "77px";
 		this.contentElement.appendChild(this.aliasElement);
 
 		/* Create span element for annotation */
@@ -646,8 +670,8 @@ ChromosomeView.Annotation = function(markedGenes) {
 		this.annotationElement.style.fontFamily = "Helvetica";
 		this.annotationElement.style.fontSize = "14px";
 		this.annotationElement.style.display = "block";
-		this.annotationElement.style.textIndent = "-30px";
-		this.annotationElement.style.paddingLeft = "30px";
+		this.annotationElement.style.textIndent = "-77px";
+		this.annotationElement.style.paddingLeft = "77px";
 		this.contentElement.appendChild(this.annotationElement);
 
 	/* Create controls HTML element for buttons */
@@ -660,8 +684,16 @@ ChromosomeView.Annotation = function(markedGenes) {
 		this.getDataElement = document.createElement("input");
 		this.getDataElement.type = "button";
 		this.getDataElement.value = "Get Data";
-		this.getDataElement.onclick = function() {
-		};
+		for (var n = 0; n < this.markedGenes.length; n++) {	//Disable button if data already loaded
+			if (this.markedGenes[n].gene == this.gene) {
+				this.getDataElement.disabled = true;
+				break;
+			}
+		}
+		this.getDataElement.onclick = $.proxy(function() {
+			/* Add gene to marked genes with default width */
+			this.markedGenes.push(new ChromosomeView.MarkedGene(this.gene, 2.0, COLOR.LIGHT_GREY));
+		}, this);
 		this.controlElement.appendChild(this.getDataElement);
 
 		/* Create button for dropping gene */
@@ -781,8 +813,8 @@ ChromosomeView.Annotation = function(markedGenes) {
 		this.geneListItem = geneListItem;
 
 		/* Populate with annotation */
-		this.identifierElement.innerHTML = "Identifier: <b>" + this.gene.agi + "</b><br>";
-		this.aliasElement.innerHTML = "Aliases: <b>" + (this.gene.aliases.join(", ") || "Not available") + "</b><br>";
+		this.identifierElement.innerHTML = "Identifier: &nbsp&nbsp&nbsp&nbsp<b>" + this.gene.agi + "</b><br>";
+		this.aliasElement.innerHTML = "Aliases: &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<b>" + (this.gene.aliases.join(", ") || "Not available") + "</b><br>";
 		if (gene.annotation != null) {
 			this.annotationElement.innerHTML = "Annotation: <b>" + (gene.annotation || "Not available") + "</b>";
 		}
@@ -893,3 +925,10 @@ ChromosomeView.Chromosome = function(name, length, centromeres, index) {
 		/* Gene annotation */
 		this.annotation = null;
 	};
+
+/* MarkedGene class constructor */
+ChromosomeView.MarkedGene = function(gene, markerWidth, markerColor) {
+	this.gene = gene;
+	this.markerWidth = markerWidth;
+	this.markerColor = markerColor;
+};
