@@ -26,6 +26,9 @@ SpeciesView.prototype.active = function() {
 	document.getElementById("navigation_container").style.visibility = "hidden";
 	document.getElementById("settings_container").style.visibility = "hidden";
 
+	/* Move ZUI container */
+	ZUI.container.style.left = "-100px";
+
 	/* Show species list */
 	this.speciesList.show();
 
@@ -42,6 +45,9 @@ SpeciesView.prototype.inactive = function() {
 	/* Show extra UI */
 	document.getElementById("navigation_container").style.visibility = "visible";
 	document.getElementById("settings_container").style.visibility = "visible";
+
+	/* Move ZUI container */
+	ZUI.container.style.left = "0";
 
 	ZUI.container.removeChild(this.speciesList.element);
 	this.speciesList.hide();
@@ -82,7 +88,7 @@ SpeciesView.SpeciesList = function(speciesView) {
 	this.element.style.width = ZUI.width / 3 + "px";
 	this.element.style.height = ZUI.height + "px";
 	this.element.style.padding = "30px";
-	this.element.style.backgroundColor = COLOR.WHITE;
+	this.element.style.backgroundColor = "transparent";
 	ZUI.container.appendChild(this.element);
 
 	/* Add header */
@@ -91,7 +97,7 @@ SpeciesView.SpeciesList = function(speciesView) {
 	header.style.fontSize = "34px";
 	header.style.textIndent = "14px";
 	header.style.lineHeight = "56px";
-	header.style.color = COLOR.DARK_GREEN;
+	header.style.color = COLOR.GREEN;
 	header.style.display = "block";
 	header.textContent = "Select a plant";
 	this.element.appendChild(header);
@@ -128,18 +134,16 @@ SpeciesView.SpeciesList.Item = function(speciesList, commonName, scientificName,
 	this.element.style.fontSize = "24px";
 	this.element.style.textIndent = "20px";
 	this.element.style.lineHeight = "46px";
-	this.element.style.color = COLOR.MED_GREEN;
+	this.element.style.color = COLOR.DARK_GREY;
 	this.element.style.display = "block";
 	this.element.textContent = this.commonName;
 	this.element.onmouseover = $.proxy(function() {
-		this.element.style.color = COLOR.WHITE;
-		this.element.style.backgroundColor = COLOR.MED_GREEN;
+		this.element.style.backgroundColor = COLOR.GREEN;
 		this.speciesList.speciesView.speciesShown = this;
 		this.speciesList.speciesView.fadeRate = -0.05;
 	}, this);
 	this.element.onmouseout = $.proxy(function() {
-		this.element.style.color = COLOR.MED_GREEN;
-		this.element.style.backgroundColor = COLOR.WHITE;
+		this.element.style.backgroundColor = "transparent";
 		this.speciesList.speciesView.fadeRate = 0.05;
 	}, this);
 	this.element.onclick = $.proxy(function() {

@@ -254,7 +254,7 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 										<div id="labelsColorIcon" class="icon hint--left hint--success hint--rounded" data-hint="Labels: off / light / dark." style="padding:5px;">
 											<img src="img/labelscolor.png"></img>
 										</div>
-										<div id="getImageIcon" class="icon hint--left hint--success hint--rounded" data-hint="Save current screen as high resolution image." style="padding:5px;">
+										<div id="getImageIcon" class="icon hint--left hint--success hint--rounded" data-hint="Save current screen as high resolution image." style="padding:5px;" onclick="getImage();">
 											<img src="img/getimage.png"></img>
 										</div>
 										<div id="paletteIcon" class="icon hint--left hint--success hint--rounded" data-hint="Color palette." style="padding:5px;">
@@ -272,6 +272,9 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			<script type="text/javascript" src="js/views/chromosome.js"></script>
 			<script type="text/javascript" src="js/views/species.js"></script>
 			<script type="text/javascript">
+				function getImage() {
+					ZUI.toImageInWindow();
+				}
 				ZUI.attachProcessing("ZUI_canvas");
 				ZUI.changeActiveView(new SpeciesView(), null, null);
 			</script>
