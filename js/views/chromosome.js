@@ -587,14 +587,14 @@ ChromosomeView.GeneList = function(annotation) {
 		this.element.onmouseover = $.proxy(function() {
 			/* Populate annotation if not pinned */
 			if (!geneList.annotation.isPinned) {
-				/* Change style */
-				this.element.style.backgroundColor = COLOR.DARK_GREY;
-				this.element.style.color = COLOR.WHITE;
-
 				/* Clear annotation if applicable */
 				if (geneList.annotation.isActive) {
 					geneList.annotation.hide();
 				}
+
+				/* Change style */
+				this.element.style.backgroundColor = COLOR.DARK_GREY;
+				this.element.style.color = COLOR.WHITE;
 
 				/* Populate annotation */
 				geneList.annotation.populate(this.gene, this);
