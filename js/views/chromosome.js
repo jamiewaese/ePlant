@@ -8,8 +8,8 @@
 function ChromosomeView() {
 	/* User annotation element */
 	this.userAnnotationWrapperElement = document.createElement("div");
-	this.userAnnotationWrapperElement.className = "hint--right hint--success hint--rounded";
-	this.userAnnotationWrapperElement.setAttribute("data-hint", "Annotate genes.");
+	this.userAnnotationWrapperElement.className = "hint--top hint--success hint--rounded";
+	this.userAnnotationWrapperElement.setAttribute("data-hint", "Annotate genes. See help tab for instructions.");
 	this.userAnnotationWrapperElement.style.padding = "5px";
 	/* User annotation text element */
 	this.userAnnotationTextElement = document.createElement("input");
@@ -31,7 +31,7 @@ function ChromosomeView() {
 	this.toggleHeatmapElement.onclick = $.proxy(function() {
 		this.toggleHeatmap = !this.toggleHeatmap;
 	}, this);
-	this.toggleHeatmapElement.className = "icon hint--right hint--success hint--rounded";
+	this.toggleHeatmapElement.className = "iconSmall hint--top hint--success hint--rounded";
 	this.toggleHeatmapElement.setAttribute("data-hint", "Toggle heatmap of gene density. Dark - more dense. Light - less dense.");
 	this.toggleHeatmapElement.style.padding = "5px";
 	this.toggleHeatmapElement.style.verticalAlign = "middle";
@@ -287,8 +287,8 @@ ChromosomeView.prototype.draw = function() {
 				heatmapData[n].bins[m] = (maximum - heatmapData[n].bins[m]) / maximum;
 			}
 			/* Draw */
-			var centerX1 = chromosome.viewObjects[0].screenX + chromosome.viewObjects[0].screenWidth / 4;
-			var centerX2 = chromosome.viewObjects[0].screenX + chromosome.viewObjects[0].screenWidth / 4 * 3;
+			var centerX1 = chromosome.viewObjects[0].screenX + chromosome.viewObjects[0].screenWidth / 8;
+			var centerX2 = chromosome.viewObjects[0].screenX + chromosome.viewObjects[0].screenWidth / 8 * 7;
 			for (m = heatmapData[n].startPixel; m < heatmapData[n].endPixel; m++) {
 				var y = m + chromosome.viewObjects[0].screenY;
 				ZUI.processing.fill(heatmapData[n].bins[m] * 255);

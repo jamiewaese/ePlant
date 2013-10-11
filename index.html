@@ -115,8 +115,8 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 				height: 52px;
 			}
 			.icon img {
-				width: 46px;
-				height: 46px;
+				width: 40px;
+				height: 40px;
 				margin: 3px;
 
 				transition:All .25s ease;
@@ -130,6 +130,30 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 				-moz-transform:scale(1.1);
 				-o-transform:scale(1.1);
 			}
+
+			.iconSmall {
+				width: 40px;
+				height: 40px;
+			}
+			.iconSmall img {
+				width: 30px;
+				height: 30px;
+				margin: 3px;
+
+				transition:All .25s ease;
+				-webkit-transition:All .25s ease;
+				-moz-transition:All .25s ease;
+				-o-transition:All .25s ease;
+			}
+			.iconSmall:hover img {
+				transform:scale(1.1);
+				-webkit-transform:scale(1.1);
+				-moz-transform:scale(1.1);
+				-o-transform:scale(1.1);
+			}
+
+			
+
 			.button {
 				background-color: #EEE;
 				border: 1px solid #CCC;
@@ -150,6 +174,22 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 				border: 1px solid #99CC00;
 			    color: #FFF;
 			}
+			.growWhenHoveredOver {
+				transition:All .75s ease;
+				-webkit-transition:All .75s ease;
+				-moz-transition:All .75s ease;
+				-o-transition:All .75s ease;
+			}
+			.growWhenHoveredOver:hover {
+				transform:scale(1.1);
+				-webkit-transform:scale(1.1);
+				-moz-transform:scale(1.1);
+				-o-transform:scale(1.1);
+				transform: rotate(180deg);
+				-webkit-transform: rotate(180deg);
+				-o-transform: rotate(180deg);
+				-moz-transform: rotate(180deg);
+			}
 
 		</style>
 	</head>
@@ -169,7 +209,9 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 						<h1>ePlant</h1>
 					</td>
 					<td>
-						<img src="img/verticalGreenBar.png" style="float: left; padding: 0px 50px 0px 50px;"/>
+						<div class="hint--right  hint--success  hint--rounded" data-hint="Just a bar.">
+							<img src="img/verticalGreenBar.png" class="growWhenHoveredOver" style="float: left; padding: 0px 50px 0px 50px;"/>
+						</div>
 					</td>
 					<td>
 						<div style="float: right; padding: 17px 0px 0px 0px">
@@ -241,23 +283,23 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 					</td>
 					<td valign="top">
 						<div id="ZUI_container" style="width:800px;height:600px;margin:0 auto;position:relative;">
-							<canvas id="ZUI_canvas" width="800px" height="600px" style="position:absolute;left:0;top:0;outline:none;">
+							<canvas id="ZUI_canvas" width="800px" height="600px" style="position:absolute;left:0;top:0;outline:none;border: 3px solid #F0F0F0; border-radius:20px; margin-left: 25px;">
 								Canvas is not supported by your browser, please upgrade.
 							</canvas>
 						</div>
-						<div id="settings_container" style="visibility:hidden;">
+						<div id="settings_container" style="visibility:hidden; margin-top:15px;">
 							<table>
 								<tr>
-									<td id="specificApplicationUI_container" style="width:600px;vertical-align:middle;">
+									<td id="specificApplicationUI_container" style="padding-left: 50px; width:550px;vertical-align:middle; ">
 									</td>
 									<td id="crossApplicationUI_container" style="width:200px;vertical-align:middle;">
-										<div id="labelsColorIcon" class="icon hint--left hint--success hint--rounded" data-hint="Labels: off / light / dark." style="padding:5px;">
+										<div id="labelsColorIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Labels: off / light / dark." style="padding:5px;">
 											<img src="img/labelscolor.png"></img>
 										</div>
-										<div id="getImageIcon" class="icon hint--left hint--success hint--rounded" data-hint="Save current screen as high resolution image." style="padding:5px;" onclick="getImage();">
+										<div id="getImageIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Save current screen as high resolution image." style="padding:5px;" onclick="getImage();">
 											<img src="img/getimage.png"></img>
 										</div>
-										<div id="paletteIcon" class="icon hint--left hint--success hint--rounded" data-hint="Color palette." style="padding:5px;">
+										<div id="paletteIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Color palette." style="padding:5px;">
 											<img src="img/palette.png"></img>
 										</div>
 									</td>
@@ -281,6 +323,7 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 		</div>
 
 		<!-- Tabs -->
+		<br>
 		<script src="lib/tabcontent.js" type="text/javascript"></script>
 		<link href="style/tabcontent-template2/tabcontent.css" rel="stylesheet" type="text/css"></link>
 		<ul class="tabs" data-persist="true">
