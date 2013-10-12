@@ -113,6 +113,13 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			.icon {
 				width: 52px;
 				height: 52px;
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+
 			}
 			.icon img {
 				width: 40px;
@@ -134,6 +141,13 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			.iconSmall {
 				width: 40px;
 				height: 40px;
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+				
 			}
 			.iconSmall img {
 				width: 30px;
@@ -200,18 +214,13 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			<!-- Title strip -->
 			<table width="90%">
 				<tr>
-					<td>
+					<td width="110px">
 						<div class="hint--right  hint--success  hint--rounded" data-hint="See more bio visualization tools at the BAR.">
 							<a href='http://bar.utoronto.ca'><img id="logo" src='img/BAR.png' alt='To the Bio-Array Resource Homepage' align=absmiddle}"></a>&nbsp;&nbsp;
 						</div>
 					</td>
 					<td>
 						<h1>ePlant</h1>
-					</td>
-					<td>
-						<div class="hint--right  hint--success  hint--rounded" data-hint="Just a bar.">
-							<img src="img/verticalGreenBar.png" class="growWhenHoveredOver" style="float: left; padding: 0px 50px 0px 50px;"/>
-						</div>
 					</td>
 					<td>
 						<div style="float: right; padding: 17px 0px 0px 0px">
@@ -253,7 +262,7 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 								<img src="img/available/geneSelector.png"></img>
 							</div>
 							<br>
-							<div id="worldEFPIcon" class="icon hint--right hint--success hint--rounded" data-hint="View global distributions of your plant.">
+							<div id="worldEFPIcon" class="icon hint--right hint--success hint--rounded" data-hint="View global distributions of your gene.">
 								<img src="img/available/worldEFP.png"></img>
 							</div>
 							<br>
@@ -282,7 +291,7 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 						</div>
 					</td>
 					<td valign="top">
-						<div id="ZUI_container" style="width:800px;height:600px;margin:0 auto;position:relative;left:-150px;border: 3px solid #F0F0F0; border-radius:20px; margin-left: 25px;">
+						<div id="ZUI_container" style="width:800px;height:600px;margin:0 auto;position:relative;left:-150px;border: 3px solid #F0F0F0; border-radius:30px; margin-left: 25px;">
 							<canvas id="ZUI_canvas" width="800px" height="600px" style="position:absolute;left:0;top:0;outline:none;">
 								Canvas is not supported by your browser, please upgrade.
 							</canvas>
