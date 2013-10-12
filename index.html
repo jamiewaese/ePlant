@@ -119,10 +119,10 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 				height: 40px;
 				margin: 3px;
 
-				transition:All .25s ease;
-				-webkit-transition:All .25s ease;
-				-moz-transition:All .25s ease;
-				-o-transition:All .25s ease;
+				transition:transform .25s ease;
+				-webkit-transition:transform .25s ease;
+				-moz-transition:transform .25s ease;
+				-o-transition:transform .25s ease;
 			}
 			.icon:hover img {
 				transform:scale(1.1);
@@ -140,10 +140,10 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 				height: 30px;
 				margin: 3px;
 
-				transition:All .25s ease;
-				-webkit-transition:All .25s ease;
-				-moz-transition:All .25s ease;
-				-o-transition:All .25s ease;
+				transition:transform .25s ease;
+				-webkit-transition:transform .25s ease;
+				-moz-transition:transform .25s ease;
+				-o-transition:transform .25s ease;
 			}
 			.iconSmall:hover img {
 				transform:scale(1.1);
@@ -175,10 +175,10 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			    color: #FFF;
 			}
 			.growWhenHoveredOver {
-				transition:All .75s ease;
-				-webkit-transition:All .75s ease;
-				-moz-transition:All .75s ease;
-				-o-transition:All .75s ease;
+				transition:transform .75s ease;
+				-webkit-transition:transform .75s ease;
+				-moz-transition:transform .75s ease;
+				-o-transition:transform .75s ease;
 			}
 			.growWhenHoveredOver:hover {
 				transform:scale(1.1);
@@ -245,45 +245,45 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
  							</div>
 							<br>
 							<br>
-							<div id="speciesIcon" class="icon hint--right hint--success hint--rounded" data-hint="Select your species of interest.">
-								<img src="img/species.png"></img>
+							<div id="speciesIcon" class="icon hint--right hint--success hint--rounded" data-hint="Select your species of interest." onclick="toSpeciesView();">
+								<img src="img/available/species.png"></img>
 							</div>
 							<br>
 							<div id="geneSelectorIcon" class="icon hint--right hint--success hint--rounded" data-hint="View chromosomes and select genes.">
-								<img src="img/geneSelector.png"></img>
+								<img src="img/available/geneSelector.png"></img>
 							</div>
 							<br>
 							<div id="worldEFPIcon" class="icon hint--right hint--success hint--rounded" data-hint="View global distributions of your plant.">
-								<img src="img/worldEFP.png"></img>
+								<img src="img/available/worldEFP.png"></img>
 							</div>
 							<br>
 							<div id="plantEFPIcon" class="icon hint--right hint--success hint--rounded" data-hint="View tissues expression profile of your gene.">
-								<img src="img/plantEFP.png"></img>
+								<img src="img/available/plantEFP.png"></img>
 							</div>
 							<br>
 							<div id="cellEFPIcon" class="icon hint--right hint--success hint--rounded" data-hint="View subcellular expression profile of your gene.">
-								<img src="img/cellEFP.png"></img>
+								<img src="img/available/cellEFP.png"></img>
 							</div>
 							<br>
 							<div id="cytoscapeIcon" class="icon hint--right hint--success hint--rounded" data-hint="View protein-protein interactions of your gene product.">
-								<img src="img/cytoscape.png"></img>
+								<img src="img/available/cytoscape.png"></img>
 							</div>
 							<div id="reactomeIcon" class="icon hint--right hint--success hint--rounded" data-hint="View metabolic pathways that your gene product participates in.">
-								<img src="img/reactome.png"></img>
+								<img src="img/available/reactome.png"></img>
 							</div>
 							<br>
 							<div id="JSmolIcon" class="icon hint--right hint--success hint--rounded" data-hint="View structure of the protein encoded by your gene.">
-								<img src="img/JSmol.png"></img>
+								<img src="img/available/JSmol.png"></img>
 							</div>
 							<br>
 							<div id="tracksIcon" class="icon hint--right hint--success hint--rounded" data-hint="View annotations for your gene sequence.">
-								<img src="img/tracks.png"></img>
+								<img src="img/available/tracks.png"></img>
 							</div>
 						</div>
 					</td>
 					<td valign="top">
-						<div id="ZUI_container" style="width:800px;height:600px;margin:0 auto;position:relative;">
-							<canvas id="ZUI_canvas" width="800px" height="600px" style="position:absolute;left:0;top:0;outline:none;border: 3px solid #F0F0F0; border-radius:20px; margin-left: 25px;">
+						<div id="ZUI_container" style="width:800px;height:600px;margin:0 auto;position:relative;left:-150px;border: 3px solid #F0F0F0; border-radius:20px; margin-left: 25px;">
+							<canvas id="ZUI_canvas" width="800px" height="600px" style="position:absolute;left:0;top:0;outline:none;">
 								Canvas is not supported by your browser, please upgrade.
 							</canvas>
 						</div>
@@ -317,7 +317,13 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 				function getImage() {
 					ZUI.toImageInWindow();
 				}
+				function toSpeciesView() {
+					if (ZUI.activeView instanceof ChromosomeView) {		//switch from chromosome view
+						ZUI.changeActiveView(speciesView, null, null);
+					}
+				}
 				ZUI.attachProcessing("ZUI_canvas");
+				var speciesView = new SpeciesView();
 				ZUI.changeActiveView(new SpeciesView(), null, null);
 			</script>
 		</div>

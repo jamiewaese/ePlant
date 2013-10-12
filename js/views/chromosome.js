@@ -21,6 +21,34 @@ function ChromosomeView() {
 	this.userAnnotationButtonElement.type = "button";
 	this.userAnnotationButtonElement.value = "Annotate";
 	this.userAnnotationButtonElement.className = "button";
+	this.userAnnotationButtonElement.onclick = $.proxy(function() {
+		var descriptions = this.userAnnotationTextElement.value.split(":");
+		var identifier = descriptions[0];
+		var width = descriptions[1];
+		var color = descriptions[2];
+		/* Search for gene */
+		var gene = null;
+		for (var n = 0; n < this.chromosomes.length; n++) {
+			var chromosome = this.chromosomes[n];
+			for (var m = 0; m < chromosome.genes.length; m++) {
+				if (chromosome.genes[m].agi.toUpperCase() == identifier.toUpperCase()) {
+					gene = chromosome.genes[m];
+					break;
+				}
+			}
+			if (gene != null) break;
+		}
+		var isValid = true;
+		if (gene == null) isValid = false;
+		if (isNaN(width)) isValid = false;
+		if (color == null) isValid = false;		//TODO fix
+		if (isValid) {
+			this.markedGenes.push(new ChromosomeView.MarkedGene(gene, width, color));
+		}
+		else {
+			alert("Oops! We cannot process your annotation. Please try again.");
+		}
+	}, this);
 	this.userAnnotationWrapperElement.appendChild(this.userAnnotationButtonElement);
 
 	/* Toggle heatmap element */
@@ -130,6 +158,9 @@ ChromosomeView.prototype.constructor = ChromosomeView;
 
 /* Override active */
 ChromosomeView.prototype.active = function() {
+	/* Set icon to active */
+	document.getElementById("geneSelectorIcon").getElementsByTagName("img")[0].src = "img/active/geneSelector.png";
+
 	/* Reset camera */
 	ZUI.camera.reset();
 
@@ -148,6 +179,9 @@ ChromosomeView.prototype.active = function() {
 
 /* Override inactive */
 ChromosomeView.prototype.inactive = function() {
+	/* Set icon to inactive */
+	document.getElementById("geneSelectorIcon").getElementsByTagName("img")[0].src = "img/available/geneSelector.png";
+
 	/* Remove gene list HTML element to view */
 	ZUI.container.removeChild(this.geneList.element);
 };
@@ -376,6 +410,7 @@ ChromosomeView.prototype.mouseMove = function() {
 	var xLast = ZUI.mouseStatus.xLast;
 	var yLast = ZUI.mouseStatus.yLast;
 	var leftDown = ZUI.mouseStatus.leftDown;
+
 
 	/* Left drag behaviour */
 	if (leftDown) {
@@ -773,7 +808,7 @@ ChromosomeView.Annotation = function(markedGenes) {
 
 		/* World EFP */
 		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/worldEFP.png";
+		loadingViewElement.src = "img/available/worldEFP.png";
 		loadingViewElement.style.width = "40px";
 		loadingViewElement.style.height = "40px";
 		loadingViewElement.style.margin = "5px";
@@ -782,7 +817,7 @@ ChromosomeView.Annotation = function(markedGenes) {
 
 		/* Plant EFP */
 		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/plantEFP.png";
+		loadingViewElement.src = "img/available/plantEFP.png";
 		loadingViewElement.style.width = "40px";
 		loadingViewElement.style.height = "40px";
 		loadingViewElement.style.margin = "5px";
@@ -791,7 +826,7 @@ ChromosomeView.Annotation = function(markedGenes) {
 
 		/* Cell EFP */
 		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/cellEFP.png";
+		loadingViewElement.src = "img/available/cellEFP.png";
 		loadingViewElement.style.width = "40px";
 		loadingViewElement.style.height = "40px";
 		loadingViewElement.style.margin = "5px";
@@ -800,7 +835,7 @@ ChromosomeView.Annotation = function(markedGenes) {
 
 		/* Cytoscape */
 		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/cytoscape.png";
+		loadingViewElement.src = "img/available/cytoscape.png";
 		loadingViewElement.style.width = "40px";
 		loadingViewElement.style.height = "40px";
 		loadingViewElement.style.margin = "5px";
@@ -809,7 +844,7 @@ ChromosomeView.Annotation = function(markedGenes) {
 
 		/* Reactome */
 		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/reactome.png";
+		loadingViewElement.src = "img/available/reactome.png";
 		loadingViewElement.style.width = "40px";
 		loadingViewElement.style.height = "40px";
 		loadingViewElement.style.margin = "5px";
@@ -818,7 +853,7 @@ ChromosomeView.Annotation = function(markedGenes) {
 
 		/* JSmol */
 		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/JSmol.png";
+		loadingViewElement.src = "img/available/JSmol.png";
 		loadingViewElement.style.width = "40px";
 		loadingViewElement.style.height = "40px";
 		loadingViewElement.style.margin = "5px";
@@ -827,7 +862,7 @@ ChromosomeView.Annotation = function(markedGenes) {
 
 		/* Tracks */
 		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/tracks.png";
+		loadingViewElement.src = "img/available/tracks.png";
 		loadingViewElement.style.width = "40px";
 		loadingViewElement.style.height = "40px";
 		loadingViewElement.style.margin = "5px";

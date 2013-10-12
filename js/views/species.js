@@ -10,7 +10,6 @@ function SpeciesView() {
 
 	/* Create species list */
 	this.speciesList = new SpeciesView.SpeciesList(this);
-	this.speciesList.hide();
 
 	/* Fade */
 	this.fade = 1;
@@ -27,10 +26,12 @@ SpeciesView.prototype.active = function() {
 	document.getElementById("settings_container").style.visibility = "hidden";
 
 	/* Move ZUI container */
-	ZUI.container.style.left = "-100px";
+	ZUI.container.style.left = "-150px";
 
-	/* Show species list */
-	this.speciesList.show();
+	this.speciesShown = null;
+
+	/* Add species list */
+	ZUI.container.appendChild(this.speciesList.element);
 
 	/* Set camera */
 	ZUI.camera.reset();
@@ -49,8 +50,8 @@ SpeciesView.prototype.inactive = function() {
 	/* Move ZUI container */
 	ZUI.container.style.left = "0";
 
+	/* Remove species list */
 	ZUI.container.removeChild(this.speciesList.element);
-	this.speciesList.hide();
 };
 
 SpeciesView.prototype.draw = function() {
@@ -89,7 +90,6 @@ SpeciesView.SpeciesList = function(speciesView) {
 	this.element.style.height = ZUI.height + "px";
 	this.element.style.padding = "30px";
 	this.element.style.backgroundColor = "transparent";
-	ZUI.container.appendChild(this.element);
 
 	/* Add header */
 	var header = document.createElement("span");
@@ -107,14 +107,6 @@ SpeciesView.SpeciesList = function(speciesView) {
 	this.items.push(new SpeciesView.SpeciesList.Item(this, "Potato", "Solanum tuberosum", "data/species/Potato.svg", -433.5, -67.5));
 	this.items.push(new SpeciesView.SpeciesList.Item(this, "Tomato", "Solanum lycopersicum", "data/species/Tomato.svg", -60.5, 0));
 	this.items.push(new SpeciesView.SpeciesList.Item(this, "Poplar", "Populus trichocarpa", "data/species/Poplar.svg", -520.841, -128.409));
-};
-
-SpeciesView.SpeciesList.prototype.show = function() {
-	this.element.style.visibility = "visible";
-};
-
-SpeciesView.SpeciesList.prototype.hide = function() {
-	this.element.style.visibility = "hidden";
 };
 
 /* Species list item class */
