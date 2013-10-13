@@ -13,7 +13,14 @@ function SpeciesView() {
 
 	/* Fade */
 	this.fade = 1;
-	this.fadeRate = 0.05;
+	this.fadeRate = 0;
+
+	/* Animations */
+	this.zoomInAnimation = new ZUI.Animation(30, $.proxy(function() {
+		ZUI.camera.distance -= 500 / 30;
+		ZUI.camera.x += ZUI.width / 6 / 30;
+		this.draw();
+	}, this));
 }
 
 /* Inherit from View superclass */
@@ -36,10 +43,11 @@ SpeciesView.prototype.active = function() {
 	/* Set camera */
 	ZUI.camera.reset();
 	ZUI.camera._distance = 500;
+	ZUI.camera.distance = 500;
 
 	/* Fade */
 	this.fade = 1;
-	this.fadeRate = 0.05;
+	this.fadeRate = 0;
 };
 
 SpeciesView.prototype.inactive = function() {
@@ -139,9 +147,9 @@ SpeciesView.SpeciesList.Item = function(speciesList, commonName, scientificName,
 		this.speciesList.speciesView.fadeRate = 0.05;
 	}, this);
 	this.element.onclick = $.proxy(function() {
-		//TODO change to something more appropriate
-		this.element.onmouseout();
-		ZUI.changeActiveView(new ChromosomeView(), null, null);
+		var chromosomeView = new ChromosomeView();
+		chromosomeViews.push(chromosomeView);
+		ZUI.changeActiveView(chromosomeView, this.speciesList.speciesView.zoomInAnimation, chromosomeView.zoomInAnimation);
 	}, this);
 	this.speciesList.element.appendChild(this.element);
 

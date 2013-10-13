@@ -24,6 +24,18 @@ ZUI.width = 800;
 /* Interface height */
 ZUI.height = 600;
 
+/* Animation object */
+ZUI.animation = null;
+
+/* Whether view is to be changed */
+ZUI.isChangeView = false;
+
+/* Views and animations before and after change */
+ZUI.oldView = null;
+ZUI.exitOldViewAnimation = null;
+ZUI.newView = null;
+ZUI.enterNewViewAnimation = null;
+
 /* Mouse status */
 ZUI.mouseStatus = {
 	x : 0,
@@ -170,6 +182,11 @@ ZUI.drawViewObject = function(viewObject) {
 	}
 };
 
+/* Execute an animation while pausing normal drawing routine */
+ZUI.animate = function(animation) {
+	this.animation = animation;
+};
+
 /* Converts color hex string to Processing color object */
 ZUI.hexToColor = function(hex, alpha) {
 	var red = parseInt(hex.substring(1, 3), 16);
@@ -188,7 +205,7 @@ ZUI.getNumberWithComma = function(number) {
 
 /* Converts canvas to an image displayed in a new window */
 ZUI.toImageInWindow = function() {
-	window.open(canvas.toDataURL());
+	window.open(ZUI.canvas.toDataURL());
 };
 
 /* Attachment function for Processing */
@@ -215,8 +232,28 @@ ZUI.sketchProc = function(processing) {
 		/* Clear background */
 		processing.background(processing.color(ZUI.background.red, ZUI.background.green, ZUI.background.blue, ZUI.background.alpha));
 
-		/* Call draw function of the active view */
-		ZUI.activeView.draw();
+		if (ZUI.animation == null) {	//No animation
+			/* View should be changed */
+			if (ZUI.isChangeView) {
+				ZUI.activeView.inactive();
+				ZUI.activeView = ZUI.newView;
+				ZUI.isChangeView = false;
+				ZUI.activeView.active();
+				ZUI.animation = ZUI.enterNewViewAnimation;
+			}
+			else {
+				/* Call draw function of the active view */
+				ZUI.activeView.draw();
+			}
+		}
+		else {		//Animate
+			if (!ZUI.animation.isOver()) {
+				ZUI.animation.next();
+			}
+			else {
+				ZUI.animation = null;
+			}
+		}
 	};
 };
 
@@ -249,17 +286,14 @@ ZUI.attachProcessing = function(canvas) {
 	ZUI.activeView.active();
 };
 
+/* Change active view */
 ZUI.changeActiveView = function(view, exitAnimation, entryAnimation) {
-	/* Exit old active view */
-	//TODO call exit animation
-	ZUI.activeView.inactive();
-
-	/* Change active view */
-	ZUI.activeView = view;
-
-	/* Enter new active view */
-	ZUI.activeView.active();
-	//TODO call entry animation
+	ZUI.oldView = ZUI.activeView;
+	ZUI.newView = view;
+	ZUI.exitOldViewAnimation = exitAnimation;
+	ZUI.enterNewViewAnimation = entryAnimation;
+	ZUI.isChangeView = true;
+	ZUI.animation = ZUI.exitOldViewAnimation;
 };
 
 /* Callback for mouse down event */
@@ -345,6 +379,25 @@ ZUI.getMousePosition = function(event) {
 /* Callback for context menu event */
 ZUI.contextMenu = function(event) {
 };
+
+/* Animation class */
+ZUI.Animation = function(frames, drawFrame) {
+	this.frames = frames;
+	this.drawFrame = drawFrame;
+	this.currentFrame = 0;
+};
+
+	/* Draw next frame */
+	ZUI.Animation.prototype.next = function() {
+		this.drawFrame(this.currentFrame);
+		this.currentFrame++;
+	};
+
+	/* Determines whether animation is over */
+	ZUI.Animation.prototype.isOver = function() {
+		if (this.currentFrame < this.frames) return false;
+		else return true;
+	};
 
 /* View superclass with abstract and overridable methods */
 ZUI.View = function() {};
