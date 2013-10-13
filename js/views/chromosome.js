@@ -52,7 +52,11 @@ function ChromosomeView() {
 			}
 			/* Mark gene */
 			this.markedGenes.push(new ChromosomeView.MarkedGene(gene, width, color));
-			//TODO check if annotation popup has same gene, if yes then change buttons
+			/* Reset annotation */
+			var gene = this.annotation.gene;
+			var geneListItem = this.annotation.geneListItem;
+			this.annotation.clear();
+			this.annotation.populate(gene, geneListItem);
 		}
 		else {
 			alert("Oops! We cannot process your annotation. Please try again.");
@@ -161,8 +165,15 @@ function ChromosomeView() {
 	}
 
 	/* Animations */
-	this.zoomInAnimation = new ZUI.Animation(30, $.proxy(function() {
-		ZUI.camera.distance -= 1200 / 30;
+	this.zoomInAnimation = new ZUI.Animation(30, $.proxy(function(currentFrame) {
+		if (currentFrame == 0) {
+			ZUI.camera.setDistance(10400);
+		}
+		ZUI.camera.distance -= 10000 / 30;
+		this.draw();
+	}, this));
+	this.zoomOutAnimation = new ZUI.Animation(30, $.proxy(function(currentFrame) {
+		ZUI.camera.setDistance(ZUI.camera.distance + 10000 / 30);
 		this.draw();
 	}, this));
 }
@@ -178,8 +189,6 @@ ChromosomeView.prototype.active = function() {
 
 	/* Reset camera */
 	ZUI.camera.reset();
-	ZUI.camera._distance = 1600;
-	ZUI.camera.distance = 1600;
 
 	/* Append gene list HTML element to view */
 	ZUI.container.appendChild(this.geneList.element);
@@ -199,8 +208,9 @@ ChromosomeView.prototype.inactive = function() {
 	/* Set icon to inactive */
 	document.getElementById("geneSelectorIcon").getElementsByTagName("img")[0].src = "img/available/geneSelector.png";
 
-	/* Remove gene list HTML element to view */
+	/* Remove HTML elements from view */
 	ZUI.container.removeChild(this.geneList.element);
+	ZUI.container.removeChild(this.annotation.element);
 };
 
 /* Override draw */
@@ -357,17 +367,22 @@ ChromosomeView.prototype.draw = function() {
 		var y = Math.floor(gene.chromosome.viewObjects[0].attributes.screenY) + Math.floor((gene.start - 1) * pixelsPerBp) + 1;
 		var height = Math.floor((gene.end - gene.start) * pixelsPerBp);
 		var width = gene.chromosome.viewObjects[1].attributes.screenWidth * this.markedGenes[n].markerWidth;
+
+		var position = gene.getScreenPosition();
+		position.x += position.width / 2;
+		position.width *= this.markedGenes[n].markerWidth;
+		position.x -= position.width / 2;
 		ZUI.processing.stroke(ZUI.hexToColor(this.markedGenes[n].markerColor));
 		ZUI.processing.fill(ZUI.hexToColor(this.markedGenes[n].markerColor));
 		ZUI.processing.rect(
-			x - width / 2,
-			y,
-			width,
-			height
+			position.x,
+			position.y,
+			position.width,
+			position.height
 		);
 
 		/* Draw label */
-		ZUI.processing.text(gene.agi, x - width / 2 - 70, y + height / 2 + 5);
+		ZUI.processing.text(gene.agi, position.x - 70, position.y + position.height / 2 + 5);
 		//TODO change this to a ZUI text object, so that its position and size can be tracked to allow for mouse interactions
 	}
 
@@ -1099,6 +1114,17 @@ ChromosomeView.Chromosome = function(name, length, centromeres, index) {
 		/* Gene annotation */
 		this.annotation = null;
 	};
+
+		/* Returns the gene's position on the screen */
+		ChromosomeView.Chromosome.Gene.prototype.getScreenPosition = function() {
+			var pixelsPerBp = 1 / this.chromosome.getBpPerPixel();
+			var obj = {};
+			obj.x = this.chromosome.viewObjects[1].screenX;
+			obj.y = Math.floor(this.chromosome.viewObjects[0].screenY + (this.start - 1) * pixelsPerBp) + 1;
+			obj.height = Math.floor((this.end - this.start) * pixelsPerBp);
+			obj.width = this.chromosome.viewObjects[1].screenWidth;
+			return obj;
+		}
 
 /* MarkedGene class constructor */
 ChromosomeView.MarkedGene = function(gene, markerWidth, markerColor) {

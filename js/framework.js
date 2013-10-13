@@ -83,6 +83,24 @@ ZUI.camera = function() {};
 		ZUI.camera._distance += (ZUI.camera.distance - ZUI.camera._distance) * ZUI.camera.moveRate;
 	};
 
+	/* Sets x immediately */
+	ZUI.camera.setX = function(x) {
+		ZUI.camera._x = x;
+		ZUI.camera.x = x;
+	};
+
+	/* Sets y immediately */
+	ZUI.camera.setY = function(y) {
+		ZUI.camera._y = y;
+		ZUI.camera.y = y;
+	};
+
+	/* Sets distance immediately */
+	ZUI.camera.setDistance = function(distance) {
+		ZUI.camera._distance = distance;
+		ZUI.camera.distance = distance;
+	};
+
 	/* Projects world coordinates to screen coordinates */
 	ZUI.camera.projectPoint = function(x, y) {
 		var pixelsPerUnit = ZUI.width / (Math.tan(ZUI.camera.fov / 2) * ZUI.camera._distance * 2);
@@ -185,6 +203,9 @@ ZUI.drawViewObject = function(viewObject) {
 /* Execute an animation while pausing normal drawing routine */
 ZUI.animate = function(animation) {
 	this.animation = animation;
+	if (this.animation != null) {
+		this.animation.reset();
+	}
 };
 
 /* Converts color hex string to Processing color object */
@@ -239,7 +260,7 @@ ZUI.sketchProc = function(processing) {
 				ZUI.activeView = ZUI.newView;
 				ZUI.isChangeView = false;
 				ZUI.activeView.active();
-				ZUI.animation = ZUI.enterNewViewAnimation;
+				ZUI.animate(ZUI.enterNewViewAnimation);
 			}
 			else {
 				/* Call draw function of the active view */
@@ -293,7 +314,7 @@ ZUI.changeActiveView = function(view, exitAnimation, entryAnimation) {
 	ZUI.exitOldViewAnimation = exitAnimation;
 	ZUI.enterNewViewAnimation = entryAnimation;
 	ZUI.isChangeView = true;
-	ZUI.animation = ZUI.exitOldViewAnimation;
+	ZUI.animate(ZUI.exitOldViewAnimation);
 };
 
 /* Callback for mouse down event */
@@ -397,6 +418,11 @@ ZUI.Animation = function(frames, drawFrame) {
 	ZUI.Animation.prototype.isOver = function() {
 		if (this.currentFrame < this.frames) return false;
 		else return true;
+	};
+
+	/* Resets animation */
+	ZUI.Animation.prototype.reset = function() {
+		this.currentFrame = 0;
 	};
 
 /* View superclass with abstract and overridable methods */

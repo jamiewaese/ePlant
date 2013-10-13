@@ -16,9 +16,18 @@ function SpeciesView() {
 	this.fadeRate = 0;
 
 	/* Animations */
-	this.zoomInAnimation = new ZUI.Animation(30, $.proxy(function() {
-		ZUI.camera.distance -= 500 / 30;
-		ZUI.camera.x += ZUI.width / 6 / 30;
+	this.zoomInAnimation = new ZUI.Animation(30, $.proxy(function(currentFrame) {
+		ZUI.camera.setDistance(ZUI.camera.distance - 500 / 30);
+		ZUI.camera.setX(ZUI.camera.x + ZUI.width / 6 / 400 * 500 / 30);
+		this.draw();
+	}, this));
+	this.zoomOutAnimation = new ZUI.Animation(30, $.proxy(function(currentFrame) {
+		if (currentFrame == 0) {
+			ZUI.camera.setDistance(0);
+			ZUI.camera.setX(ZUI.width / 6);
+		}
+		ZUI.camera.distance += 500 / 30;
+		ZUI.camera.x -= ZUI.width / 6 / 400 * 500 / 30;
 		this.draw();
 	}, this));
 }
@@ -42,8 +51,10 @@ SpeciesView.prototype.active = function() {
 
 	/* Set camera */
 	ZUI.camera.reset();
-	ZUI.camera._distance = 500;
 	ZUI.camera.distance = 500;
+	ZUI.camera._distance = 500;
+	ZUI.camera.x = ZUI.width / 6 / 400 * (400 - 500);
+	ZUI.camera._x = ZUI.width / 6 / 400 * (400 - 500);
 
 	/* Fade */
 	this.fade = 1;
