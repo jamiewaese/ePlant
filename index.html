@@ -26,6 +26,9 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 		<script type="text/javascript" src="lib/processing-1.4.1.min.js"></script>
+		<script type="text/javascript" src="lib/JSmol.min.js"></script>
+		<script type="text/javascript" src="lib/cytoscape.min.js"></script>
+		<script type="text/javascript" src="lib/arbor.js"></script>
 
 		<!-- Tooltip Pop-Up Stylesheet. (From: https://github.com/chinchang/hint.css) -->
 		<link rel="stylesheet" href="style/hint.css"></link>
@@ -89,7 +92,7 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			#content {
 				margin: 5px auto 0px auto;
 				padding: 0px 5px 5px 5px;
-				width: 1000px;
+				width: 1200px;
 				min-width: 300px;
 				border: 0px solid #DDD;
 				background-color: #FFF;
@@ -113,13 +116,6 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			.icon {
 				width: 52px;
 				height: 52px;
-				-webkit-touch-callout: none;
-				-webkit-user-select: none;
-				-khtml-user-select: none;
-				-moz-user-select: none;
-				-ms-user-select: none;
-				user-select: none;
-
 			}
 			.icon img {
 				width: 40px;
@@ -141,13 +137,6 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			.iconSmall {
 				width: 40px;
 				height: 40px;
-				-webkit-touch-callout: none;
-				-webkit-user-select: none;
-				-khtml-user-select: none;
-				-moz-user-select: none;
-				-ms-user-select: none;
-				user-select: none;
-				
 			}
 			.iconSmall img {
 				width: 30px;
@@ -214,13 +203,18 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			<!-- Title strip -->
 			<table width="90%">
 				<tr>
-					<td width="110px">
+					<td>
 						<div class="hint--right  hint--success  hint--rounded" data-hint="See more bio visualization tools at the BAR.">
 							<a href='http://bar.utoronto.ca'><img id="logo" src='img/BAR.png' alt='To the Bio-Array Resource Homepage' align=absmiddle}"></a>&nbsp;&nbsp;
 						</div>
 					</td>
 					<td>
 						<h1>ePlant</h1>
+					</td>
+					<td>
+						<div class="hint--right  hint--success  hint--rounded" data-hint="Just a bar.">
+							<img src="img/verticalGreenBar.png" class="growWhenHoveredOver" style="float: left; padding: 0px 50px 0px 50px;"/>
+						</div>
 					</td>
 					<td>
 						<div style="float: right; padding: 17px 0px 0px 0px">
@@ -262,7 +256,7 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 								<img src="img/available/geneSelector.png"></img>
 							</div>
 							<br>
-							<div id="worldEFPIcon" class="icon hint--right hint--success hint--rounded" data-hint="View global distributions of your gene.">
+							<div id="worldEFPIcon" class="icon hint--right hint--success hint--rounded" data-hint="View global distributions of your plant.">
 								<img src="img/available/worldEFP.png"></img>
 							</div>
 							<br>
@@ -274,14 +268,14 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 								<img src="img/available/cellEFP.png"></img>
 							</div>
 							<br>
-							<div id="cytoscapeIcon" class="icon hint--right hint--success hint--rounded" data-hint="View protein-protein interactions of your gene product.">
+							<div id="cytoscapeIcon" class="icon hint--right hint--success hint--rounded" data-hint="View protein-protein interactions of your gene product." onclick="toInteractionView();">
 								<img src="img/available/cytoscape.png"></img>
 							</div>
 							<div id="reactomeIcon" class="icon hint--right hint--success hint--rounded" data-hint="View metabolic pathways that your gene product participates in.">
 								<img src="img/available/reactome.png"></img>
 							</div>
 							<br>
-							<div id="JSmolIcon" class="icon hint--right hint--success hint--rounded" data-hint="View structure of the protein encoded by your gene.">
+							<div id="JSmolIcon" class="icon hint--right hint--success hint--rounded" data-hint="View structure of the protein encoded by your gene." onclick="toMoleculeView();">
 								<img src="img/available/JSmol.png"></img>
 							</div>
 							<br>
@@ -291,15 +285,19 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 						</div>
 					</td>
 					<td valign="top">
-						<div id="ZUI_container" style="width:800px;height:600px;margin:0 auto;position:relative;left:-150px;border: 3px solid #F0F0F0; border-radius:30px; margin-left: 25px;">
-							<canvas id="ZUI_canvas" width="800px" height="600px" style="position:absolute;left:0;top:0;outline:none;">
+						<div id="ZUI_container" style="width:900px;height:600px;margin:0 auto;position:relative;left:-150px;border: 3px solid #F0F0F0; border-radius:20px; margin-left: 25px;">
+							<div id="Cytoscape_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;">
+							</div>
+							<div id="JSmol_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;margin:0 auto 0 50px;">
+							</div>
+							<canvas id="ZUI_canvas" width="900px" height="600px" style="position:absolute;left:0;top:0;outline:none;">
 								Canvas is not supported by your browser, please upgrade.
 							</canvas>
 						</div>
 						<div id="settings_container" style="visibility:hidden; margin-top:15px;">
 							<table>
 								<tr>
-									<td id="specificApplicationUI_container" style="padding-left: 50px; width:550px;vertical-align:middle; ">
+									<td id="specificApplicationUI_container" style="padding-left: 50px; width:550px;vertical-align:middle;">
 									</td>
 									<td id="crossApplicationUI_container" style="width:200px;vertical-align:middle;">
 										<div id="labelsColorIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Labels: off / light / dark." style="padding:5px;">
@@ -322,19 +320,30 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			<script type="text/javascript" src="js/constants.js"></script>
 			<script type="text/javascript" src="js/views/chromosome.js"></script>
 			<script type="text/javascript" src="js/views/species.js"></script>
+			<script type="text/javascript" src="js/views/interaction.js"></script>
+			<script type="text/javascript" src="js/views/molecule.js"></script>
 			<script type="text/javascript">
 				function getImage() {
 					ZUI.toImageInWindow();
 				}
 				function toSpeciesView() {
 					if (ZUI.activeView instanceof ChromosomeView) {		//switch from chromosome view
-						ZUI.changeActiveView(speciesView, null, null);
+						ZUI.changeActiveView(speciesView, ZUI.activeView.zoomOutAnimation, speciesView.zoomOutAnimation);
 					}
 				}
+				function toInteractionView() {
+					//TODO replace with actual code
+					ZUI.changeActiveView(new InteractionView("At2g41460"), null, null);
+				}
+				function toMoleculeView() {
+					//TODO replace with actual code
+					ZUI.changeActiveView(new MoleculeView("At2g41460"), null, null);
+				}
 				ZUI.attachProcessing("ZUI_canvas");
+				MoleculeView.initJMol();
 				var speciesView = new SpeciesView();
 				var chromosomeViews = [];
-				ZUI.changeActiveView(new SpeciesView(), null, null);
+				ZUI.changeActiveView(speciesView, null, null);
 			</script>
 		</div>
 

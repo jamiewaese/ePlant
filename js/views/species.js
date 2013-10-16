@@ -122,7 +122,7 @@ SpeciesView.SpeciesList = function(speciesView) {
 	this.element.appendChild(header);
 
 	/* Add species */
-	this.items.push(new SpeciesView.SpeciesList.Item(this, "Arabidopsis", "Arabidopsis thaliana", "data/species/Arabidopsis.svg", -16.824, -25.598));
+	this.items.push(new SpeciesView.SpeciesList.Item(this, "Arabidopsis", "Arabidopsis thaliana", "data/species/Arabidopsis.svg", -16.824 + 16, -25.598));
 	this.items.push(new SpeciesView.SpeciesList.Item(this, "Potato", "Solanum tuberosum", "data/species/Potato.svg", -433.5, -67.5));
 	this.items.push(new SpeciesView.SpeciesList.Item(this, "Tomato", "Solanum lycopersicum", "data/species/Tomato.svg", -60.5, 0));
 	this.items.push(new SpeciesView.SpeciesList.Item(this, "Poplar", "Populus trichocarpa", "data/species/Poplar.svg", -520.841, -128.409));

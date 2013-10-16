@@ -19,7 +19,7 @@ ZUI.processing = null;
 ZUI.frameRate = 60;
 
 /* Interface width */
-ZUI.width = 800;
+ZUI.width = 900;
 
 /* Interface height */
 ZUI.height = 600;
@@ -331,6 +331,9 @@ ZUI.mouseDown = function(event) {
 		ZUI.mouseStatus.rightDown = true;
 		ZUI.activeView.rightMouseDown();
 	}
+	if (ZUI.passInputEvent != null) {
+		ZUI.passInputEvent(event);
+	}
 };
 
 /* Callback for mouse up event */
@@ -347,6 +350,9 @@ ZUI.mouseUp = function(event) {
 		ZUI.mouseStatus.rightDown = false;
 		ZUI.activeView.rightMouseUp();
 	}
+	if (ZUI.passInputEvent != null) {
+		ZUI.passInputEvent(event);
+	}
 };
 
 /* Callback for mouse move event */
@@ -357,6 +363,9 @@ ZUI.mouseMove = function(event) {
 	ZUI.mouseStatus.x = mousePosition.x;
 	ZUI.mouseStatus.y = mousePosition.y;
 	ZUI.activeView.mouseMove();
+	if (ZUI.passInputEvent != null) {
+		ZUI.passInputEvent(event);
+	}
 };
 
 /* Callback for click event */
@@ -370,6 +379,9 @@ ZUI.click = function(event) {
 	else if (event.button == 2) {
 		ZUI.activeView.rightClick();
 	}
+	if (ZUI.passInputEvent != null) {
+		ZUI.passInputEvent(event);
+	}
 };
 
 /* Callback for double click event */
@@ -380,13 +392,29 @@ ZUI.doubleClick = function(event) {
 	else if (event.button == 1) {
 		ZUI.activeView.middleDoubleClick();
 	}
+	if (ZUI.passInputEvent != null) {
+		ZUI.passInputEvent(event);
+	}
 };
 
 ZUI.mouseWheel = function(event) {
 	event.preventDefault();
 	var scroll = Math.max(-1, Math.min(1, (event.wheelDelta || -event.detail)));
 	ZUI.activeView.mouseWheel(scroll);
+	if (ZUI.passInputEvent != null) {
+		ZUI.passInputEvent(event);
+	}
 };
+
+/* Callback for context menu event */
+ZUI.contextMenu = function(event) {
+	if (ZUI.passInputEvent != null) {
+		ZUI.passInputEvent(event);
+	}
+};
+
+/* Overriddable function for passing input events to another element, takes event as parameter */
+ZUI.passInputEvent = null;
 
 /* Gets mouse position in screen coordinates */
 ZUI.getMousePosition = function(event) {
@@ -395,10 +423,6 @@ ZUI.getMousePosition = function(event) {
 		x: event.clientX - canvasBoundingRect.left,
 		y: event.clientY - canvasBoundingRect.top
 	};
-};
-
-/* Callback for context menu event */
-ZUI.contextMenu = function(event) {
 };
 
 /* Animation class */

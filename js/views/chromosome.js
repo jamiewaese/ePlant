@@ -198,7 +198,6 @@ ChromosomeView.prototype.active = function() {
 
 	/* Set application specific UI */
 	var specificApplicationUI_container = document.getElementById("specificApplicationUI_container");
-	specificApplicationUI_container.innerHTML = "";
 	specificApplicationUI_container.appendChild(this.userAnnotationWrapperElement);
 	specificApplicationUI_container.appendChild(this.toggleHeatmapElement);
 };
@@ -211,6 +210,9 @@ ChromosomeView.prototype.inactive = function() {
 	/* Remove HTML elements from view */
 	ZUI.container.removeChild(this.geneList.element);
 	ZUI.container.removeChild(this.annotation.element);
+
+	/* Remove application specific UI */
+	document.getElementById("specificApplicationUI_container").innerHTML = "";
 };
 
 /* Override draw */
@@ -826,6 +828,8 @@ ChromosomeView.Annotation = function(markedGenes) {
 	/* Create controls HTML element for buttons */
 	this.controlElement = document.createElement("div");
 	this.controlElement.style.padding = "5px";
+	this.controlElement.style.display = "table-cell";
+	this.controlElement.style.verticalAlign = "middle";
 	this.controlElement.style.backgroundColor = COLOR.WHITE;
 	this.element.appendChild(this.controlElement);
 
@@ -844,6 +848,18 @@ ChromosomeView.Annotation = function(markedGenes) {
 		this.top50Element.onclick = function() {
 		};
 		this.controlElement.appendChild(this.top50Element);
+
+		/* Create container for tags */
+		this.tagsElement = document.createElement("div");
+		this.tagsElement.style.display = "inline";
+		this.tagsElement.style.padding = "5px";
+		this.tagsElement.style.verticalAlign = "middle";
+		this.controlElement.appendChild(this.tagsElement);
+
+			/* Create tags label */
+			this.tagsLabelElement = document.createElement("label");
+			this.tagsLabelElement.innerHTML = "Tags: ";
+			this.tagsElement.appendChild(this.tagsLabelElement);
 
 	/* Create loading HTML element for loading status */
 	this.loadingElement = document.createElement("div");
@@ -1035,7 +1051,7 @@ ChromosomeView.Chromosome = function(name, length, centromeres, index) {
 		ZUI.ViewObject.Type.ROUNDED_RECT,
 		{
 			x : -298 + index * 120,
-			y : -250,
+			y : -220,
 			width : 6,
 			height : this.length * 0.000015,
 			radius: 3,
@@ -1047,7 +1063,7 @@ ChromosomeView.Chromosome = function(name, length, centromeres, index) {
 			ZUI.ViewObject.Type.ROUNDED_RECT,
 			{
 				x : -300 + index * 120,
-				y : -250 + start * 0.000015,
+				y : -220 + start * 0.000015,
 				width : 10,
 				height : (this.centromeres[n].start - start) * 0.000015,
 				radius : 5,
@@ -1059,7 +1075,7 @@ ChromosomeView.Chromosome = function(name, length, centromeres, index) {
 		ZUI.ViewObject.Type.ROUNDED_RECT,
 		{
 			x : -300 + index * 120,
-			y : -250 + start * 0.000015,
+			y : -220 + start * 0.000015,
 			width : 10,
 			height : (this.length - start) * 0.000015,
 			radius : 5,
