@@ -74,22 +74,34 @@ ZUI.camera = function() {};
 	ZUI.camera.distance = ZUI.camera._distance;
 
 	/* Rate at which the camera moves */
-	ZUI.camera.moveRate = 0.1;
+	ZUI.camera.moveRate = 1;
 
 	/* Updates camera position */
 	ZUI.camera.update = function() {
 		ZUI.camera._x += (ZUI.camera.x - ZUI.camera._x) * ZUI.camera.moveRate;
 		ZUI.camera._y += (ZUI.camera.y - ZUI.camera._y) * ZUI.camera.moveRate;
 		ZUI.camera._distance += (ZUI.camera.distance - ZUI.camera._distance) * ZUI.camera.moveRate;
+
+		if (Math.abs(ZUI.camera.x - ZUI.camera._x) < ZUI.camera._distance * 0.005) ZUI.camera._x = ZUI.camera.x;
+		if (Math.abs(ZUI.camera.y - ZUI.camera._y) < ZUI.camera._distance * 0.005) ZUI.camera._y = ZUI.camera.y;
+		if (Math.abs(ZUI.camera.distance - ZUI.camera._distance) < ZUI.camera._distance * 0.005) ZUI.camera._distance = ZUI.camera.distance;
 	};
 
-	/* Sets x immediately */
+	/* Sets position immediately */
+	ZUI.camera.setPosition = function(x, y) {
+		ZUI.camera._x = x;
+		ZUI.camera.x = x;
+		ZUI.camera._y = y;
+		ZUI.camera.y = y;
+	};
+
+	/* Sets x immediately DEPRECATED */
 	ZUI.camera.setX = function(x) {
 		ZUI.camera._x = x;
 		ZUI.camera.x = x;
 	};
 
-	/* Sets y immediately */
+	/* Sets y immediately DEPRECATED */
 	ZUI.camera.setY = function(y) {
 		ZUI.camera._y = y;
 		ZUI.camera.y = y;
@@ -146,57 +158,71 @@ ZUI.camera = function() {};
 
 /* Draws a list of view objects */
 ZUI.drawViewObject = function(viewObject) {
-	if (viewObject.type == ZUI.ViewObject.Type.POINT) {
+	if (viewObject.type == ZUI.ViewObject.Type.Point) {
 	}
-	else if (viewObject.type == ZUI.ViewObject.Type.POINT) {
+	else if (viewObject.type == ZUI.ViewObject.Type.Point) {
 	}
-	else if (viewObject.type == ZUI.ViewObject.Type.LINE) {
+	else if (viewObject.type == ZUI.ViewObject.Type.Line) {
 	}
-	else if (viewObject.type == ZUI.ViewObject.Type.RECT) {
-		var point = ZUI.camera.projectPoint(viewObject.attributes.x, viewObject.attributes.y);
-		viewObject.attributes.screenX = point.x;
-		viewObject.attributes.screenY = point.y;
-		viewObject.attributes.screenWidth = ZUI.camera.projectDistance(viewObject.attributes.width);
-		viewObject.attributes.screenHeight = ZUI.camera.projectDistance(viewObject.attributes.height);
-		viewObject.screenX = point.x;
-		viewObject.screenY = point.y;
-		viewObject.screenWidth = ZUI.camera.projectDistance(viewObject.attributes.width);
-		viewObject.screenHeight = ZUI.camera.projectDistance(viewObject.attributes.width);
-		ZUI.processing.rect(viewObject.attributes.screenX, viewObject.attributes.screenY, viewObject.attributes.screenWidth, viewObject.attributes.screenHeight);
-	}
-	else if (viewObject.type == ZUI.ViewObject.Type.ROUNDED_RECT) {
-		var point = ZUI.camera.projectPoint(viewObject.attributes.x, viewObject.attributes.y);
-		viewObject.attributes.screenX = point.x;
-		viewObject.attributes.screenY = point.y;
-		viewObject.attributes.screenWidth = ZUI.camera.projectDistance(viewObject.attributes.width);
-		viewObject.attributes.screenHeight = ZUI.camera.projectDistance(viewObject.attributes.height);
-		viewObject.attributes.screenRadius = ZUI.camera.projectDistance(viewObject.attributes.radius);
-		viewObject.screenX = point.x;
-		viewObject.screenY = point.y;
-		viewObject.screenWidth = ZUI.camera.projectDistance(viewObject.attributes.width);
-		viewObject.screenHeight = ZUI.camera.projectDistance(viewObject.attributes.height);
-		viewObject.screenRadius = ZUI.camera.projectDistance(viewObject.attributes.radius);
-		ZUI.processing.rect(viewObject.attributes.screenX, viewObject.attributes.screenY, viewObject.attributes.screenWidth, viewObject.attributes.screenHeight, viewObject.attributes.screenRadius);
-	}
-	else if (viewObject.type == ZUI.ViewObject.Type.CIRCLE) {
-	}
-	else if (viewObject.type == ZUI.ViewObject.Type.ELLIPSE) {
-	}
-	else if (viewObject.type == ZUI.ViewObject.Type.TRIANGLE) {
-	}
-	else if (viewObject.type == ZUI.ViewObject.Type.QUAD) {
-	}
-	else if (viewObject.type == ZUI.ViewObject.Type.POLYGON) {
-	}
-	else if (viewObject.type == ZUI.ViewObject.Type.SHAPE) {
+	else if (viewObject.type == ZUI.ViewObject.Type.Rect) {
 		var point = ZUI.camera.projectPoint(viewObject.x, viewObject.y);
 		viewObject.screenX = point.x;
 		viewObject.screenY = point.y;
-		viewObject.screenXOffset = ZUI.camera.projectDistance(viewObject.xOffset);
-		viewObject.screenYOffset = ZUI.camera.projectDistance(viewObject.yOffset);
-		viewObject.screenWidth = ZUI.camera.projectDistance(viewObject.width);
-		viewObject.screenHeight = ZUI.camera.projectDistance(viewObject.height);
-		ZUI.processing.shape(viewObject.shape, viewObject.screenX + viewObject.screenXOffset, viewObject.screenY + viewObject.screenYOffset, viewObject.screenWidth, viewObject.screenHeight);
+		if (viewObject.scale == ZUI.ViewObject.Scale.Screen) {
+			viewObject.screenWidth = viewObject.width;
+			viewObject.screenHeight = viewObject.height;
+		}
+		else if (viewObject.scale == ZUI.ViewObject.Scale.World) {
+			viewObject.screenWidth = ZUI.camera.projectDistance(viewObject.width);
+			viewObject.screenHeight = ZUI.camera.projectDistance(viewObject.height);
+		}
+		ZUI.processing.rect(viewObject.screenX, viewObject.screenY, viewObject.screenWidth, viewObject.screenHeight);
+	}
+	else if (viewObject.type == ZUI.ViewObject.Type.RoundedRect) {
+		var point = ZUI.camera.projectPoint(viewObject.x, viewObject.y);
+		viewObject.screenX = point.x;
+		viewObject.screenY = point.y;
+		if (viewObject.scale == ZUI.ViewObject.Scale.Screen) {
+			viewObject.screenWidth = viewObject.width;
+			viewObject.screenHeight = viewObject.height;
+			viewObject.screenRadius = viewObject.radius;
+		}
+		else if (viewObject.scale == ZUI.ViewObject.Scale.World) {
+			viewObject.screenWidth = ZUI.camera.projectDistance(viewObject.width);
+			viewObject.screenHeight = ZUI.camera.projectDistance(viewObject.height);
+			viewObject.screenRadius = ZUI.camera.projectDistance(viewObject.radius);
+		}
+		ZUI.processing.rect(viewObject.screenX, viewObject.screenY, viewObject.screenWidth, viewObject.screenHeight, viewObject.screenRadius);
+	}
+	else if (viewObject.type == ZUI.ViewObject.Type.Circle) {
+	}
+	else if (viewObject.type == ZUI.ViewObject.Type.Ellipse) {
+	}
+	else if (viewObject.type == ZUI.ViewObject.Type.Triangle) {
+	}
+	else if (viewObject.type == ZUI.ViewObject.Type.Quad) {
+	}
+	else if (viewObject.type == ZUI.ViewObject.Type.Polygon) {
+	}
+	else if (viewObject.type == ZUI.ViewObject.Type.Shape) {
+		var point = ZUI.camera.projectPoint(viewObject.x, viewObject.y);
+		viewObject.screenX = point.x;
+		viewObject.screenY = point.y;
+		if (viewObject.scale == ZUI.ViewObject.Scale.Screen) {
+			viewObject.screenWidth = viewObject.width;
+			viewObject.screenHeight = viewObject.height;
+		}
+		else if (viewObject.scale == ZUI.ViewObject.Scale.World) {
+			viewObject.screenWidth = ZUI.camera.projectDistance(viewObject.width);
+			viewObject.screenHeight = ZUI.camera.projectDistance(viewObject.height);
+		}
+		ZUI.processing.shape(viewObject.shape, viewObject.screenX, viewObject.screenY, viewObject.screenWidth, viewObject.screenHeight);
+	}
+	else if (viewObject.type == ZUI.ViewObject.Type.Text) {
+		var point = ZUI.camera.projectPoint(viewObject.x, viewObject.y);
+		viewObject.screenX = point.x;
+		viewObject.screenY = point.y;
+		//TODO finish this up
 	}
 };
 
@@ -219,7 +245,7 @@ ZUI.hexToColor = function(hex, alpha) {
 /* Converts a number to a string with comma separators */
 ZUI.getNumberWithComma = function(number) {
 	/* By mikez302, http://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript */
-	var parts = number.toString().split(".");
+	var parts = (number + "").split(".");
 	parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 	return parts.join(".");
 };
@@ -250,6 +276,9 @@ ZUI.sketchProc = function(processing) {
 
 	/* Processing draw */
 	processing.draw = function() {
+		/* Update */
+		ZUI.update();
+
 		/* Clear background */
 		processing.background(processing.color(ZUI.background.red, ZUI.background.green, ZUI.background.blue, ZUI.background.alpha));
 
@@ -315,6 +344,10 @@ ZUI.changeActiveView = function(view, exitAnimation, entryAnimation) {
 	ZUI.enterNewViewAnimation = entryAnimation;
 	ZUI.isChangeView = true;
 	ZUI.animate(ZUI.exitOldViewAnimation);
+};
+
+/* Called every frame regardless of view, override with custom function */
+ZUI.update = function() {
 };
 
 /* Callback for mouse down event */
@@ -425,6 +458,16 @@ ZUI.getMousePosition = function(event) {
 	};
 };
 
+/* Checks whether a string describes a valid color */
+ZUI.isValidColor = function(str) {
+	if (!str || !str.match) {
+		return null;
+	}
+	else {
+		return str.match(/^#[a-f0-9]{6}$/i) !== null;
+	}
+};
+
 /* Animation class */
 ZUI.Animation = function(frames, drawFrame) {
 	this.frames = frames;
@@ -467,29 +510,39 @@ ZUI.View = function() {};
 	ZUI.View.prototype.leftDoubleClick = function() {};
 	ZUI.View.prototype.middleDoubleClick = function() {};
 	ZUI.View.prototype.mouseWheel = function(scroll) {};
-	ZUI.View.prototype.animateEntry = function(mode, frame) {};	//return frameRemainder (Number)
-	ZUI.View.prototype.animateExit = function(mode, frame) {};	//return frameRemainder (Number)
 	ZUI.View.prototype.getLoadProgress = function() {};		//return Number between 0 and 1, inclusive
 
 /* View object class */
-ZUI.ViewObject = function(type, attributes) {
+ZUI.ViewObject = function(type, scale, attributes) {
 	/* Type of view object, should be one of the definitions in ZUI.ViewObject.Type */
 	this.type = type;
 
+	/* Scale, should be one of the definitions in ZUI.ViewObject.Scale  */
+	this.scale = scale;
+
 	/* Attributes of view object */
-	this.attributes = attributes;
+	for (var key in attributes) {
+		this[key] = attributes[key];
+	}
 };
 
 	/* View object types */
 	ZUI.ViewObject.Type = {
-		POINT: 0,
-		LINE: 1,
-		RECT: 2,
-		ROUNDED_RECT: 3,
-		CIRCLE: 4,
-		ELLIPSE: 5,
-		TRIANGLE: 6,
-		QUAD: 7,
-		POLYGON: 8,
-		SHAPE: 9,
+		Point: 0,
+		Line: 1,
+		Rect: 2,
+		RoundedRect: 3,
+		Circle: 4,
+		Ellipse: 5,
+		Triangle: 6,
+		Quad: 7,
+		Polygon: 8,
+		Shape: 9,
+		Text: 10,
+	};
+
+	/* Scale */
+	ZUI.ViewObject.Scale = {
+		Screen: 0,
+		World: 1,
 	};

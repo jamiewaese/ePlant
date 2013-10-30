@@ -1,0 +1,18 @@
+[
+	{
+		"scientificName": "Arabidopsis thaliana",
+		"commonName": "Thale cress"
+	},
+	{
+		"scientificName": "Solanum tuberosum",
+		"commonName": "Potato"
+	},
+	{
+		"scientificName": "Solanum lycopersicum",
+		"commonName": "Tomato"
+	},
+	{
+		"scientificName": "Populus trichocarpa",
+		"commonName": "Poplar"
+	}
+]

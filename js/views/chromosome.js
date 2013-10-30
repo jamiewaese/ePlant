@@ -1,181 +1,153 @@
 /**
- * Chromosome View class
+ * ChromosomeView class
+ * Describes the view for browsing chromosome-related data
+ *
  * UI design by Jamie Waese
  * Code by Hans Yu
  */
 
 /* Constructor */
-function ChromosomeView() {
-	/* User annotation element */
-	this.userAnnotationWrapperElement = document.createElement("div");
-	this.userAnnotationWrapperElement.className = "hint--top hint--success hint--rounded";
-	this.userAnnotationWrapperElement.setAttribute("data-hint", "Annotate genes. See help tab for instructions.");
-	this.userAnnotationWrapperElement.style.padding = "5px";
-	/* User annotation text element */
-	this.userAnnotationTextElement = document.createElement("input");
-	this.userAnnotationTextElement.type = "text";
-	this.userAnnotationTextElement.style.width = "150px";
-	this.userAnnotationWrapperElement.appendChild(this.userAnnotationTextElement);
-	/* User annotation button element */
-	this.userAnnotationButtonElement = document.createElement("input");
-	this.userAnnotationButtonElement.type = "button";
-	this.userAnnotationButtonElement.value = "Annotate";
-	this.userAnnotationButtonElement.className = "button";
-	this.userAnnotationButtonElement.onclick = $.proxy(function() {
-		var descriptions = this.userAnnotationTextElement.value.split(":");
-		var identifier = descriptions[0];
-		var width = descriptions[1];
-		var color = descriptions[2];
-		/* Search for gene */
-		var gene = null;
-		for (var n = 0; n < this.chromosomes.length; n++) {
-			var chromosome = this.chromosomes[n];
-			for (var m = 0; m < chromosome.genes.length; m++) {
-				if (chromosome.genes[m].agi.toUpperCase() == identifier.toUpperCase()) {
-					gene = chromosome.genes[m];
-					break;
+function ChromosomeView(species) {
+	/* Define field properties */
+	this.species = species;							// Species of interest
+	this.chromosomeViewObjects = [];						// List of chromosome view objects
+	this.userAnnotations = [];							// User annotations
+	this.isHeatmap = false;							// Whether heatmap is activated
+	this.annotationPopup = null;						// Annotation popup
+	this.geneListPopup = null;							// Gene list popup
+	this.loadProgress = 0;							// Loading progress (0 to 1)
+	this.mouseFramesIdle = 0;							// Number of frames that the mouse stays idle
+
+	/* Create view-specific UI elements */
+		/* User annotation */
+		this.userAnnotation = document.createElement("div");
+		this.userAnnotation.className = "hint--top hint--success hint--rounded";
+		this.userAnnotation.setAttribute("data-hint", "Annotate genes. See help tab for instructions.");
+		this.userAnnotation.style.padding = "5px";
+			/* Text input */
+			this.userAnnotationText = Eplant.createTextInput();
+			this.userAnnotationText.style.width = "150px";
+			this.userAnnotation.appendChild(this.userAnnotationText);
+
+			/* Button */
+			this.userAnnotationButton = Eplant.createButton("Annotate", $.proxy(function() {
+				/* Parse input */
+				var input = this.userAnnotationText.value.split(":");
+				var geneIdentifier = input[0];
+				var width = input[1];
+				var color = input[2];
+
+				/* Validate input */
+				var isValid = true;
+				if (isNaN(width)) isValid = false;
+				if (!ZUI.isValidColor(color)) isValid = false;
+
+				/* Store gene if input is valid */
+				if (isValid) {
+					/* Check if a user annotation already exists */
+					var userAnnotation = null;
+					for (n = 0; n < this.userAnnotations.length; n++) {
+						if (geneIdentifier.toUpperCase() == this.userAnnotations[n].gene.identifier.toUpperCase()) {
+							userAnnotation = this.userAnnotations[n];
+							break;
+						}
+					}
+
+					/* Update user annotation */
+					if (userAnnotation != null) {
+						userAnnotation.width = width;
+						userAnnotation.color = color;
+					}
+					else {
+						var userAnnotation = new ChromosomeView.UserAnnotation(geneIdentifier, width, color, this);
+						this.userAnnotations.push(userAnnotation);
+					}
+
+					/* Reset annotation */
+					//TODO change this part
+/*
+					var gene = this.annotationPopup.gene;
+					var geneListPopupItem = this.annotationPopup.geneListPopupItem;
+					this.annotationPopup.clear();
+					this.annotationPopup.populate(gene, geneListPopupItem);
+*/
 				}
-			}
-			if (gene != null) break;
-		}
-		var isValid = true;
-		if (gene == null) isValid = false;
-		if (isNaN(width)) isValid = false;
-		if (color == null) isValid = false;		//TODO fix
-		if (isValid) {
-			/* Remove older mark of the gene, if applicable */
-			for (n = 0; n < this.markedGenes.length; n++) {
-				if (gene == this.markedGenes[n].gene) {
-					this.markedGenes.splice(n, 1);
-					break;
+
+				/* Provide feedback if input is invalid */
+				else {
+					alert("Oops! We cannot process your annotation. Please try again.");
 				}
-			}
-			/* Mark gene */
-			this.markedGenes.push(new ChromosomeView.MarkedGene(gene, width, color));
-			/* Reset annotation */
-			var gene = this.annotation.gene;
-			var geneListItem = this.annotation.geneListItem;
-			this.annotation.clear();
-			this.annotation.populate(gene, geneListItem);
-		}
-		else {
-			alert("Oops! We cannot process your annotation. Please try again.");
-		}
-	}, this);
-	this.userAnnotationWrapperElement.appendChild(this.userAnnotationButtonElement);
+			}, this));
+			this.userAnnotation.appendChild(this.userAnnotationButton);
 
-	/* Toggle heatmap element */
-	this.toggleHeatmapElement = document.createElement("div");
-	var img = document.createElement("img");
-	img.src = "img/heatmap.png";
-	this.toggleHeatmapElement.appendChild(img);
-	this.toggleHeatmapElement.onclick = $.proxy(function() {
-		this.toggleHeatmap = !this.toggleHeatmap;
-	}, this);
-	this.toggleHeatmapElement.className = "iconSmall hint--top hint--success hint--rounded";
-	this.toggleHeatmapElement.setAttribute("data-hint", "Toggle heatmap of gene density. Dark - more dense. Light - less dense.");
-	this.toggleHeatmapElement.style.padding = "5px";
-	this.toggleHeatmapElement.style.verticalAlign = "middle";
+		/* Toggle heatmap */
+		this.toggleHeatmap = document.createElement("div");
+		this.toggleHeatmap.className = "iconSmall hint--top hint--success hint--rounded";
+		this.toggleHeatmap.setAttribute("data-hint", "Toggle heatmap of gene density. Dark - more dense. Light - less dense.");
+		this.toggleHeatmap.style.padding = "5px";
+		this.toggleHeatmap.style.verticalAlign = "middle";
+		this.toggleHeatmap.onclick = $.proxy(function() {
+			/* Change toggle status */
+			this.isHeatmap = !this.isHeatmap;
+		}, this);
+			/* Set icon */
+			this.toggleHeatmap.appendChild(Eplant.createImage("img/heatmap.png"));
 
-	/* Toggle heatmap */
-	this.toggleHeatmap = false;
-
-	/* Array of chromosomes */
-	this.chromosomes = [];
-
-	/* Define chromosomes */
-	this.chromosomes.push(new ChromosomeView.Chromosome(
-		"Chromosome 1",		//name
-		30427671,			//length
-		[
-			new ChromosomeView.Chromosome.Centromere(15086046, 15087045),	//centromere
-		],
-		this.chromosomes.length	//index
-	));
-	this.chromosomes.push(new ChromosomeView.Chromosome(
-		"Chromosome 2",
-		19698289,
-		[
-			new ChromosomeView.Chromosome.Centromere(3607930, 3608929),
-		],
-		this.chromosomes.length
-	));
-	this.chromosomes.push(new ChromosomeView.Chromosome(
-		"Chromosome 3",
-		23459830,
-		[
-			new ChromosomeView.Chromosome.Centromere(13587787, 13588786),
-			new ChromosomeView.Chromosome.Centromere(13799418, 13800417),
-			new ChromosomeView.Chromosome.Centromere(14208953, 14209952),
-		],
-		this.chromosomes.length
-	));
-	this.chromosomes.push(new ChromosomeView.Chromosome(
-		"Chromosome 4",
-		18585056,
-		[
-			new ChromosomeView.Chromosome.Centromere(3956022, 3957021),
-		],
-		this.chromosomes.length
-	));
-	this.chromosomes.push(new ChromosomeView.Chromosome(
-		"Chromosome 5",
-		26975502,
-		[
-			new ChromosomeView.Chromosome.Centromere(11725025, 11726024),
-		],
-		this.chromosomes.length
-	));
-
-	/* Marked genes */
-	this.markedGenes = [];
-
-	/* Create annotation */
-	this.annotation = new ChromosomeView.Annotation(this.markedGenes);
-
-	/* Create gene list */
-	this.geneList = new ChromosomeView.GeneList(this.annotation);
+	/* Set animations */
+	//TODO add view parameter and change context to animation, then data can be stored in the animation object
+	this.zoomInEntryAnimation = new ZUI.Animation(30, $.proxy(function(currentFrame) {
+		ZUI.camera.distance = 10000 * Math.pow(0.85, currentFrame) + 400;
+		this.draw();
+	}, this));
+	this.zoomOutExitAnimation = new ZUI.Animation(30, $.proxy(function(currentFrame) {
+		ZUI.camera.distance = 10000 * Math.pow(0.85, 29 - currentFrame) + 400;
+		this.draw();
+	}, this));
 
 	/* Load chromosomes */
-	for (var n = 0; n < this.chromosomes.length; n++) {
-		/* Get chromosome data by Ajax */
-		var chromosome = this.chromosomes[n];
+	if (this.species.chromosomes == null) {
 		$.ajax({
 			type: "GET",
-			url: "data/gene/list/" + chromosome.name.replace(" ", "_"),
-			dataType: "text"
+			url: "cgi-bin/chromosomeinfo.cgi?species=" + this.species.scientificName.replace(" ", "_"),
+			dataType: "json"
 		}).done($.proxy(function(response) {
-			/* Parse chromosome data */
-			var genesData = response.split("\n");
-			for (var n = 0; n < genesData.length; n++) {
-				/* Get gene information */
-				var geneData = genesData[n];
-				var fields = geneData.split("\t");
-				if (fields.length < 4) continue;
-				this.genes.push(new ChromosomeView.Chromosome.Gene(
-					fields[0],			//agi
-					fields[1].split(","),	//aliases
-					Number(fields[2]),		//start
-					Number(fields[3]),		//end
-					this				//chromosome
-				));
+			/* Store data */
+			this.species.chromosomes = [];
+			for (var n = 0; n < response.chromosomes.length; n++) {
+				var chromosome = new Eplant.Chromosome(this.species);
+				chromosome.name = response.chromosomes[n].name;
+				chromosome.length = response.chromosomes[n].length;
+				chromosome.genes = [];
+				chromosome.centromeres = [];
+				for (var m = 0; m < response.chromosomes[n].centromeres.length; m++) {
+					var centromere = new Eplant.Centromere(chromosome);
+					centromere.start = response.chromosomes[n].centromeres[m].start;
+					centromere.end = response.chromosomes[n].centromeres[m].end;
+					chromosome.centromeres.push(centromere);
+				}
+				this.species.chromosomes.push(chromosome);
 			}
-			this.isLoaded = true;
-		}, chromosome));
-	}
 
-	/* Animations */
-	this.zoomInAnimation = new ZUI.Animation(30, $.proxy(function(currentFrame) {
-		if (currentFrame == 0) {
-			ZUI.camera.setDistance(10400);
+			/* Create ChromosomeViewObjects */
+			for (n = 0; n < this.species.chromosomes.length; n++) {
+				var chromosome = this.species.chromosomes[n];
+				var chromosomeViewObject = new ChromosomeView.ChromosomeViewObject(chromosome, this, n);
+				this.chromosomeViewObjects.push(chromosomeViewObject);
+			}
+
+			this.loadProgress += 1.0;
+		}, this));
+	}
+	else {
+		/* Create ChromosomeViewObjects */
+		for (n = 0; n < this.species.chromosomes.length; n++) {
+			var chromosome = this.species.chromosomes[n];
+			var chromosomeViewObject = new ChromosomeView.ChromosomeViewObject(chromosome, this, n);
+			this.chromosomeViewObjects.push(chromosomeViewObject);
 		}
-		ZUI.camera.distance -= 10000 / 30;
-		this.draw();
-	}, this));
-	this.zoomOutAnimation = new ZUI.Animation(30, $.proxy(function(currentFrame) {
-		ZUI.camera.setDistance(ZUI.camera.distance + 10000 / 30);
-		this.draw();
-	}, this));
+
+		this.loadProgress += 1.0;
+	}
 }
 
 /* Inherit from View superclass */
@@ -184,255 +156,151 @@ ChromosomeView.prototype.constructor = ChromosomeView;
 
 /* Override active */
 ChromosomeView.prototype.active = function() {
-	/* Set icon to active */
-	document.getElementById("geneSelectorIcon").getElementsByTagName("img")[0].src = "img/active/geneSelector.png";
+	/* Reset properties */
+	this.mouseFramesIdle = 0;
 
-	/* Reset camera */
-	ZUI.camera.reset();
+	/* Append view-specific UI */
+	var viewSpecificUI = document.getElementById("viewSpecificUI");
+	viewSpecificUI.appendChild(this.userAnnotation);
+	viewSpecificUI.appendChild(this.toggleHeatmap);
 
-	/* Append gene list HTML element to view */
-	ZUI.container.appendChild(this.geneList.element);
+	/* Create UserAnnotations from GenesOfInterest */
+	var genesOfInterest = Eplant.getSpeciesOfInterest(this.species).getGenesOfInterest();
+	for (var n = 0; n < genesOfInterest.length; n++) {
+		/* Check if GeneOfInterest is already annotated */
+		var isAnnotated = false;
+		for (var m = 0; m < this.userAnnotations.length; m++) {
+			if (genesOfInterest[n].gene == this.userAnnotations[m].gene) {
+				isAnnotated = true;
+				break;
+			}
+		}
 
-	/* Append annotation HTML element to view */
-	ZUI.container.appendChild(this.annotation.element);
-
-	/* Set application specific UI */
-	var specificApplicationUI_container = document.getElementById("specificApplicationUI_container");
-	specificApplicationUI_container.appendChild(this.userAnnotationWrapperElement);
-	specificApplicationUI_container.appendChild(this.toggleHeatmapElement);
+		/* Create UserAnnotation if GeneOfInterest is not annotated */
+		if (!isAnnotated) {
+			this.userAnnotations.push(new ChromosomeView.UserAnnotation(genesOfInterest[n].gene.identifier, 1.8, Eplant.Color.LightGrey, this));
+		}
+	}
 };
 
 /* Override inactive */
 ChromosomeView.prototype.inactive = function() {
-	/* Set icon to inactive */
-	document.getElementById("geneSelectorIcon").getElementsByTagName("img")[0].src = "img/available/geneSelector.png";
-
-	/* Remove HTML elements from view */
-	ZUI.container.removeChild(this.geneList.element);
-	ZUI.container.removeChild(this.annotation.element);
+	/* Remove popups */
+	if (this.geneListPopup != null) {
+		this.geneListPopup.remove();
+		this.geneListPopup = null;
+	}
+	if (this.annotationPopup != null) {
+		this.annotationPopup.remove();
+		this.annotationPopup = null;
+	}
 
 	/* Remove application specific UI */
-	document.getElementById("specificApplicationUI_container").innerHTML = "";
+	document.getElementById("viewSpecificUI").innerHTML = "";
+};
+
+/* Decorate gene list popup */
+ChromosomeView.prototype.decorateGeneListPopup = function() {
+	/* Draw whisker */
+	ZUI.processing.stroke(ZUI.hexToColor(Eplant.Color.DarkGrey));
+	var chromosomeViewObject = this.getChromosomeViewObject(this.geneListPopup.chromosome);
+	ZUI.processing.line(chromosomeViewObject.getScreenX() - 10, this.geneListPopup.y, chromosomeViewObject.getScreenX() + chromosomeViewObject.getScreenWidth() + 10, this.geneListPopup.y);
+
+	/* Draw connecting lines */
+	ZUI.processing.stroke(ZUI.hexToColor(Eplant.Color.LightGrey));
+	if (this.geneListPopup.orientation == "left") {
+		ZUI.processing.line(this.geneListPopup.x - 10, this.geneListPopup.y, this.geneListPopup.x - this.geneListPopup.xOffset, this.geneListPopup.y + this.geneListPopup.yOffset);
+		ZUI.processing.line(this.geneListPopup.x - 10, this.geneListPopup.y, this.geneListPopup.x - this.geneListPopup.xOffset, this.geneListPopup.y + this.geneListPopup.yOffset + this.geneListPopup.height + 12);
+	}
+	else {
+		ZUI.processing.line(this.geneListPopup.x + 10, this.geneListPopup.y, this.geneListPopup.x + this.geneListPopup.xOffset, this.geneListPopup.y + this.geneListPopup.yOffset);
+		ZUI.processing.line(this.geneListPopup.x + 10, this.geneListPopup.y, this.geneListPopup.x + this.geneListPopup.xOffset, this.geneListPopup.y + this.geneListPopup.yOffset + this.geneListPopup.height + 12);
+	}
+
+	/* Draw base pair range values */
+	ZUI.processing.fill(ZUI.hexToColor(Eplant.Color.DarkGrey));
+	ZUI.processing.textSize(10);
+	if (this.geneListPopup.orientation == "left") {
+		ZUI.processing.text(ZUI.getNumberWithComma(Math.ceil(this.geneListPopup.start)) + " bp", this.geneListPopup.x - this.geneListPopup.xOffset - this.geneListPopup.width - 6, this.geneListPopup.y + this.geneListPopup.yOffset - 3);
+		ZUI.processing.text(ZUI.getNumberWithComma(Math.floor(this.geneListPopup.end)) + " bp", this.geneListPopup.x - this.geneListPopup.xOffset - this.geneListPopup.width - 6, this.geneListPopup.y + this.geneListPopup.yOffset + this.geneListPopup.height + 12 + 13);
+	}
+	else {
+		ZUI.processing.text(ZUI.getNumberWithComma(Math.ceil(this.geneListPopup.start)) + " bp", this.geneListPopup.x + this.geneListPopup.xOffset + 6, this.geneListPopup.y + this.geneListPopup.yOffset - 3);
+		ZUI.processing.text(ZUI.getNumberWithComma(Math.floor(this.geneListPopup.end)) + " bp", this.geneListPopup.x + this.geneListPopup.xOffset + 6, this.geneListPopup.y + this.geneListPopup.yOffset + this.geneListPopup.height + 12 + 13);
+	}
+};
+
+/* Decorate annotation popup */
+ChromosomeView.prototype.decorateAnnotationPopup = function() {
+	if (this.annotationPopup != null && this.annotationPopup.source instanceof ChromosomeView.GeneListPopupItem) {
+		/* Draw connecting lines */
+		ZUI.processing.stroke(ZUI.hexToColor(Eplant.Color.LightGrey));
+		if (this.annotationPopup.orientation == "left") {
+			ZUI.processing.line(this.annotationPopup.x, this.annotationPopup.y, this.annotationPopup.x - 10, this.annotationPopup.y);
+			ZUI.processing.line(this.annotationPopup.x - 10, this.annotationPopup.y, this.annotationPopup.x - this.annotationPopup.xOffset, this.annotationPopup.y + this.annotationPopup.yOffset);
+			ZUI.processing.line(this.annotationPopup.x - 10, this.annotationPopup.y, this.annotationPopup.x - this.annotationPopup.xOffset, this.annotationPopup.y + this.annotationPopup.yOffset + this.annotationPopup.height + 12);
+		}
+		else {
+			ZUI.processing.line(this.annotationPopup.x, this.annotationPopup.y, this.annotationPopup.x + 10, this.annotationPopup.y);
+			ZUI.processing.line(this.annotationPopup.x + 10, this.annotationPopup.y, this.annotationPopup.x + this.annotationPopup.xOffset, this.annotationPopup.y + this.annotationPopup.yOffset);
+			ZUI.processing.line(this.annotationPopup.x + 10, this.annotationPopup.y, this.annotationPopup.x + this.annotationPopup.xOffset, this.annotationPopup.y + this.annotationPopup.yOffset + this.annotationPopup.height + 12);
+		}
+	}
+};
+
+/* Draw heatmap */
+ChromosomeView.prototype.drawHeatmap = function() {
+	//TODO
 };
 
 /* Override draw */
 ChromosomeView.prototype.draw = function() {
+	this.mouseFramesIdle++;
+
+	/* Get mouse status */
+	var x = ZUI.mouseStatus.x;
+	var y = ZUI.mouseStatus.y;
+
 	/* Update camera */
 	ZUI.camera.update();
 
 	/* Draw chromosomes */
-	for (var n = 0; n < this.chromosomes.length; n++) {
-		var chromosome = this.chromosomes[n];
-		if (chromosome.isLoaded) {
-			/* Draw chromosome */
-			ZUI.processing.fill(ZUI.hexToColor(COLOR.MED_GREY));
-			ZUI.processing.stroke(ZUI.hexToColor(COLOR.MED_GREY));
-			for (var m = 0; m < chromosome.viewObjects.length; m++) {
-				ZUI.drawViewObject(chromosome.viewObjects[m]);
-			}
+	for (var n = 0; n < this.chromosomeViewObjects.length; n++) {
+		this.chromosomeViewObjects[n].draw();
+	}
 
-			/* Get screen coordinates of chromosome tips */
-			var halfWidth = chromosome.viewObjects[1].attributes.screenWidth / 2;
-			var topTip = {
-				x : chromosome.viewObjects[1].attributes.screenX + halfWidth,
-				y : chromosome.viewObjects[0].attributes.screenY,
-			};
-			var bottomTip = {
-				x : chromosome.viewObjects[1].attributes.screenX + halfWidth,
-				y : chromosome.viewObjects[0].attributes.screenY + chromosome.viewObjects[0].attributes.screenHeight,
-			};
+	/* Draw heatmap */
+	this.drawHeatmap();
 
-			/* Draw label */
-			ZUI.processing.textSize(14);
-			ZUI.processing.fill(ZUI.hexToColor(COLOR.LIGHT_GREY));
-			ZUI.processing.text(chromosome.name, topTip.x - chromosome.name.length * 4, topTip.y - 15);
+	/* Draw user annotations */
+	for (n = 0; n < this.userAnnotations.length; n++) {
+		this.userAnnotations[n].draw();
+		//TODO check if in bound and create annotation popup: this.userAnnotations[n].isInBound(x, y)
+	}
 
-			/* Visible chromosome range in base pairs */
-			var visibleStart = 0;
-			var visibleEnd = chromosome.length;
-
-			ZUI.processing.textSize(12);
-			ZUI.processing.fill(ZUI.hexToColor(COLOR.LIGHT_GREY));
-			if (topTip.y < 0) {
-				var bpPerPixel = chromosome.length / (Math.round(chromosome.viewObjects[0].attributes.screenHeight) - 1);
-				visibleStart = (0 - Math.floor(chromosome.viewObjects[0].attributes.screenY) - 1) * bpPerPixel;
-				if (visibleStart <= chromosome.length) {
-					/* Draw top base pair value */
-					var mb = Math.round(visibleStart / 10000) / 100;
-					ZUI.processing.text(mb + " Mb", topTip.x + halfWidth + 10, 12);
-
-					/* Draw clipped top */
-					ZUI.processing.fill(ZUI.hexToColor(COLOR.WHITE));
-					ZUI.processing.stroke(ZUI.hexToColor(COLOR.WHITE));
-					ZUI.processing.triangle(topTip.x, 0, topTip.x + halfWidth + 2, 0, topTip.x + halfWidth + 2, halfWidth);
-					ZUI.processing.triangle(topTip.x, 0, topTip.x - halfWidth - 2, 0, topTip.x - halfWidth - 2, halfWidth);
-				}
-			}
-			else {
-				/* Draw top base pair value */
-				ZUI.processing.text(0 + " Mb", topTip.x + halfWidth + 10, topTip.y + 12);
-			}
-			ZUI.processing.fill(ZUI.hexToColor(COLOR.LIGHT_GREY));
-			if (bottomTip.y > ZUI.height) {
-				var bpPerPixel = chromosome.length / (Math.round(chromosome.viewObjects[0].attributes.screenHeight) - 1);
-				visibleEnd = (ZUI.height - Math.ceil(chromosome.viewObjects[0].attributes.screenY)) * bpPerPixel + 1;
-				if (visibleEnd >= 1) {
-					/* Draw bottom base pair value */
-					var mb = Math.round(visibleEnd / 10000) / 100;
-					ZUI.processing.text(mb + " Mb", bottomTip.x + halfWidth + 10, ZUI.height - 2);
-
-					/* Draw clipped bottom */
-					ZUI.processing.fill(ZUI.hexToColor(COLOR.WHITE));
-					ZUI.processing.stroke(ZUI.hexToColor(COLOR.WHITE));
-					ZUI.processing.triangle(bottomTip.x, ZUI.height, bottomTip.x + halfWidth + 2, ZUI.height, bottomTip.x + halfWidth + 2, ZUI.height - halfWidth);
-					ZUI.processing.triangle(bottomTip.x, ZUI.height, bottomTip.x - halfWidth - 2, ZUI.height, bottomTip.x - halfWidth - 2, ZUI.height - halfWidth);
-				}
-			}
-			else {
-				/* Draw bottom base pair value */
-				var mb = Math.round(chromosome.length / 10000) / 100;
-				ZUI.processing.text(mb + " Mb", bottomTip.x + halfWidth + 10, bottomTip.y - 2);
-			}
-
-			/* Draw mini chromosome at bottom right */
-			if (visibleStart > 0 || visibleEnd < chromosome.length) {
-				if (visibleStart > chromosome.length) visibleStart = chromosome.length;
-				if (visibleEnd < 0) visibleEnd = 0;
-				ZUI.processing.stroke(ZUI.hexToColor(COLOR.LIGHT_GREY));
-				var y1 = ZUI.height / 2 - 50;
-				var y2 = y1 + visibleStart / chromosome.length * 100;
-				var y3 = y1 + visibleEnd / chromosome.length * 100;
-				var y4 = y1 + 100;
-				ZUI.processing.fill(ZUI.hexToColor(COLOR.WHITE));
-				ZUI.processing.rect(bottomTip.x + halfWidth + 10, y1, 20, y2 - y1);
-				ZUI.processing.rect(bottomTip.x + halfWidth + 10, y3 , 20, y4 - y3);
-				ZUI.processing.fill(ZUI.hexToColor(COLOR.LIGHT_GREY));
-				ZUI.processing.rect(bottomTip.x + halfWidth + 10, y2 , 20, y3 - y2);
-			}
+	/* Check whether gene list popup should be created */
+	if (this.mouseFramesIdle == 20) {
+		if (this.geneListPopup == null) {
+			this.createGeneListPopup();
 		}
 	}
 
-	/* Draw heat map */
-	if (this.toggleHeatmap) {
-		var heatmapData = [];
-		var maximum = 0;
-		for (n = 0; n < this.chromosomes.length; n++) {
-			var chromosome = this.chromosomes[n];
-			heatmapData.push({});
-			heatmapData[n].binSize = chromosome.getBpPerPixel();
-			heatmapData[n].numberOfBins = chromosome.viewObjects[0].screenHeight;
-			//initialize bins
-			heatmapData[n].bins = [];
-			for (var m = 0; m < heatmapData[n].numberOfBins; m++) {
-				heatmapData[n].bins.push(0);
-			}
-			for (m = 0; m < chromosome.genes.length; m++) {
-				var gene = chromosome.genes[m];
-				var startBin = Math.floor(gene.start / heatmapData[n].binSize);
-				var endBin = Math.floor(gene.end / heatmapData[n].binSize);
-				for (var o = startBin; o <= endBin; o++) {
-					heatmapData[n].bins[o]++;
-				}
-			}
-			heatmapData[n].startPixel = 0;
-			if (chromosome.viewObjects[0].screenY < 0) heatmapData[n].startPixel -= Math.round(chromosome.viewObjects[0].screenY);
-			heatmapData[n].endPixel = chromosome.viewObjects[0].screenHeight;
-			if (chromosome.viewObjects[0].screenY + chromosome.viewObjects[0].screenHeight > ZUI.height) heatmapData[n].endPixel -= Math.round(chromosome.viewObjects[0].screenY + chromosome.viewObjects[0].screenHeight - ZUI.height);
-			/* Get highest count */
-			for (m = 0; m < heatmapData[n].bins.length; m++) {
-				if (heatmapData[n].bins[m] > maximum) maximum = heatmapData[n].bins[m];
-			}
-		}
-		for (n = 0; n < this.chromosomes.length; n++) {
-			var chromosome = this.chromosomes[n];
-			/* Normalize bin counts */
-			for (var m = 0; m < heatmapData[n].bins.length; m++) {
-				heatmapData[n].bins[m] = (maximum - heatmapData[n].bins[m]) / maximum;
-			}
-			/* Draw */
-			var centerX1 = chromosome.viewObjects[0].screenX + chromosome.viewObjects[0].screenWidth / 8;
-			var centerX2 = chromosome.viewObjects[0].screenX + chromosome.viewObjects[0].screenWidth / 8 * 7;
-			for (m = heatmapData[n].startPixel; m < heatmapData[n].endPixel; m++) {
-				var y = m + chromosome.viewObjects[0].screenY;
-				ZUI.processing.fill(heatmapData[n].bins[m] * 255);
-				ZUI.processing.stroke(heatmapData[n].bins[m] * 255);
-				ZUI.processing.line(centerX1, y, centerX2, y);
-			}
+	/* Decorate gene list popup */
+	if (this.geneListPopup != null) {
+		this.decorateGeneListPopup();
+	}
+
+	/* Check whether annotation popup should be created */
+	if (this.mouseFramesIdle == 20) {
+		if (this.annotationPopup == null) {
+			this.createAnnotationPopup();
 		}
 	}
 
-	/* Draw marked genes */ //TODO CHANGE
-	for (n = 0; n < this.markedGenes.length; n++) {
-		var gene = this.markedGenes[n].gene;
-		var pixelsPerBp = 1 / gene.chromosome.getBpPerPixel();
-		var x = gene.chromosome.viewObjects[1].attributes.screenX + gene.chromosome.viewObjects[1].attributes.screenWidth / 2;
-		var y = Math.floor(gene.chromosome.viewObjects[0].attributes.screenY) + Math.floor((gene.start - 1) * pixelsPerBp) + 1;
-		var height = Math.floor((gene.end - gene.start) * pixelsPerBp);
-		var width = gene.chromosome.viewObjects[1].attributes.screenWidth * this.markedGenes[n].markerWidth;
-
-		var position = gene.getScreenPosition();
-		position.x += position.width / 2;
-		position.width *= this.markedGenes[n].markerWidth;
-		position.x -= position.width / 2;
-		ZUI.processing.stroke(ZUI.hexToColor(this.markedGenes[n].markerColor));
-		ZUI.processing.fill(ZUI.hexToColor(this.markedGenes[n].markerColor));
-		ZUI.processing.rect(
-			position.x,
-			position.y,
-			position.width,
-			position.height
-		);
-
-		/* Draw label */
-		ZUI.processing.text(gene.agi, position.x - 70, position.y + position.height / 2 + 5);
-		//TODO change this to a ZUI text object, so that its position and size can be tracked to allow for mouse interactions
-	}
-
-	/* If gene list is active */
-	if (this.geneList.isActive) {
-		/* Draw lines connecting gene list to chromosome if gene list is visible */
-		ZUI.processing.stroke(ZUI.hexToColor(COLOR.LIGHT_GREY));
-		ZUI.processing.strokeWeight(1);
-		if (this.geneList.side == "left") {
-			ZUI.processing.line(this.geneList.x + this.geneList.width + 19, this.geneList.y, this.geneList.x + this.geneList.width, this.geneList.y + this.geneList.yOffset + 1);
-			ZUI.processing.line(this.geneList.x + this.geneList.width + 19, this.geneList.y, this.geneList.x + this.geneList.width, this.geneList.y + this.geneList.yOffset + this.geneList.height + 2);
-		}
-		else {
-			ZUI.processing.line(this.geneList.x - 19, this.geneList.y, this.geneList.x, this.geneList.y + this.geneList.yOffset + 1);
-			ZUI.processing.line(this.geneList.x - 19, this.geneList.y, this.geneList.x, this.geneList.y + this.geneList.yOffset + this.geneList.height + 2);
-		}
-
-		/* Draw horizontal marker on chromosome */
-		ZUI.processing.stroke(ZUI.hexToColor(COLOR.DARK_GREY));
-		if (this.geneList.side == "left") {
-			ZUI.processing.line(this.geneList.x + this.geneList.width + 19, this.geneList.y, this.geneList.x + this.geneList.width + 30 + this.geneList.chromosome.viewObjects[1].screenWidth, this.geneList.y);
-		}
-		else {
-			ZUI.processing.line(this.geneList.x - 30 - this.geneList.chromosome.viewObjects[1].attributes.screenWidth, this.geneList.y, this.geneList.x - 20, this.geneList.y);
-		}
-
-		/* Draw top and bottom base pair values for gene list */
-		ZUI.processing.fill(ZUI.hexToColor(COLOR.DARK_GREY));
-		ZUI.processing.textSize(10);
-		ZUI.processing.text(ZUI.getNumberWithComma(Math.ceil(this.geneList.start)) + " bp", this.geneList.x, this.geneList.y + this.geneList.yOffset - 3);
-		ZUI.processing.text(ZUI.getNumberWithComma(Math.floor(this.geneList.end)) + " bp", this.geneList.x, this.geneList.y + this.geneList.yOffset + this.geneList.height + 18);
-	}
-
-	/* If annotation is active */
-	if (this.annotation.isActive && this.annotation.geneListItem != null) {
-		/* Draw lines connecting annotation to target */
-		ZUI.processing.stroke(ZUI.hexToColor(COLOR.LIGHT_GREY));
-		ZUI.processing.strokeWeight(1);
-		if (this.annotation.side == "left") {
-			ZUI.processing.line(this.annotation.x + this.annotation.width + 24, this.annotation.y, this.annotation.x + this.annotation.width + 19, this.annotation.y);
-			ZUI.processing.line(this.annotation.x + this.annotation.width + 19, this.annotation.y, this.annotation.x + this.annotation.width, this.annotation.y + this.annotation.yOffset + 1);
-			ZUI.processing.line(this.annotation.x + this.annotation.width + 19, this.annotation.y, this.annotation.x + this.annotation.width, this.annotation.y + this.annotation.yOffset + this.annotation.height + 2);
-		}
-		else {
-			ZUI.processing.line(this.annotation.x - 24, this.annotation.y, this.annotation.x - 19, this.annotation.y);
-			ZUI.processing.line(this.annotation.x - 19, this.annotation.y, this.annotation.x, this.annotation.y + this.annotation.yOffset + 1);
-			ZUI.processing.line(this.annotation.x - 19, this.annotation.y, this.annotation.x, this.annotation.y + this.annotation.yOffset + this.annotation.height + 2);
-		}
+	/* Decorate annotation popup and update its icons */
+	if (this.annotationPopup != null) {
+		this.decorateAnnotationPopup();
+		this.annotationPopup.updateIcons();
 	}
 };
 
@@ -445,6 +313,10 @@ ChromosomeView.prototype.mouseMove = function() {
 	var yLast = ZUI.mouseStatus.yLast;
 	var leftDown = ZUI.mouseStatus.leftDown;
 
+	if (xLast != x || yLast != y) {
+		this.mouseFramesIdle = 0;
+	}
+
 
 	/* Left drag behaviour */
 	if (leftDown) {
@@ -455,76 +327,31 @@ ChromosomeView.prototype.mouseMove = function() {
 
 	/* Default behaviour */
 	else {
-		/* Check whether to redraw gene list */
-		if (!(this.geneList.isActive &&
-		      y >= this.geneList.y + this.geneList.yOffset && y <= this.geneList.y + this.geneList.yOffset + this.geneList.height &&
-		      ((this.geneList.side == "right" && x >= this.geneList.x - 25 && x <= this.geneList.x) || (this.geneList.side == "left" && x <= this.geneList.x + this.geneList.width + 25 && x >= this.geneList.x + this.geneList.width))) &&
-		     !(this.geneList.isActive && this.annotation.isActive && this.annotation.geneListItem != null) &&
-		    !this.geneList.isPinned) {
-			/* Clear gene list */
-			this.geneList.hide();
-
-			/* Check whether mouse is on a chromosome */
-			for (var n = 0; n < this.chromosomes.length; n++) {
-				var chromosome = this.chromosomes[n];
-				if (chromosome.isLoaded && chromosome.isMouseOver()) {
-					/* Translate screen position to chromosome position */
-					var bpPerPixel = chromosome.getBpPerPixel();
-					start = (y - Math.round(chromosome.viewObjects[0].attributes.screenY)) * bpPerPixel + 1;
-					end = start + bpPerPixel;
-					if (end > chromosome.length) end = chromosome.length;
-
-					/* Populate gene list */
-					this.geneList.populate(chromosome, start, end);
-
-					/* Show gene list */
-					this.geneList.show();
-
-					/* Stop searching chromosomes */
-					break;
+		/* Check whether to clear annotation popup */
+		if (this.annotationPopup != null) {
+			if (!this.annotationPopup.isPinned && !this.annotationPopup.isInBound(x, y)) {
+				var isRemove = true;
+				if (this.annotationPopup.source instanceof ChromosomeView.UserAnnotation) {
+					if (this.annotationPopup.source.isInBound(x, y)) {
+						isRemove = false;
+					}
+				}
+				if (isRemove) {
+					this.annotationPopup.remove();
+					this.annotationPopup = null;
 				}
 			}
 		}
 
-		/* Check whether to clear annotation */
-		if (!(this.annotation.isActive &&
-		      y >= this.annotation.y + this.annotation.yOffset && y <= this.annotation.y + this.annotation.yOffset + this.annotation.height &&
-		      ((this.annotation.side == "right" && x >= this.annotation.x - 25 && x <= this.annotation.x) || (this.annotation.side == "left" && x <= this.annotation.x + this.annotation.width + 25 && x >= this.annotation.x + this.annotation.width))) &&
-		    !this.annotation.isPinned) {
-			/* Clear annotation */
-			this.annotation.hide();
-
-			/* Check whether to show annotation for marked genes */
-			for (var n = 0; n < this.markedGenes.length; n++) {
-				var gene = this.markedGenes[n].gene;
-				var chromosome = gene.chromosome;
-				var pixelsPerBp = 1 / chromosome.getBpPerPixel();
-				var chromosomeY = Math.floor(chromosome.viewObjects[0].screenY) + Math.floor(((gene.start + gene.end) / 2 - 1) * pixelsPerBp) + 1;
-				var chromosomeX = chromosome.viewObjects[1].screenX;
-				var xOffset = chromosome.viewObjects[1].screenWidth * ((this.markedGenes[n].markerWidth - 1) / 2);
-				if (y < chromosomeY + 8 && y > chromosomeY - 8 && x < chromosomeX - xOffset && x > chromosomeX - xOffset - 75) {
-					/* Show annotation popup */
-					/* Populate annotation */
-					this.annotation.populate(gene, null);
-
-					/* Set annotation position */
-					if (chromosomeX - xOffset > ZUI.width / 2) {
-						this.side = "left";
-						this.annotation.x = chromosomeX - xOffset - 75 - 10 - this.annotation.width;
-					}
-					else {
-						this.side = "right";
-						this.annotation.x = chromosomeX - xOffset + 10;
-					}
-					this.annotation.y = chromosomeY;
-					this.annotation.yOffset = -this.annotation.height * 0.3;
-					this.annotation.element.style.left = this.annotation.x + "px";
-					this.annotation.element.style.top = (this.annotation.y + this.annotation.yOffset) + "px";
-
-					/* Show annotation */
-					this.annotation.show();
-					break;
-				}
+		/* Check whether to clear gene list popup */
+		if (this.geneListPopup != null) {
+			var chromosomeViewObject = this.getChromosomeViewObject(this.geneListPopup.chromosome);
+			if (!this.geneListPopup.isPinned && 
+			    !this.geneListPopup.isInBound(x, y) && 
+			    (y != this.geneListPopup.y || x < chromosomeViewObject.getScreenX() || x > chromosomeViewObject.getScreenX() + chromosomeViewObject.getScreenWidth()) && 
+			    (this.annotationPopup == null || !(this.annotationPopup.source instanceof ChromosomeView.GeneListPopupItem))) {
+				this.geneListPopup.remove();
+				this.geneListPopup = null;
 			}
 		}
 	}
@@ -536,22 +363,40 @@ ChromosomeView.prototype.leftClick = function() {
 	var x = ZUI.mouseStatus.x;
 	var y = ZUI.mouseStatus.y;
 
-	/* Pin gene list if it is active and not pinned */
-	if (this.geneList.isActive && !this.geneList.isPinned) {
-		this.geneList.isPinned = true;
+	/* Create popup if appropriate */
+	if (this.geneListPopup == null) {
+		this.createGeneListPopup();
 	}
-	else if (this.annotation.isActive && !this.annotation.isPinned) {
-		this.annotation.isPinned = true;
+	if (this.annotationPopup == null) {
+		this.createAnnotationPopup();
 	}
-	/* Unpin otherwise */
-	else {
-		this.geneList.isPinned = false;
-		this.annotation.isPinned = false;
-	}
-};
 
-/* Override leftDoubleClick */
-ChromosomeView.prototype.leftDoubleClick = function() {
+	/* Pin popup if appropriate */
+	if (this.annotationPopup != null) {
+		if (!this.annotationPopup.isPinned) {
+			if (this.annotationPopup.source instanceof ChromosomeView.UserAnnotation && this.annotationPopup.source.isInBound(x, y)) {
+				this.annotationPopup.isPinned = true;
+			}
+		}
+		else {
+			this.annotationPopup.isPinned = false;
+			this.annotationPopup.remove();
+			this.annotationPopup = null;
+		}
+	}
+	if (this.geneListPopup != null) {
+		if (!this.geneListPopup.isPinned) {
+			var chromosomeViewObject = this.getChromosomeViewObject(this.geneListPopup.chromosome);
+			if (this.geneListPopup.y == y && x > chromosomeViewObject.getScreenX() && x < chromosomeViewObject.getScreenX() + chromosomeViewObject.getScreenWidth()) {
+				this.geneListPopup.isPinned = true;
+			}
+		}
+		else {
+			this.geneListPopup.isPinned = false;
+			this.geneListPopup.remove();
+			this.geneListPopup = null;
+		}
+	}
 };
 
 /* Override mouseWheel */
@@ -567,536 +412,134 @@ ChromosomeView.prototype.mouseWheel = function(scroll) {
 	ZUI.camera.distance *= 1 - scroll * 0.05;
 };
 
-/* GeneList class constructor */
-ChromosomeView.GeneList = function(annotation) {
-	/* Handle to annotation */
-	this.annotation = annotation;;
-
-	this.side = null;
-
-	/* Array of genes */
-	this.items = [];
-
-	/* Corresponding chromosome region */
-	this.chromosome = null;
-	this.start = null;
-	this.end = null;
-
-	/* Position */
-	this.x = null;
-	this.y = null;
-	this.yOffset = null;
-	this.height = null;
-	this.width = 192;
-
-	/* Whether gene list is active */
-	this.isActive = false;
-
-	/* Whether gene list is pinned */
-	this.isPinned = false;
-
-	/* Create HTML element */
-	this.element = document.createElement("div");
-	this.element.style.position = "absolute";
-	this.element.style.left = "0px";
-	this.element.style.top = "0px";
-	this.element.style.width = "180px";
-	this.element.style.padding = "5px";
-	this.element.style.borderStyle = "solid";
-	this.element.style.borderWidth = "1px";
-	this.element.style.borderColor = COLOR.LIGHT_GREY;
-	this.element.style.backgroundColor = COLOR.WHITE;
-	this.element.style.boxShadow = "0 3px 5px 2px " + COLOR.MED_GREY;
-	this.element.style.overflow = "auto";
-	this.element.style.visibility = "hidden";
+/* Retrieves the ChromosomeViewObject corresponding to the Chromosome */
+ChromosomeView.prototype.getChromosomeViewObject = function(chromosome) {
+	for (var n = 0; n < this.chromosomeViewObjects.length; n++) {
+		if (this.chromosomeViewObjects[n].chromosome == chromosome) {
+			return this.chromosomeViewObjects[n];
+		}
+	}
+	return null;
 };
 
-	/* Makes gene list visible */
-	ChromosomeView.GeneList.prototype.show = function() {
-		this.element.style.visibility = "visible";
-		this.isActive = true;
-	};
+/* Creates gene list popup */
+ChromosomeView.prototype.createGeneListPopup = function() {
+	/* Get mouse status */
+	var x = ZUI.mouseStatus.x;
+	var y = ZUI.mouseStatus.y;
 
-	/* Hides gene list and clears content */
-	ChromosomeView.GeneList.prototype.hide = function() {
-		this.element.style.visibility = "hidden";
-		this.element.innerHTML = "";
-		this.items = [];
-		this.chromosome = null;
-		this.start = null;
-		this.end = null;
-		this.isActive = false;
-	};
-
-	/* Populates gene list with genes in the specified chromosome between the specified start and end base pair positions */
-	ChromosomeView.GeneList.prototype.populate = function(chromosome, start, end) {
-		this.chromosome = chromosome;
-		this.start = start;
-		this.end = end;
-
-		/* Get genes and add them to list */
-		for (var n = 0; n < this.chromosome.genes.length; n++) {
-			var gene = this.chromosome.genes[n];
-			if (gene.start >= this.start && gene.start < this.end ||
-			    gene.end >= this.start && gene.end < this.end ||
-			    gene.start < this.start && gene.end >= this.end) {
-				this.items.push(new ChromosomeView.GeneList.Item(gene, this));
+	/* Check whether mouse is over a chromosome */
+	for (var n = 0; n < this.chromosomeViewObjects.length; n++) {
+		var chromosomeViewObject = this.chromosomeViewObjects[n];
+		if (chromosomeViewObject.isInBound(x, y) && chromosomeViewObject.chromosome.genes != null) {
+			/* Create gene list popup */
+			this.geneListPopup = new ChromosomeView.GeneListPopup(this);
+			var range = chromosomeViewObject.mapPixelToBp(y);
+			this.geneListPopup.setData(chromosomeViewObject.chromosome, range.start, range.end);
+			var xCenter = chromosomeViewObject.getScreenX() + chromosomeViewObject.getScreenWidth() / 2;
+			if (xCenter < ZUI.width / 2) {
+				this.geneListPopup.setPosition(chromosomeViewObject.getScreenX() + chromosomeViewObject.getScreenWidth(), y, 35, null, 180, null, "right");
 			}
-		}
-
-		/* Set list size */
-		this.height = this.items.length * 18 + 10;
-		if (this.height > 200) this.height = 200;
-		this.element.style.height = (this.height - 10) + "px";
-
-		/* Set list position */
-		this.x = this.chromosome.viewObjects[1].attributes.screenX + this.chromosome.viewObjects[1].attributes.screenWidth / 2;
-		var xOffset = this.chromosome.viewObjects[1].attributes.screenWidth / 2 + 25;
-		if (this.x > ZUI.width / 2) {
-			this.x -= xOffset + this.width;
-			this.side = "left";
-		}
-		else {
-			this.x += xOffset;
-			this.side = "right";
-		}
-		this.y = (this.start + this.end) / 2 / this.chromosome.length * (chromosome.viewObjects[0].attributes.screenHeight) + this.chromosome.viewObjects[0].attributes.screenY;
-		this.yOffset = -this.height * 0.3;
-		this.element.style.left = this.x + "px";
-		this.element.style.top = (this.y + this.yOffset) + "px";
-	};
-
-	/* GeneList Item class constructor */
-	ChromosomeView.GeneList.Item = function(gene, geneList) {
-		/* Store gene reference */
-		this.gene = gene;
-		this.geneList = geneList;
-
-		/* Create HTML element */
-		this.element = document.createElement("span");
-		this.element.style.cursor = "default";
-		this.element.style.fontFamily = "Helvetica";
-		this.element.style.fontSize = "14px";
-		this.element.style.lineHeight = "18px";
-		this.element.style.color = COLOR.DARK_GREY;
-		this.element.style.display = "block";
-		this.element.style.textIndent = "-10px";
-		this.element.style.paddingLeft = "10px";
-		this.element.style.whiteSpace = "nowrap";
-		this.element.style.overflow = "hidden";
-		this.element.style.textOverflow = "ellipsis";
-
-		/* Mouse over event handler */
-		this.element.onmouseover = $.proxy(function() {
-			/* Populate annotation if not pinned */
-			if (!geneList.annotation.isPinned) {
-				/* Clear annotation if applicable */
-				if (geneList.annotation.isActive) {
-					geneList.annotation.hide();
-				}
-
-				/* Change style */
-				this.element.style.backgroundColor = COLOR.DARK_GREY;
-				this.element.style.color = COLOR.WHITE;
-
-				/* Populate annotation */
-				geneList.annotation.populate(this.gene, this);
-
-				/* Set annotation position */
-				geneList.annotation.side = geneList.side;
-				if (geneList.annotation.side == "left") {
-					geneList.annotation.x = geneList.x - 25 - geneList.annotation.width;
-				}
-				else {
-					geneList.annotation.x = geneList.x + geneList.width + 25;
-				}
-				geneList.annotation.y = this.element.offsetTop + geneList.element.offsetTop - geneList.element.scrollTop + this.element.offsetHeight / 2;
-				geneList.annotation.yOffset = -geneList.annotation.height * 0.3;
-				geneList.annotation.element.style.left = geneList.annotation.x + "px";
-				geneList.annotation.element.style.top = (geneList.annotation.y + geneList.annotation.yOffset) + "px";
-
-				/* Show annotation */
-				geneList.annotation.show();
-			}
-		}, this);
-
-		/* Mouse out event handler */
-		this.element.onmouseout = $.proxy(function() {
-			if (!geneList.annotation.isActive) {
-				/* Change style */
-				this.element.style.backgroundColor = COLOR.WHITE;
-				this.element.style.color = COLOR.DARK_GREY;
-			}
-		}, this);
-
-		/* Mouse click event handler */
-		this.element.onclick = $.proxy(function() {
-			/* Pin annotation if active and not pinned */
-			if (this.geneList.annotation.isActive && !this.geneList.annotation.isPinned) {
-				this.geneList.annotation.isPinned = true;
-			}
-			/* Unpin otherwise */
 			else {
-				this.geneList.annotation.isPinned = false;
+				this.geneListPopup.setPosition(chromosomeViewObject.getScreenX(), y, 35, null, 180, null, "left");
 			}
-		}, this);
+			this.geneListPopup.addToContainer(ZUI.container);
 
-		/* Set AGI and alias as label */
-		this.element.textContent = this.gene.agi;
-		if (this.gene.aliases.length > 0 && this.gene.aliases[0].length > 0) {
-			this.element.textContent += " / " + this.gene.aliases.join(", ");
+			break;
 		}
+	}
+}
 
-		geneList.element.appendChild(this.element);
-	};
+/* Creates annotation popup from user annotation */
+ChromosomeView.prototype.createAnnotationPopup = function() {
+	/* Get mouse status */
+	var x = ZUI.mouseStatus.x;
+	var y = ZUI.mouseStatus.y;
 
-/* Annotation class constructor */
-ChromosomeView.Annotation = function(markedGenes) {
-	/* Marked genes */
-	this.markedGenes = markedGenes;
-
-	this.side = null;
-
-	/* Gene */
-	this.gene = null;
-
-	/* Reference to gene list item associated with the annotation */
-	this.geneListItem = null;
-
-	/* Position */
-	this.x = null;
-	this.y = null;
-	this.yOffset = null;
-	this.height = 210;
-	this.width = 352;
-
-	/* Whether annotation is active */
-	this.isActive = false;
-
-	/* Whether annotation is pinned */
-	this.isPinned = false;
-
-	/* Create HTML element */
-	this.element = document.createElement("div");
-	this.element.style.position = "absolute";
-	this.element.style.left = "0px";
-	this.element.style.top = "0px";
-	this.element.style.width = "350px";
-	this.element.style.height = "210px";
-	this.element.style.borderStyle = "solid";
-	this.element.style.borderWidth = "1px";
-	this.element.style.borderColor = COLOR.LIGHT_GREY;
-	this.element.style.backgroundColor = COLOR.WHITE;
-	this.element.style.boxShadow = "0 3px 5px 2px " + COLOR.MED_GREY;
-	this.element.style.visibility = "hidden";
-
-	/* Create content HTML element for text */
-	this.contentElement = document.createElement("div");
-	this.contentElement.style.height = "110px";
-	this.contentElement.style.padding = "5px";
-	this.contentElement.style.backgroundColor = COLOR.WHITE;
-	this.contentElement.style.overflow = "auto";
-	this.element.appendChild(this.contentElement);
-
-		/* Create span element for identifier */
-		this.identifierElement = document.createElement("span");
-		this.identifierElement.style.fontFamily = "Helvetica";
-		this.identifierElement.style.fontSize = "14px";
-		this.identifierElement.style.display = "block";
-		this.identifierElement.style.textIndent = "-75px";
-		this.identifierElement.style.paddingLeft = "75px";
-		this.contentElement.appendChild(this.identifierElement);
-
-		/* Create span element for aliases */
-		this.aliasElement = document.createElement("span");
-		this.aliasElement.style.fontFamily = "Helvetica";
-		this.aliasElement.style.fontSize = "14px";
-		this.aliasElement.style.display = "block";
-		this.aliasElement.style.textIndent = "-75px";
-		this.aliasElement.style.paddingLeft = "75px";
-		this.contentElement.appendChild(this.aliasElement);
-
-		/* Create span element for annotation */
-		this.annotationElement = document.createElement("span");
-		this.annotationElement.style.fontFamily = "Helvetica";
-		this.annotationElement.style.fontSize = "14px";
-		this.annotationElement.style.display = "block";
-		this.annotationElement.style.textIndent = "-75px";
-		this.annotationElement.style.paddingLeft = "75px";
-		this.contentElement.appendChild(this.annotationElement);
-
-	/* Create controls HTML element for buttons */
-	this.controlElement = document.createElement("div");
-	this.controlElement.style.padding = "5px";
-	this.controlElement.style.display = "table-cell";
-	this.controlElement.style.verticalAlign = "middle";
-	this.controlElement.style.backgroundColor = COLOR.WHITE;
-	this.element.appendChild(this.controlElement);
-
-		/* Create button for getting data */
-		this.dataElement = document.createElement("input");
-		this.dataElement.type = "button";
-		this.dataElement.className = "button";
-		this.dataElement.value = "Get Data";
-		this.controlElement.appendChild(this.dataElement);
-
-		/* Create button for top 50 similar */
-		this.top50Element = document.createElement("input");
-		this.top50Element.type = "button";
-		this.top50Element.className = "button";
-		this.top50Element.value = "Top 50 Similar";
-		this.top50Element.onclick = function() {
-		};
-		this.controlElement.appendChild(this.top50Element);
-
-		/* Create container for tags */
-		this.tagsElement = document.createElement("div");
-		this.tagsElement.style.display = "inline";
-		this.tagsElement.style.padding = "5px";
-		this.tagsElement.style.verticalAlign = "middle";
-		this.controlElement.appendChild(this.tagsElement);
-
-			/* Create tags label */
-			this.tagsLabelElement = document.createElement("label");
-			this.tagsLabelElement.innerHTML = "Tags: ";
-			this.tagsElement.appendChild(this.tagsLabelElement);
-
-	/* Create loading HTML element for loading status */
-	this.loadingElement = document.createElement("div");
-	this.controlElement.style.backgroundColor = COLOR.WHITE;
-	this.element.appendChild(this.loadingElement);
-		/* Create loading view elements */
-		this.loadingViewElements = [];
-		var loadingViewElement;
-
-		/* World EFP */
-		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/available/worldEFP.png";
-		loadingViewElement.style.width = "40px";
-		loadingViewElement.style.height = "40px";
-		loadingViewElement.style.margin = "5px";
-		this.loadingViewElements.push(loadingViewElement);
-		this.loadingElement.appendChild(loadingViewElement);
-
-		/* Plant EFP */
-		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/available/plantEFP.png";
-		loadingViewElement.style.width = "40px";
-		loadingViewElement.style.height = "40px";
-		loadingViewElement.style.margin = "5px";
-		this.loadingViewElements.push(loadingViewElement);
-		this.loadingElement.appendChild(loadingViewElement);
-
-		/* Cell EFP */
-		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/available/cellEFP.png";
-		loadingViewElement.style.width = "40px";
-		loadingViewElement.style.height = "40px";
-		loadingViewElement.style.margin = "5px";
-		this.loadingViewElements.push(loadingViewElement);
-		this.loadingElement.appendChild(loadingViewElement);
-
-		/* Cytoscape */
-		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/available/cytoscape.png";
-		loadingViewElement.style.width = "40px";
-		loadingViewElement.style.height = "40px";
-		loadingViewElement.style.margin = "5px";
-		this.loadingViewElements.push(loadingViewElement);
-		this.loadingElement.appendChild(loadingViewElement);
-
-		/* Reactome */
-		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/available/reactome.png";
-		loadingViewElement.style.width = "40px";
-		loadingViewElement.style.height = "40px";
-		loadingViewElement.style.margin = "5px";
-		this.loadingViewElements.push(loadingViewElement);
-		this.loadingElement.appendChild(loadingViewElement);
-
-		/* JSmol */
-		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/available/JSmol.png";
-		loadingViewElement.style.width = "40px";
-		loadingViewElement.style.height = "40px";
-		loadingViewElement.style.margin = "5px";
-		this.loadingViewElements.push(loadingViewElement);
-		this.loadingElement.appendChild(loadingViewElement);
-
-		/* Tracks */
-		loadingViewElement = document.createElement("img");
-		loadingViewElement.src = "img/available/tracks.png";
-		loadingViewElement.style.width = "40px";
-		loadingViewElement.style.height = "40px";
-		loadingViewElement.style.margin = "5px";
-		this.loadingViewElements.push(loadingViewElement);
-		this.loadingElement.appendChild(loadingViewElement);
-};
-
-	/* Makes annotation visible */
-	ChromosomeView.Annotation.prototype.show = function() {
-		this.element.style.visibility = "visible";
-		this.isActive = true;
-	};
-
-	/* Clear and hide annotation */
-	ChromosomeView.Annotation.prototype.hide = function() {
-		/* Disable highlight on gene list item, if applicable */
-		if (this.geneListItem != null) {
-			this.geneListItem.element.style.backgroundColor = COLOR.WHITE;
-			this.geneListItem.element.style.color = COLOR.DARK_GREY;
-		}
-
-		this.element.style.visibility = "hidden";
-		this.clear();
-		this.isActive = false;
-	};
-
-	/* Clear annotation */
-	ChromosomeView.Annotation.prototype.clear = function() {
-		this.identifierElement.innerHTML = "";
-		this.aliasElement.innerHTML = "";
-		this.annotationElement.innerHTML = "";
-		this.gene = null;
-		this.geneListItem = null;
-	};
-
-	/* Populate annotation with annotation of the specified gene */
-	ChromosomeView.Annotation.prototype.populate = function(gene, geneListItem) {
-		this.gene = gene;
-		this.geneListItem = geneListItem;
-
-		/* Populate with annotation */
-		this.identifierElement.innerHTML = "<label>Identifier:</label> &nbsp&nbsp&nbsp&nbsp" + this.gene.agi + "<br>";
-		this.aliasElement.innerHTML = "<label>Aliases:</label> &nbsp&nbsp&nbsp&nbsp&nbsp" + (this.gene.aliases.join(", ") || "Not available") + "<br>";
-		if (gene.annotation != null) {
-			this.annotationElement.innerHTML = "<label>Annotation:</label> " + (gene.annotation || "Not available");
-		}
-		else {
-			/* Query annotation if not available */
-			$.ajax({
-				type: "GET",
-				url: "http://bar.utoronto.ca/webservices/agiToAnnot.php?request={\"agi\":\"" + this.gene.agi + "\"}",
-				dataType: "json"
-			}).done($.proxy(function(response) {
-				if (this.geneList.annotation.gene != null && this.geneList.annotation.gene.annotation == null) {
-					var annotation = response.split("__");
-					this.gene.annotation = annotation[1] || annotation[0];
-					if (this.geneList.annotation.gene == this.gene) {
-						this.geneList.annotation.annotationElement.innerHTML = "<label>Annotation:</label> " + (this.geneList.annotation.gene.annotation || "Not available");
-					}
-				}
-			}, geneListItem));
-		}
-
-		/* Configure data button */
-		this.dataElement.value = "Get Data";
-		this.dataElement.onclick = $.proxy(function() {
-			/* Add gene to marked genes with default width */
-			this.markedGenes.push(new ChromosomeView.MarkedGene(this.gene, 2.0, COLOR.LIGHT_GREY));
-
-			/* Reset annotation */
-			var gene = this.gene;
-			var geneListItem = this.geneListItem;
-			this.clear();
-			this.populate(gene, geneListItem);
-		}, this);
-		for (var n = 0; n < this.markedGenes.length; n++) {
-			if (this.markedGenes[n].gene == this.gene) {
-				this.dataElement.value = "Drop Data";
-				this.dataElement.onclick = $.proxy(function() {
-					/* Drop gene data */
-					//TODO drop data, not just mark
-					for (var m = 0; m < this.markedGenes.length; m++) {
-						if (this.markedGenes[m].gene == this.gene) {
-							this.markedGenes.splice(m, 1);
-							break;
-						}
-					}
-
-					/* Reset annotation */
-					var gene = this.gene;
-					var geneListItem = this.geneListItem;
-					this.clear();
-					this.populate(gene, geneListItem);
-				}, this);
-				break;
+	/* Check whether mouse is over a user annotation */
+	for (var n = 0; n < this.userAnnotations.length; n++) {
+		var userAnnotation = this.userAnnotations[n];
+		if (userAnnotation.isInBound(x, y)) {
+			/* Create annotation popup */
+			this.annotationPopup = new ChromosomeView.AnnotationPopup(this);
+			this.annotationPopup.source = userAnnotation;
+			var xCenter = (userAnnotation.xStart + userAnnotation.xEnd) / 2;
+			if (xCenter < ZUI.width / 2) {
+				this.annotationPopup.setPosition(userAnnotation.xEnd, (userAnnotation.yStart + userAnnotation.yEnd) / 2, 35, -210 * 0.3, 350, 205, "right");
 			}
+			else {
+				this.annotationPopup.setPosition(userAnnotation.xStart, (userAnnotation.yStart + userAnnotation.yEnd) / 2, 35, -210 * 0.3, 350, 205, "left");
+			}
+			this.annotationPopup.setData(userAnnotation.gene);
+			this.annotationPopup.addToContainer(ZUI.container);
+
+			break;
 		}
-	};
+	}
+}
 
-/* Chromosome class constructor */
-ChromosomeView.Chromosome = function(name, length, centromeres, index) {
-	/* Name of chromosome */
-	this.name = name;
-
-	/* Length of chromosome in base pairs */
-	this.length = length;
-
-	/* Centromere position */
-	this.centromeres = centromeres;
-
-	/* Parent view */
+/* ChromosomeViewObject class constructor */
+ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
+	/* Field properties */
+	this.chromosome = chromosome;
+	this.view = view;
 	this.index = index;
 
-	/* Array of genes */
-	this.genes = [];
-
-	/* Whether data are loaded */
-	this.isLoaded = false;
-
-	/* View object */
+	/* Create view objects */
 	this.viewObjects = [];
-	this.viewObjects.push(new ZUI.ViewObject(		//centromere layer
-		ZUI.ViewObject.Type.ROUNDED_RECT,
-		{
-			x : -298 + index * 120,
-			y : -220,
-			width : 6,
-			height : this.length * 0.000015,
-			radius: 3,
-		}
-	));
-	var start = 0;
-	for (var n = 0; n < this.centromeres.length; n++) {		//non-centromere layer pieces
-		this.viewObjects.push(new ZUI.ViewObject(
-			ZUI.ViewObject.Type.ROUNDED_RECT,
+		/* Centromeric layer */
+		this.viewObjects.push(new ZUI.ViewObject(		// Centromeric layer
+			ZUI.ViewObject.Type.RoundedRect,
+			ZUI.ViewObject.Scale.World,
 			{
-				x : -300 + index * 120,
-				y : -220 + start * 0.000015,
-				width : 10,
-				height : (this.centromeres[n].start - start) * 0.000015,
-				radius : 5,
+				x: -178 + index * 120,
+				y: -220,
+				width: 6,
+				height: this.chromosome.length * 0.000015,
+				radius: 3
 			}
 		));
-		start = this.centromeres[n].end;
-	}
-	this.viewObjects.push(new ZUI.ViewObject(		//bottom piece
-		ZUI.ViewObject.Type.ROUNDED_RECT,
-		{
-			x : -300 + index * 120,
-			y : -220 + start * 0.000015,
-			width : 10,
-			height : (this.length - start) * 0.000015,
-			radius : 5,
+
+		/* Non-centromeric layers */
+		var start = 0;
+		for (var n = 0; n < this.chromosome.centromeres.length; n++) {
+			this.viewObjects.push(new ZUI.ViewObject(
+				ZUI.ViewObject.Type.RoundedRect,
+				ZUI.ViewObject.Scale.World,
+				{
+					x: -180 + index * 120,
+					y: -220 + start * 0.000015,
+					width: 10,
+					height: (this.chromosome.centromeres[n].start - start) * 0.000015,
+					radius: 5
+				}
+			));
+			start = this.chromosome.centromeres[n].end;
 		}
-	));
+
+		/* Bottom non-centromeric layer */
+		this.viewObjects.push(new ZUI.ViewObject(
+			ZUI.ViewObject.Type.RoundedRect,
+			ZUI.ViewObject.Scale.World,
+			{
+				x: -180 + index * 120,
+				y: -220 + start * 0.000015,
+				width: 10,
+				height: (this.chromosome.length - start) * 0.000015,
+				radius: 5
+			}
+		));
 };
 
-	/* Calculates and returns the number of base pairs per pixel */
-	ChromosomeView.Chromosome.prototype.getBpPerPixel = function() {
-		return (this.length - 1) / (this.viewObjects[0].screenHeight);
+	/* Converts a pixel to number of base pairs */
+	ChromosomeView.ChromosomeViewObject.prototype.getBpPerPixel = function() {
+		return this.chromosome.length / (this.getScreenHeight() - 1);
 	};
 
-	/* Checks whether mouse is over chromosome */
-	ChromosomeView.Chromosome.prototype.isMouseOver = function() {
-		/* Get mouse position */
-		var x = ZUI.mouseStatus.x;
-		var y = ZUI.mouseStatus.y;
-
-		/* Check*/
-		if (x >= this.viewObjects[1].screenX && x <= this.viewObjects[1].screenX + this.viewObjects[1].screenWidth &&
-		    y >= this.viewObjects[0].screenY && y < this.viewObjects[0].screenY + this.viewObjects[0].screenHeight) {
+	/* Returns whether the specified position is within the bounds of the chromosome */
+	ChromosomeView.ChromosomeViewObject.prototype.isInBound = function(x, y) {
+		if (x > this.getScreenX() && x < this.getScreenX() + this.getScreenWidth() &&
+		    y > this.getScreenY() && y < this.getScreenY() + this.getScreenHeight()) {
 			return true;
 		}
 		else {
@@ -1104,47 +547,849 @@ ChromosomeView.Chromosome = function(name, length, centromeres, index) {
 		}
 	};
 
-	/* Centromere class constructor */
-	ChromosomeView.Chromosome.Centromere = function(start, end) {
-		this.start = start;
-		this.end = end;
-	};
-
-	/* Gene class constructor */
-	ChromosomeView.Chromosome.Gene = function(agi, aliases, start, end, chromosome) {
-		/* AGI identifier */
-		this.agi = agi;
-
-		/* Alias */
-		this.aliases = aliases;
-
-		/* Start base pair position on chromosome */
-		this.start = start;
-
-		/* End base pair position on chromosome */
-		this.end = end;
-
-		/* Parent chromosome */
-		this.chromosome = chromosome;
-
-		/* Gene annotation */
-		this.annotation = null;
-	};
-
-		/* Returns the gene's position on the screen */
-		ChromosomeView.Chromosome.Gene.prototype.getScreenPosition = function() {
-			var pixelsPerBp = 1 / this.chromosome.getBpPerPixel();
-			var obj = {};
-			obj.x = this.chromosome.viewObjects[1].screenX;
-			obj.y = Math.floor(this.chromosome.viewObjects[0].screenY + (this.start - 1) * pixelsPerBp) + 1;
-			obj.height = Math.floor((this.end - this.start) * pixelsPerBp);
-			obj.width = this.chromosome.viewObjects[1].screenWidth;
-			return obj;
+	/* Draws chromosome */
+	ChromosomeView.ChromosomeViewObject.prototype.draw = function() {
+		/* Draw chromosome view object */
+		ZUI.processing.fill(ZUI.hexToColor(Eplant.Color.MedGrey));
+		ZUI.processing.noStroke();
+		for (var n = 0; n < this.viewObjects.length; n++) {
+			ZUI.drawViewObject(this.viewObjects[n]);
 		}
 
-/* MarkedGene class constructor */
-ChromosomeView.MarkedGene = function(gene, markerWidth, markerColor) {
-	this.gene = gene;
-	this.markerWidth = markerWidth;
-	this.markerColor = markerColor;
+		/* Get chromosome tips positions */
+		var halfWidth = this.getScreenWidth() / 2;
+		var topTip = {
+			x : this.getScreenX() + halfWidth,
+			y : this.getScreenY(),
+		};
+		var bottomTip = {
+			x : this.getScreenX() + halfWidth,
+			y : this.getScreenY() + this.getScreenHeight(),
+		};
+
+		/* Draw label */
+		ZUI.processing.textSize(14);
+		ZUI.processing.fill(ZUI.hexToColor(Eplant.Color.LightGrey));
+		ZUI.processing.text(this.chromosome.name, topTip.x - this.chromosome.name.length * 4, topTip.y - 15);
+
+		/* Draw chromosome base pair range */
+		var rangeStart = 0;
+		var rangeEnd = this.chromosome.length;
+		ZUI.processing.textSize(12);
+		ZUI.processing.fill(ZUI.hexToColor(Eplant.Color.LightGrey));
+		if (topTip.y < 0) {
+			var bpPerPixel = this.getBpPerPixel();
+			rangeStart = (0 - this.getScreenY()) * bpPerPixel;
+			if (rangeStart < this.chromosome.length) {
+				/* Draw top base pair value */
+				var mb = Math.round(rangeStart / 10000) / 100;
+				ZUI.processing.text(mb + " Mb", topTip.x + halfWidth + 10, 12);
+
+				/* Draw clipped top */
+				ZUI.processing.stroke(ZUI.hexToColor(Eplant.Color.White));
+				ZUI.processing.fill(ZUI.hexToColor(Eplant.Color.White));
+				ZUI.processing.triangle(topTip.x, 0, topTip.x + halfWidth + 2, 0, topTip.x + halfWidth + 2, halfWidth);
+				ZUI.processing.triangle(topTip.x, 0, topTip.x - halfWidth - 2, 0, topTip.x - halfWidth - 2, halfWidth);
+			}
+		}
+		else {
+			/* Draw top base pair value */
+			ZUI.processing.text(0 + " Mb", topTip.x + halfWidth + 10, topTip.y + 12);
+		}
+		ZUI.processing.fill(ZUI.hexToColor(Eplant.Color.LightGrey));
+		if (bottomTip.y > ZUI.height) {
+			var bpPerPixel = this.getBpPerPixel();
+			rangeEnd = (ZUI.height - this.getScreenY()) * bpPerPixel;
+			if (rangeEnd >= 0) {
+				/* Draw bottom base pair value */
+				var mb = Math.round(rangeEnd / 10000) / 100;
+				ZUI.processing.text(mb + " Mb", bottomTip.x + halfWidth + 10, ZUI.height - 2);
+
+				/* Draw clipped bottom */
+				ZUI.processing.stroke(ZUI.hexToColor(Eplant.Color.White));
+				ZUI.processing.fill(ZUI.hexToColor(Eplant.Color.White));
+				ZUI.processing.triangle(bottomTip.x, ZUI.height, bottomTip.x + halfWidth + 2, ZUI.height, bottomTip.x + halfWidth + 2, ZUI.height - halfWidth);
+				ZUI.processing.triangle(bottomTip.x, ZUI.height, bottomTip.x - halfWidth - 2, ZUI.height, bottomTip.x - halfWidth - 2, ZUI.height - halfWidth);
+			}
+		}
+		else {
+			/* Draw bottom base pair value */
+			var mb = Math.round(this.chromosome.length / 10000) / 100;
+			ZUI.processing.text(mb + " Mb", bottomTip.x + halfWidth + 10, bottomTip.y - 2);
+		}
+
+		/* Draw mini chromosome */
+		if (rangeStart > 0 || rangeEnd < this.chromosome.length) {
+			if (rangeStart > this.chromosome.length) rangeStart = this.chromosome.length;
+			if (rangeEnd < 0) rangeEnd = 0;
+			ZUI.processing.stroke(ZUI.hexToColor(Eplant.Color.LightGrey));
+			var y1 = ZUI.height / 2 - 50;
+			var y2 = y1 + rangeStart / this.chromosome.length * 100;
+			var y3 = y1 + rangeEnd / this.chromosome.length * 100;
+			var y4 = y1 + 100;
+			ZUI.processing.fill(ZUI.hexToColor(Eplant.Color.White));
+			ZUI.processing.rect(bottomTip.x + halfWidth + 10, y1, 20, y2 - y1);
+			ZUI.processing.rect(bottomTip.x + halfWidth + 10, y3 , 20, y4 - y3);
+			ZUI.processing.fill(ZUI.hexToColor(Eplant.Color.LightGrey));
+			ZUI.processing.rect(bottomTip.x + halfWidth + 10, y2 , 20, y3 - y2);
+		}
+	};
+
+	/* Returns the x position of the chromosome view object on the screen */
+	ChromosomeView.ChromosomeViewObject.prototype.getScreenX = function() {
+		return this.viewObjects[1].screenX;
+	};
+
+	/* Returns the y position of the chromosome view object on the screen */
+	ChromosomeView.ChromosomeViewObject.prototype.getScreenY = function() {
+		return this.viewObjects[0].screenY;
+	};
+
+	/* Returns the width of the chromosome view object on the screen */
+	ChromosomeView.ChromosomeViewObject.prototype.getScreenWidth = function() {
+		return this.viewObjects[1].screenWidth;
+	};
+
+	/* Returns the height of the chromosome view object on the screen */
+	ChromosomeView.ChromosomeViewObject.prototype.getScreenHeight = function() {
+		return this.viewObjects[0].screenHeight;
+	};
+
+	/* Converts a base pair position to the y pixel position corresponding to the chromosome view object */
+	ChromosomeView.ChromosomeViewObject.prototype.mapBpToPixel = function(bp) {
+		return this.getScreenY() + (bp - 1) / this.getBpPerPixel() + 1;
+	};
+
+	/* Converts a y pixel position corresponding to the chromosome view object to a range of base pair positions */
+	ChromosomeView.ChromosomeViewObject.prototype.mapPixelToBp = function(pixel) {
+		if (pixel > this.getScreenY() && pixel < this.getScreenY() + this.getScreenHeight()) {
+			range = {
+				start: (pixel - 1 - this.getScreenY()) * this.getBpPerPixel() + 1,
+				end: (pixel - this.getScreenY()) * this.getBpPerPixel()
+			};
+			if (range.end > this.chromosome.length) {
+				range.end = this.chromosome.length;
+			}
+			return range;
+		}
+		else {
+			return null;
+		}
+	};
+
+/* UserAnnotation class constructor */
+ChromosomeView.UserAnnotation = function(geneIdentifier, width, color, view) {
+	/* Field attributes */
+	this.geneIdentifier = geneIdentifier;
+	this.width = width;
+	this.color = color;
+	this.view = view;
+	this.gene = null;
+	this.geneOfInterest = null;
+	this.xStart = null;
+	this.xEnd = null;
+	this.yStart = null;
+	this.yEnd = null;
+
+	/* Get gene */
+	var chromosomes = this.view.species.chromosomes;
+	for (var n = 0; n < chromosomes.length; n++) {
+		var chromosome = chromosomes[n];
+		var genes = chromosome.genes;
+		for (var m = 0; m < genes.length; m++) {
+			var gene = genes[m];
+			if (gene.identifier.toUpperCase() == geneIdentifier.toUpperCase()) {
+				this.gene = gene;
+				break;
+			}
+		}
+		if (this.gene != null) break;
+	}
+	if (this.gene == null) {
+		$.ajax({
+			type: "GET",
+			url: "cgi-bin/querygenebyidentifier.cgi?id=" + geneIdentifier,
+			dataType: "json"
+		}).done($.proxy(function(response) {
+			var chromosome = null;
+			var chromosomes = this.view.species.chromosomes;
+			for (var n = 0; n < chromosomes.length; n++) {
+				if (chromosomes[n].name == response.chromosome) {
+					chromosome = chromosomes[n];
+				}
+			}
+			if (chromosome == null) {
+				alert("Sorry! We cannot find your gene. Please try again.");
+				var index = this.view.userAnnotations.indexOf(this);
+				if (index >= 0) {
+					this.view.userAnnotations.splice(index, 1);
+				}
+			}
+			else {
+				this.gene = new Eplant.Gene(chromosome);
+				this.gene.identifier = response.id;
+				this.gene.start = response.start;
+				this.gene.end = response.end;
+				this.gene.strand = response.strand;
+				this.gene.aliases = response.aliases;
+				chromosome.genes.push(this.gene);
+				this.geneOfInterest = Eplant.getSpeciesOfInterest(this.view.species).addGeneOfInterest(this.gene);
+				if (this.view.annotationPopup != null && this.view.annotationPopup.gene == this.gene) {
+					this.view.annotationPopup.geneOfInterest = this.geneOfInterest;
+				}
+			}
+		}, this));
+	}
+	else {
+		this.geneOfInterest = Eplant.getSpeciesOfInterest(this.view.species).addGeneOfInterest(this.gene);
+		if (this.view.annotationPopup != null && this.view.annotationPopup.gene == this.gene) {
+			this.view.annotationPopup.geneOfInterest = this.geneOfInterest;
+		}
+	}
 };
+
+	/* Retrieves the screen position of the user annotation */
+	ChromosomeView.UserAnnotation.prototype.isInBound = function(x, y) {
+		if (x >= this.xStart && x <= this.xEnd && y >= this.yStart && y <= this.yEnd) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	};
+
+	/* Draws the user annotation */
+	ChromosomeView.UserAnnotation.prototype.draw = function() {
+		if (this.gene != null) {
+			var gene = this.gene;
+			var chromosome = gene.chromosome;
+
+			/* Get ChromosomeViewObject */
+			var chromosomeViewObject = this.view.getChromosomeViewObject(chromosome);
+
+			/* Map gene position onto chromosome */
+			this.yStart = chromosomeViewObject.mapBpToPixel(gene.start);
+			this.yEnd = chromosomeViewObject.mapBpToPixel(gene.end);
+			if (gene.strand == "+") {
+				this.xEnd = chromosomeViewObject.getScreenX();
+				this.xStart = this.xEnd - this.width * chromosomeViewObject.getScreenWidth() / 2;
+			}
+			else {
+				this.xStart = chromosomeViewObject.getScreenX() + chromosomeViewObject.getScreenWidth();
+				this.xEnd = this.xStart + this.width * chromosomeViewObject.getScreenWidth() / 2;
+			}
+
+			/* Draw whisker */
+			ZUI.processing.stroke(ZUI.hexToColor(this.color));
+			ZUI.processing.fill(ZUI.hexToColor(this.color));
+			ZUI.processing.rect(
+				this.xStart,
+				this.yStart,
+				this.xEnd - this.xStart,
+				this.yEnd - this.yStart
+			);
+
+			/* Draw label */
+			ZUI.processing.textSize(12);
+			var labelX = null;
+			var labelY = (this.yStart + this.yEnd) / 2 + 5;
+			if (gene.strand == "+") {
+				labelX = this.xStart - 65 - 5;
+				this.xStart = labelX;
+			}
+			else {
+				labelX = this.xEnd + 5;
+				this.xEnd = labelX + 65;
+			}
+			this.yStart = labelY - 12;
+			this.yEnd = labelY + 3;
+			ZUI.processing.text(
+				gene.identifier,
+				labelX,
+				labelY
+			);
+		}
+	};
+
+/* GeneListPopup class constructor */
+ChromosomeView.GeneListPopup = function(view) {
+	/* Field properties */
+	this.view = view;
+	this.orientation = "left";
+	this.x = 0;
+	this.y = 0;
+	this.width = 180;
+	this.height = 18;
+	this.xOffset = 0;
+	this.yOffset = -this.height * 0.3;
+	this.isPinned = false;		// Whether the popup is pinned
+
+	this.chromosome = null;
+	this.start = 0;
+	this.end = 0;
+	this.items = [];
+
+	/* Create popup element */
+	this.container = document.createElement("div");
+	this.container.className = "popup";
+	this.container.style.left = "0px";
+	this.container.style.top = "0px";
+	this.container.width = this.width + "px";
+	this.container.height = this.height + "px";
+
+	/* Add loading span */
+	var span = document.createElement("span");
+	span.innerHTML = "Loading...";
+	span.style.cursor = "default";
+	span.style.fontFamily = "Helvetica";
+	span.style.fontSize = "14px";
+	span.style.lineHeight = "18px";
+	span.style.color = Eplant.Color.DarkGrey;
+	span.style.display = "block";
+	this.container.appendChild(span);
+};
+
+	/* Sets position of gene list popup */
+	ChromosomeView.GeneListPopup.prototype.setPosition = function(x, y, xOffset, yOffset, width, height, orientation) {
+		if (x != null) this.x = x;
+		if (y != null) this.y = y;
+		if (xOffset != null) this.xOffset = xOffset;
+		if (yOffset != null) this.yOffset = yOffset;
+		if (width != null) this.width = width;
+		if (height != null) this.height = height;
+		if (orientation != null) this.orientation = orientation;
+
+		if (this.orientation == "left") {
+			this.container.style.left = (this.x - this.width - this.xOffset - 12) + "px";
+		}
+		else {
+			this.container.style.left = (this.x + this.xOffset) + "px";
+		}
+		this.container.style.top = (this.y + this.yOffset) + "px";
+		this.container.style.width = this.width + "px";
+		this.container.style.height = this.height + "px";
+	};
+
+	/* Adds the gene list popup element to the specified container */
+	ChromosomeView.GeneListPopup.prototype.addToContainer = function(container) {
+		container.appendChild(this.container);
+	};
+
+	/* Returns whether the specified position is within the bounds of the popup */
+	ChromosomeView.GeneListPopup.prototype.isInBound = function(x, y) {
+		var inBound = true;
+		if (this.orientation == "left") {
+			if (x < this.x - this.width - this.xOffset - 12 || x > this.x) {
+				inBound = false;
+			}
+		}
+		else {
+			if (x < this.x || x > this.x + this.xOffset + this.width + 12) {
+				inBound = false;
+			}
+		}
+		if (y < this.y + this.yOffset || y > this.y + this.height + this.yOffset + 12) {
+			inBound = false;
+		}
+		return inBound;
+	};
+
+	/* Remove gene list popup */
+	ChromosomeView.GeneListPopup.prototype.remove = function() {
+		if (this.container.parentNode != null) {
+			this.container.parentNode.removeChild(this.container);
+		}
+	};
+
+	/* Sets data */
+	ChromosomeView.GeneListPopup.prototype.setData = function(chromosome, start, end) {
+		this.chromosome = chromosome;
+		this.start = start;
+		this.end = end;
+
+		/* Query genes and add to list */
+		$.ajax({
+			type: "GET",
+			url: "cgi-bin/querygenesbyposition.cgi?chromosome=" + chromosome.name.replace(" ", "_") + "&start=" + start + "&end=" + end,
+			dataType: "json"
+		}).done($.proxy(function(response) {
+			this.container.innerHTML = "";
+			for (var n = 0; n < response.length; n++) {
+				/* Get gene object */
+				var gene = null;
+				for (var m = 0; m < this.chromosome.genes.length; m++) {
+					if (this.chromosome.genes[m].identifier == response[n].id) {
+						gene = this.chromosome.genes[m];
+					}
+				}
+				if (gene == null) {
+					gene = new Eplant.Gene(this.chromosome);
+					gene.identifier = response[n].id;
+					gene.start = response[n].start;
+					gene.end = response[n].end;
+					gene.strand = response[n].strand;
+					gene.aliases = response[n].aliases;
+					this.chromosome.genes.push(gene);
+				}
+
+				/* Add item to gene list */
+				var item = new ChromosomeView.GeneListPopupItem(gene, this);
+				//TODO set mouse over/out/click behaviours
+				this.items.push(item);
+			}
+
+			/* Set list size */
+			var height = this.items.length * 18;
+			if (height > 200) height = 200;
+			this.setPosition(null, null, null, -height * 0.3, null, height, null);
+		}, this));
+	};
+
+
+/* GeneListPopupItem class Constructor */
+ChromosomeView.GeneListPopupItem = function(gene, geneListPopup) {
+	/* Field properties */
+	this.gene = gene;
+	this.geneListPopup = geneListPopup;
+
+	/* Create span element */
+	this.span = document.createElement("span");
+	this.span.style.cursor = "default";
+	this.span.style.fontFamily = "Helvetica";
+	this.span.style.fontSize = "14px";
+	this.span.style.lineHeight = "18px";
+	this.span.style.color = Eplant.Color.DarkGrey;
+	this.span.style.display = "block";
+	this.span.style.whiteSpace = "nowrap";
+	this.span.style.overflow = "hidden";
+	this.span.style.textOverflow = "ellipsis";
+	this.geneListPopup.container.appendChild(this.span);
+
+	/* Set data */
+	this.span.innerHTML = this.gene.identifier;
+	if (this.gene.aliases != null && this.gene.aliases.length > 0 && this.gene.aliases[0].length > 0) {
+		this.span.innerHTML += " / " + this.gene.aliases.join(", ");
+	}
+
+	/* Sets mouse over behaviour */
+	this.span.onmouseover = $.proxy(function() {
+		if (this.geneListPopup.view.annotationPopup == null || !this.geneListPopup.view.annotationPopup.isPinned) {
+			/* Remove previous annotation popup, if applicable */
+			if (this.geneListPopup.view.annotationPopup != null) {
+				this.geneListPopup.view.annotationPopup.remove();
+				this.geneListPopup.view.annotationPopup = null;
+			}
+
+			/* Highlight item */
+			this.span.style.backgroundColor = Eplant.Color.DarkGrey;
+			this.span.style.color = Eplant.Color.White;
+
+			/* Create annotation popup */
+			this.geneListPopup.view.annotationPopup = new ChromosomeView.AnnotationPopup(this.geneListPopup.view);
+			this.geneListPopup.view.annotationPopup.source = this;
+			var xPos = null;
+			if (this.geneListPopup.orientation == "right") {
+				xPos = this.geneListPopup.x + this.geneListPopup.xOffset + this.geneListPopup.width + 12;
+			}
+			else {
+				xPos = this.geneListPopup.x - this.geneListPopup.xOffset - this.geneListPopup.width - 12;
+			}
+			var yPos = this.span.offsetTop + this.geneListPopup.container.offsetTop - this.geneListPopup.container.scrollTop + this.span.offsetHeight / 2;
+			this.geneListPopup.view.annotationPopup.setPosition(xPos, yPos, 35, -210 * 0.3, 350, 205, this.geneListPopup.orientation);
+			this.geneListPopup.view.annotationPopup.setData(this.gene);
+			this.geneListPopup.view.annotationPopup.addToContainer(ZUI.container);
+		}
+	}, this);
+
+	/* Sets click behaviour */
+	this.span.onclick = $.proxy(function() {
+		if (this.geneListPopup.view.annotationPopup != null) {
+			if (!this.geneListPopup.view.annotationPopup.isPinned) {
+				this.geneListPopup.view.annotationPopup.isPinned = true;
+				this.geneListPopup.isPinned = true;
+			}
+			else {
+				this.geneListPopup.view.annotationPopup.isPinned = false;
+				this.geneListPopup.view.annotationPopup.remove();
+				this.geneListPopup.view.annotationPopup = null;
+			}
+		}
+	}, this);
+};
+
+/* Annotation class constructor */
+ChromosomeView.AnnotationPopup = function(view) {
+	/* Field properties */
+	this.view = view;
+	this.orientation = "left";			// Side on which the popup is placed
+	this.x = 0;
+	this.y = 0;
+	this.xOffset = 0;
+	this.yOffset = 0;
+	this.width = 350;
+	this.height = 205;
+	this.source = null;
+	this.isPinned = false;		// Whether the popup is pinned
+
+	this.gene = null;
+	this.geneOfInterest = null;		// GeneOfInterest that the annotation popup is prepared for
+
+	/* Create popup element */
+	this.container = document.createElement("div");
+	this.container.className = "popup";
+	this.container.style.left = "0px";
+	this.container.style.top = "0px";
+	this.container.style.width = this.width + "px";
+	this.container.style.height = this.height + "px";
+		/* Content */
+		this.content = document.createElement("div");
+		this.content.style.height = "110px";
+		this.content.style.padding = "5px";
+		this.content.style.backgroundColor = Eplant.Color.White;
+		this.content.style.overflow = "auto";
+		this.container.appendChild(this.content);
+			/* Identifier */
+			this.identifier = document.createElement("span");
+			this.identifier.style.fontFamily = "Helvetica";
+			this.identifier.style.fontSize = "14px";
+			this.identifier.style.display = "block";
+			this.identifier.style.textIndent = "-75px";
+			this.identifier.style.paddingLeft = "75px";
+			this.content.appendChild(this.identifier);
+
+			/* Aliases */
+			this.aliases = document.createElement("span");
+			this.aliases.style.fontFamily = "Helvetica";
+			this.aliases.style.fontSize = "14px";
+			this.aliases.style.display = "block";
+			this.aliases.style.textIndent = "-75px";
+			this.aliases.style.paddingLeft = "75px";
+			this.content.appendChild(this.aliases);
+
+			/* Annotation */
+			this.annotation = document.createElement("span");
+			this.annotation.style.fontFamily = "Helvetica";
+			this.annotation.style.fontSize = "14px";
+			this.annotation.style.display = "block";
+			this.annotation.style.textIndent = "-75px";
+			this.annotation.style.paddingLeft = "75px";
+			this.content.appendChild(this.annotation);
+
+		/* Controls */
+		this.controls = document.createElement("div");
+		this.controls.style.padding = "5px";
+		this.controls.style.display = "table-cell";
+		this.controls.style.verticalAlign = "middle";
+		this.container.appendChild(this.controls);
+			/* Get/Drop Data button */
+			this.getDropData = Eplant.createButton("", function(){});
+			this.controls.appendChild(this.getDropData);
+
+			/* Top 50 Similar button */
+			this.top50Similar = Eplant.createButton("Top 50 Similar", $.proxy(function() {
+				//TODO top 50 similar
+			}, this));
+			this.controls.appendChild(this.top50Similar);
+
+			/* Tags */
+			this.tags = document.createElement("div");
+			this.tags.style.display = "inline";
+			this.tags.style.padding = "5px";
+			this.tags.style.verticalAlign = "middle";
+			this.controls.appendChild(this.tags);
+				/* Tags label */
+				this.tags.appendChild(Eplant.createLabel("Tags: "));
+
+				//TODO append tag colors
+
+		/* Views */
+		this.viewIcons = document.createElement("div");
+		this.viewIcons.style.padding = "5px";
+		this.container.appendChild(this.viewIcons);
+			/* World */
+			this.worldViewIcon = document.createElement("div");
+			this.worldViewIcon.className = "iconSmall";
+			this.worldViewIcon.style.display = "inline";
+			this.worldViewIcon.appendChild(Eplant.createImage("img/unavailable/world.png"));
+			this.viewIcons.appendChild(this.worldViewIcon);
+
+			/* Plant */
+			this.plantViewIcon = document.createElement("div");
+			this.plantViewIcon.className = "iconSmall";
+			this.plantViewIcon.style.display = "inline";
+			this.plantViewIcon.appendChild(Eplant.createImage("img/unavailable/plant.png"));
+			this.viewIcons.appendChild(this.plantViewIcon);
+
+			/* Cell */
+			this.cellViewIcon = document.createElement("div");
+			this.cellViewIcon.className = "iconSmall";
+			this.cellViewIcon.style.display = "inline";
+			this.cellViewIcon.appendChild(Eplant.createImage("img/unavailable/cell.png"));
+			this.viewIcons.appendChild(this.cellViewIcon);
+
+			/* Interaction */
+			this.interactionViewIcon = document.createElement("div");
+			this.interactionViewIcon.className = "iconSmall";
+			this.interactionViewIcon.style.display = "inline";
+			this.interactionViewIcon.appendChild(Eplant.createImage("img/unavailable/interaction.png"));
+			this.viewIcons.appendChild(this.interactionViewIcon);
+
+			/* Pathway */
+			this.pathwayViewIcon = document.createElement("div");
+			this.pathwayViewIcon.className = "iconSmall";
+			this.pathwayViewIcon.style.display = "inline";
+			this.pathwayViewIcon.appendChild(Eplant.createImage("img/unavailable/pathway.png"));
+			this.viewIcons.appendChild(this.pathwayViewIcon);
+
+			/* Molecule */
+			this.moleculeViewIcon = document.createElement("div");
+			this.moleculeViewIcon.className = "iconSmall";
+			this.moleculeViewIcon.style.display = "inline";
+			this.moleculeViewIcon.appendChild(Eplant.createImage("img/unavailable/molecule.png"));
+			this.viewIcons.appendChild(this.moleculeViewIcon);
+
+			/* Sequence */
+			this.sequenceViewIcon = document.createElement("div");
+			this.sequenceViewIcon.className = "iconSmall";
+			this.sequenceViewIcon.style.display = "inline";
+			this.sequenceViewIcon.appendChild(Eplant.createImage("img/unavailable/sequence.png"));
+			this.viewIcons.appendChild(this.sequenceViewIcon);
+};
+
+	/* Updates the icons */
+	ChromosomeView.AnnotationPopup.prototype.updateIcons = function() {
+		/* WorldView */
+		if (this.geneOfInterest == null || this.geneOfInterest.worldView == null || this.geneOfInterest.worldView.getLoadProgress() < 1) {
+			this.worldViewIcon.getElementsByTagName("img")[0].src = "img/unavailable/world.png";
+		}
+		else if (this.geneOfInterest.worldView == ZUI.activeView) {
+			this.worldViewIcon.getElementsByTagName("img")[0].src = "img/active/world.png";
+		}
+		else {
+			this.worldViewIcon.getElementsByTagName("img")[0].src = "img/available/world.png";
+		}
+
+		/* PlantView */
+		if (this.geneOfInterest == null || this.geneOfInterest.plantView == null || this.geneOfInterest.plantView.getLoadProgress() < 1) {
+			this.plantViewIcon.getElementsByTagName("img")[0].src = "img/unavailable/plant.png";
+		}
+		else if (this.geneOfInterest.plantView == ZUI.activeView) {
+			this.plantViewIcon.getElementsByTagName("img")[0].src = "img/active/plant.png";
+		}
+		else {
+			this.plantViewIcon.getElementsByTagName("img")[0].src = "img/available/plant.png";
+		}
+
+		/* CellView */
+		if (this.geneOfInterest == null || this.geneOfInterest.cellView == null || this.geneOfInterest.cellView.getLoadProgress() < 1) {
+			this.cellViewIcon.getElementsByTagName("img")[0].src = "img/unavailable/cell.png";
+		}
+		else if (this.geneOfInterest.cellView == ZUI.activeView) {
+			this.cellViewIcon.getElementsByTagName("img")[0].src = "img/active/cell.png";
+		}
+		else {
+			this.cellViewIcon.getElementsByTagName("img")[0].src = "img/available/cell.png";
+		}
+
+		/* InteractionView */
+		if (this.geneOfInterest == null || this.geneOfInterest.interactionView == null || this.geneOfInterest.interactionView.getLoadProgress() < 1) {
+			this.interactionViewIcon.getElementsByTagName("img")[0].src = "img/unavailable/interaction.png";
+		}
+		else if (this.geneOfInterest.interactionView == ZUI.activeView) {
+			this.interactionViewIcon.getElementsByTagName("img")[0].src = "img/active/interaction.png";
+		}
+		else {
+			this.interactionViewIcon.getElementsByTagName("img")[0].src = "img/available/interaction.png";
+		}
+
+		/* PathwayView */
+		if (this.geneOfInterest == null || this.geneOfInterest.pathwayView == null || this.geneOfInterest.pathwayView.getLoadProgress() < 1) {
+			this.pathwayViewIcon.getElementsByTagName("img")[0].src = "img/unavailable/pathway.png";
+		}
+		else if (this.geneOfInterest.pathwayView == ZUI.activeView) {
+			this.pathwayViewIcon.getElementsByTagName("img")[0].src = "img/active/pathway.png";
+		}
+		else {
+			this.pathwayViewIcon.getElementsByTagName("img")[0].src = "img/available/pathway.png";
+		}
+
+		/* MoleculeView */
+		if (this.geneOfInterest == null || this.geneOfInterest.moleculeView == null || this.geneOfInterest.moleculeView.getLoadProgress() < 1) {
+			this.moleculeViewIcon.getElementsByTagName("img")[0].src = "img/unavailable/molecule.png";
+		}
+		else if (this.geneOfInterest.moleculeView == ZUI.activeView) {
+			this.moleculeViewIcon.getElementsByTagName("img")[0].src = "img/active/molecule.png";
+		}
+		else {
+			this.moleculeViewIcon.getElementsByTagName("img")[0].src = "img/available/molecule.png";
+		}
+
+		/* SequenceView */
+		if (this.geneOfInterest == null || this.geneOfInterest.sequenceView == null || this.geneOfInterest.sequenceView.getLoadProgress() < 1) {
+			this.sequenceViewIcon.getElementsByTagName("img")[0].src = "img/unavailable/sequence.png";
+		}
+		else if (this.geneOfInterest.sequenceView == ZUI.activeView) {
+			this.sequenceViewIcon.getElementsByTagName("img")[0].src = "img/active/sequence.png";
+		}
+		else {
+			this.sequenceViewIcon.getElementsByTagName("img")[0].src = "img/available/sequence.png";
+		}
+	};
+
+	/* Sets the data button to Get Data */
+	ChromosomeView.AnnotationPopup.prototype.setToGetData = function() {
+		this.getDropData.value = "Get Data";
+		this.getDropData.onclick = $.proxy(function() {
+//TODO write function for adding user annotation
+			/* Check if gene is already annotated */
+			var isAnnotated = false;
+			for (var m = 0; m < this.view.userAnnotations.length; m++) {
+				if (this.gene == this.view.userAnnotations[m].gene) {
+					isAnnotated = true;
+					break;
+				}
+			}
+
+			/* Create UserAnnotation if gene is not annotated */
+			if (!isAnnotated) {
+				this.view.userAnnotations.push(new ChromosomeView.UserAnnotation(this.gene.identifier, 1.8, Eplant.Color.LightGrey, this.view));
+			}
+			this.setToDropData();
+		}, this);
+	};
+
+	/* Sets the data button to Drop Data */
+	ChromosomeView.AnnotationPopup.prototype.setToDropData = function() {
+		this.getDropData.value = "Drop Data";
+		this.getDropData.onclick = $.proxy(function() {
+			/* Drop GeneOfInterest */
+			Eplant.getSpeciesOfInterest(this.view.species).removeGeneOfInterest(this.geneOfInterest);
+			genesOfInterest_onChange();
+
+			/* Drop UserAnnotation */
+			for (var m = 0; m < this.view.userAnnotations.length; m++) {
+				if (this.gene == this.view.userAnnotations[m].gene) {
+					this.view.userAnnotations.splice(m, 1);
+					break;
+				}
+			}
+			this.setToGetData();
+		}, this);
+	};
+
+	/* Sets position of annotation popup */
+	ChromosomeView.AnnotationPopup.prototype.setPosition = function(x, y, xOffset, yOffset, width, height, orientation) {
+		if (x != null) this.x = x;
+		if (y != null) this.y = y;
+		if (xOffset != null) this.xOffset = xOffset;
+		if (yOffset != null) this.yOffset = yOffset;
+		if (width != null) this.width = width;
+		if (height != null) this.height = height;
+		if (orientation != null) this.orientation = orientation;
+
+		if (this.orientation == "left") {
+			this.container.style.left = (this.x - this.width - this.xOffset - 12) + "px";
+		}
+		else {
+			this.container.style.left = (this.x + this.xOffset) + "px";
+		}
+		this.container.style.top = (this.y + this.yOffset) + "px";
+		this.container.style.width = this.width + "px";
+		this.container.style.height = this.height + "px";
+	};
+
+	/* Adds the annotation popup element to the specified container */
+	ChromosomeView.AnnotationPopup.prototype.addToContainer = function(container) {
+		container.appendChild(this.container);
+	};
+
+	/* Returns whether the specified position is within the bounds of the popup */
+	ChromosomeView.AnnotationPopup.prototype.isInBound = function(x, y) {
+		var inBound = true;
+		if (this.orientation == "left") {
+			if (x < this.x - this.width - this.xOffset - 12 || x > this.x) {
+				inBound = false;
+			}
+		}
+		else {
+			if (x < this.x || x > this.x + this.xOffset + this.width + 12) {
+				inBound = false;
+			}
+		}
+		if (y < this.y + this.yOffset || y > this.y + this.height + this.yOffset + 12) {
+			inBound = false;
+		}
+		return inBound;
+	};
+
+	/* Sets data */
+	ChromosomeView.AnnotationPopup.prototype.setData = function(gene) {
+		/* Set data texts */
+		this.gene = gene;
+		this.setIdentifier(this.gene.identifier);
+		this.setAliases(this.gene.aliases);
+		if (this.gene.annotation != null) {
+			this.setAnnotation(this.gene.annotation);
+		}
+		else {
+			$.ajax({
+				type: "GET",
+				url: "http://bar.utoronto.ca/webservices/agiToAnnot.php?request={\"agi\":\"" + this.gene.identifier + "\"}",
+				dataType: "json"
+			}).done($.proxy(function(response) {
+				var data = response.split("__");
+				if (data.length == 1) {
+					this.gene.annotation = data[0];
+				}
+				else {
+					this.gene.annotation = data[1];
+				}
+
+				this.setAnnotation(this.gene.annotation);
+			}, this));
+		}
+
+		/* Set data button */
+		this.geneOfInterest = Eplant.getSpeciesOfInterest(this.view.species).getGeneOfInterest(this.gene);
+		if (this.geneOfInterest == null) {
+			this.setToGetData();
+		}
+		else {
+			this.setToDropData();
+		}
+	};
+
+	/* Remove annotation popup */
+	ChromosomeView.AnnotationPopup.prototype.remove = function() {
+		this.container.parentNode.removeChild(this.container);
+		if (this.source instanceof ChromosomeView.GeneListPopupItem) {
+			this.source.span.style.backgroundColor = Eplant.Color.White;
+			this.source.span.style.color = Eplant.Color.DarkGrey;
+		}
+	};
+
+	/* Sets identifier text */
+	ChromosomeView.AnnotationPopup.prototype.setIdentifier = function(identifier) {
+		this.identifier.innerHTML = "<label>Identifier:</label> &nbsp&nbsp&nbsp&nbsp" + identifier;
+	};
+
+	/* Sets aliases text */
+	ChromosomeView.AnnotationPopup.prototype.setAliases = function(aliases) {
+		if (aliases.length == 0) {
+			this.aliases.innerHTML = "<label>Aliases:</label> &nbsp&nbsp&nbsp&nbsp&nbspNot available";
+		}
+		else {
+			this.aliases.innerHTML = "<label>Aliases:</label> &nbsp&nbsp&nbsp&nbsp&nbsp" + aliases.join(", ");
+		}
+	};
+
+	/* Sets annotation text */
+	ChromosomeView.AnnotationPopup.prototype.setAnnotation = function(annotation) {
+		if (annotation.length == 0) {
+			this.annotation.innerHTML = "<label>Annotation:</label> Not available";
+		}
+		else {
+			this.annotation.innerHTML = "<label>Annotation:</label> " + annotation;
+		}
+	};
+
