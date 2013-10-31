@@ -5,9 +5,9 @@
  * Uses Cytoscape.js http://cytoscape.github.io/cytoscape.js/
  */
 
-function InteractionView(geneId) {
+function InteractionView(gene) {
 	/* Store gene identifier */
-	this.geneId = geneId;
+	this.gene = gene;
 
 	/* Create Cytoscape container element */
 	this.cytoscapeElement = document.getElementById("Cytoscape_container");
@@ -15,8 +15,13 @@ function InteractionView(geneId) {
 	/* Cytoscape object */
 	this.cy = null;
 
+	/* Annotation popup */
+	this.annotationPopup = null;
+
 	/* Data status */
 	this.isDataReady = false;
+
+	this.clickOnNode = false;
 
 	/* Configure Cytoscape */
 	this.cytoscapeConf = {};
@@ -45,16 +50,40 @@ function InteractionView(geneId) {
 	this.cytoscapeConf.ready = $.proxy(function() {
 		this.cy = $(this.cytoscapeElement).cytoscape("get");
 		this.cy.nodes().bind("mouseover", $.proxy(function(event){
-			console.log("node mouseover");
-			//TODO create annotation popup
+			var node = event.cyTarget._private;
+			node.hovered = true;
+			if (this.annotationPopup == null) {
+				this.annotationPopup = new InteractionView.AnnotationPopup(this, node.data.id);
+				this.annotationPopup.source = node;
+				var position = ZUI.camera.projectPoint(node.position.x - ZUI.width / 2, node.position.y - ZUI.height / 2);
+				if (position.x > ZUI.width / 2) {
+					this.annotationPopup.setPosition(position.x, position.y, null, null, null, null, "left");
+				}
+				else {
+					this.annotationPopup.setPosition(position.x, position.y, null, null, null, null, "right");
+				}
+			}
 		}, this));
 		this.cy.nodes().bind("mouseout", $.proxy(function(event){
-			console.log("node mouseout");
-			//TODO remove annotation popup if not pinned
+			var node = event.cyTarget._private;
+			node.hovered = false;
+			if (this.annotationPopup != null && !this.annotationPopup.isPinned && !this.annotationPopup.isInBound(ZUI.mouseStatus.x, ZUI.mouseStatus.y)) {
+				this.annotationPopup.remove();
+				this.annotationPopup = null;
+			}
 		}, this));
 		this.cy.nodes().bind("click", $.proxy(function(event){
-			console.log("node click");
-			//TODO create annotation popup if not created and pin it
+			this.clickOnNode = true;
+			if (this.annotationPopup != null) {
+				if (!this.annotationPopup.isPinned) {
+					this.annotationPopup.isPinned = true;
+				}
+				else {
+					this.annotationPopup.isPinned = false;
+					this.annotationPopup.remove();
+					this.annotationPopup = null;
+				}
+			}
 		}, this));
 		this.cy.edges().bind("mouseover", $.proxy(function(event){
 			console.log("edge mouseover");
@@ -70,18 +99,19 @@ function InteractionView(geneId) {
 	/* Retrieve interactions data */
 	$.ajax({
 		type: "GET",
-		url: "http://bar.utoronto.ca/webservices/aiv/get_interactions.php?request=[{\"agi\":\"" + this.geneId + "\"}]",
+		url: "http://bar.utoronto.ca/webservices/aiv/get_interactions.php?request=[{\"agi\":\"" + this.gene.identifier + "\"}]",
 		dataType: "json"
 	}).done($.proxy(function(response) {
+//TODO if response.length == 0 then NO DATA AVAILABLE
 		var nodes = this.cytoscapeConf.elements.nodes;
 		var edges = this.cytoscapeConf.elements.edges;
 		nodes.push({
 			data: {
-				id: this.geneId,
+				id: this.gene.identifier,
 				color: Eplant.Color.DarkGrey
 			}
 		});
-		var interactors = response[this.geneId];
+		var interactors = response[this.gene.identifier];
 		for (var n = 0; n < interactors.length; n++) {
 			nodes.push({
 				data: {
@@ -91,7 +121,7 @@ function InteractionView(geneId) {
 			});
 			edges.push({
 				data: {
-					source: this.geneId,
+					source: this.gene.identifier,
 					target: interactors[n].protein,
 					color: Eplant.Color.LightGrey
 				}
@@ -130,9 +160,45 @@ InteractionView.prototype.active = function() {
 InteractionView.prototype.inactive = function() {
 	this.cytoscapeElement.innerHTML = "";
 	ZUI.passInputEvent = null;
+
+	this.cy.remove(this.cy.elements());
 };
 
 InteractionView.prototype.mouseMove = function() {
+	if (this.annotationPopup != null) {
+		var node = this.annotationPopup.source;
+		if (!this.annotationPopup.isPinned && !node.hovered && !this.annotationPopup.isInBound(ZUI.mouseStatus.x, ZUI.mouseStatus.y)) {
+			this.annotationPopup.remove();
+			this.annotationPopup = null;
+		}
+	}
+};
+
+InteractionView.prototype.draw = function() {
+	if (this.cy != null) {
+		ZUI.camera.distance = ZUI.width / 2 / this.cy.zoom();
+		var pan = this.cy.pan();
+		ZUI.camera.x = ZUI.camera.unprojectDistance(ZUI.width / 2) - ZUI.width / 2 - ZUI.camera.unprojectDistance(pan.x);
+		ZUI.camera.y = ZUI.camera.unprojectDistance(ZUI.height / 2) - ZUI.height / 2 - ZUI.camera.unprojectDistance(pan.y);
+	}
+	ZUI.camera.update();
+
+	if (this.annotationPopup != null) {
+		this.annotationPopup.updateIcons();
+	}
+};
+
+InteractionView.prototype.leftClick = function() {
+	if (this.clickOnNode) {
+		this.clickOnNode = false;
+	}
+	else {
+		if (this.annotationPopup != null && this.annotationPopup.isPinned) {
+			this.annotationPopup.isPinned = false;
+			this.annotationPopup.remove();
+			this.annotationPopup = null;
+		}
+	}
 };
 
 InteractionView.prototype.getLoadProgress = function() {
@@ -140,19 +206,19 @@ InteractionView.prototype.getLoadProgress = function() {
 };
 
 /* Annotation class constructor */
-InteractionView.AnnotationPopup = function(view) {
+InteractionView.AnnotationPopup = function(view, geneIdentifier) {
 	/* Field properties */
 	this.view = view;
 	this.orientation = "left";			// Side on which the popup is placed
 	this.x = 0;
 	this.y = 0;
-	this.xOffset = 0;
-	this.yOffset = 0;
+	this.xOffset = 50;
+	this.yOffset = -100;
 	this.width = 350;
 	this.height = 205;
 	this.source = null;
 	this.isPinned = false;		// Whether the popup is pinned
-
+	this.geneIdentifier = geneIdentifier;
 	this.gene = null;
 	this.geneOfInterest = null;		// GeneOfInterest that the annotation popup is prepared for
 
@@ -276,6 +342,41 @@ InteractionView.AnnotationPopup = function(view) {
 			this.sequenceViewIcon.style.display = "inline";
 			this.sequenceViewIcon.appendChild(Eplant.createImage("img/unavailable/sequence.png"));
 			this.viewIcons.appendChild(this.sequenceViewIcon);
+
+	/* Set data */
+	this.gene = this.view.gene.chromosome.species.getGeneByIdentifier(this.geneIdentifier);
+	if (this.gene == null) {
+		$.ajax({
+			type: "GET",
+			url: "cgi-bin/querygenebyidentifier.cgi?id=" + this.geneIdentifier,
+			dataType: "json"
+		}).done($.proxy(function(response) {
+			var chromosome = null;
+			var chromosomes = this.view.gene.chromosome.species.chromosomes;
+			for (var n = 0; n < chromosomes.length; n++) {
+				if (chromosomes[n].name == response.chromosome) {
+					chromosome = chromosomes[n];
+				}
+			}
+			if (chromosome != null) {
+				this.gene = new Eplant.Gene(chromosome);
+				this.gene.identifier = response.id;
+				this.gene.start = response.start;
+				this.gene.end = response.end;
+				this.gene.strand = response.strand;
+				this.gene.aliases = response.aliases;
+				chromosome.genes.push(this.gene);
+
+				this.setData(this.gene);
+			}
+		}, this));
+	}
+	else {
+		this.setData(this.gene);
+	}
+
+	/* Append to container */
+	ZUI.container.appendChild(this.container);
 };
 
 	/* Updates the icons */
@@ -362,6 +463,14 @@ InteractionView.AnnotationPopup = function(view) {
 	InteractionView.AnnotationPopup.prototype.setToGetData = function() {
 		this.getDropData.value = "Get Data";
 		this.getDropData.onclick = $.proxy(function() {
+			this.geneOfInterest = Eplant.getSpeciesOfInterest(this.view.gene.chromosome.species).getGeneOfInterest(this.gene);
+			if (this.geneOfInterest == null) {
+				this.geneOfInterest = Eplant.getSpeciesOfInterest(this.view.gene.chromosome.species).addGeneOfInterest(this.gene);
+			}
+			if (this.view.annotationPopup != null && this.view.annotationPopup.gene == this.gene) {
+				this.view.annotationPopup.geneOfInterest = this.geneOfInterest;
+			}
+
 			this.setToDropData();
 		}, this);
 	};
@@ -371,11 +480,16 @@ InteractionView.AnnotationPopup = function(view) {
 		this.getDropData.value = "Drop Data";
 		this.getDropData.onclick = $.proxy(function() {
 			/* Drop GeneOfInterest */
-			Eplant.getSpeciesOfInterest(this.view.species).removeGeneOfInterest(this.geneOfInterest);
+			Eplant.getSpeciesOfInterest(this.view.gene.chromosome.species).removeGeneOfInterest(this.geneOfInterest);
+			this.geneOfInterest = null;
 			genesOfInterest_onChange();
 
 			this.setToGetData();
 		}, this);
+		if (this.geneOfInterest == Eplant.speciesOfFocus.geneOfFocus) {
+			this.getDropData.disabled = true;
+			this.getDropData.value = "Disabled";
+		}
 	};
 
 	/* Sets position of annotation popup */
@@ -451,7 +565,7 @@ InteractionView.AnnotationPopup = function(view) {
 		}
 
 		/* Set data button */
-		this.geneOfInterest = Eplant.getSpeciesOfInterest(this.view.species).getGeneOfInterest(this.gene);
+		this.geneOfInterest = Eplant.getSpeciesOfInterest(this.view.gene.chromosome.species).getGeneOfInterest(this.gene);
 		if (this.geneOfInterest == null) {
 			this.setToGetData();
 		}
@@ -463,10 +577,6 @@ InteractionView.AnnotationPopup = function(view) {
 	/* Remove annotation popup */
 	InteractionView.AnnotationPopup.prototype.remove = function() {
 		this.container.parentNode.removeChild(this.container);
-		if (this.source instanceof InteractionView.GeneListPopupItem) {
-			this.source.span.style.backgroundColor = Eplant.Color.White;
-			this.source.span.style.color = Eplant.Color.DarkGrey;
-		}
 	};
 
 	/* Sets identifier text */

@@ -134,6 +134,7 @@ Eplant.getSpeciesView = function() {
  */
 Eplant.setSpeciesView = function(speciesView) {
 	Eplant.speciesView = speciesView;
+	//TODO sync with drop down list
 };
 
 
@@ -337,13 +338,6 @@ Eplant.getSpeciesOfInterest = function(species) {
 };
 
 /**
- * Returns the SpeciesOfInterest object that is in focus.
- */
-Eplant.getSpeciesOfFocus = function(speciesOfFocus) {
-	return Eplant.speciesOfFocus;
-};
-
-/**
  * Sets the SpeciesOfInterest object that is in focus.
  * Syncs with the species label on the navigation panel.
  */
@@ -371,7 +365,7 @@ Eplant.GeneOfInterest = function(gene, speciesOfInterest) {
 	this.worldView = null;
 	this.plantView = null;
 	this.cellView = null;
-	this.interactionView = new InteractionView(gene.identifier);
+	this.interactionView = new InteractionView(gene);
 	this.pathwayView = null;
 	this.moleculeView = null;
 	this.sequenceView = null;
@@ -405,6 +399,19 @@ Eplant.Species = function() {
 	this.commonName = null;
 	this.chromosomes = null;
 };
+
+	/* Returns the gene object associated with the given identifier, or null */
+	Eplant.Species.prototype.getGeneByIdentifier = function(identifier) {
+		for (var n = 0; n < this.chromosomes.length; n++) {
+			var chromosome = this.chromosomes[n];
+			for (var m = 0; m < chromosome.genes.length; m++) {
+				if (chromosome.genes[m].identifier.toUpperCase() == identifier.toUpperCase()) {
+					return chromosome.genes[m];
+				}
+			}
+		}
+		return null;
+	};
 
 /* Chromosome class */
 Eplant.Chromosome = function(species) {

@@ -159,6 +159,10 @@ ChromosomeView.prototype.active = function() {
 	/* Reset properties */
 	this.mouseFramesIdle = 0;
 
+	/* Set camera */
+	ZUI.camera.x = 0;
+	ZUI.camera.y = 0;
+
 	/* Append view-specific UI */
 	var viewSpecificUI = document.getElementById("viewSpecificUI");
 	viewSpecificUI.appendChild(this.userAnnotation);
@@ -492,7 +496,7 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 			ZUI.ViewObject.Type.RoundedRect,
 			ZUI.ViewObject.Scale.World,
 			{
-				x: -178 + index * 120,
+				x: -318 + index * 120,
 				y: -220,
 				width: 6,
 				height: this.chromosome.length * 0.000015,
@@ -507,7 +511,7 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 				ZUI.ViewObject.Type.RoundedRect,
 				ZUI.ViewObject.Scale.World,
 				{
-					x: -180 + index * 120,
+					x: -320 + index * 120,
 					y: -220 + start * 0.000015,
 					width: 10,
 					height: (this.chromosome.centromeres[n].start - start) * 0.000015,
@@ -522,7 +526,7 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 			ZUI.ViewObject.Type.RoundedRect,
 			ZUI.ViewObject.Scale.World,
 			{
-				x: -180 + index * 120,
+				x: -320 + index * 120,
 				y: -220 + start * 0.000015,
 				width: 10,
 				height: (this.chromosome.length - start) * 0.000015,
@@ -619,19 +623,24 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 		}
 
 		/* Draw mini chromosome */
-		if (rangeStart > 0 || rangeEnd < this.chromosome.length) {
+		var bitmask = 0;
+		if (rangeStart > 0) bitmask += 1;
+		if (rangeEnd < this.chromosome.length) bitmask += 2;
+		if (bitmask > 0) {
 			if (rangeStart > this.chromosome.length) rangeStart = this.chromosome.length;
 			if (rangeEnd < 0) rangeEnd = 0;
 			ZUI.processing.stroke(ZUI.hexToColor(Eplant.Color.LightGrey));
-			var y1 = ZUI.height / 2 - 50;
-			var y2 = y1 + rangeStart / this.chromosome.length * 100;
-			var y3 = y1 + rangeEnd / this.chromosome.length * 100;
-			var y4 = y1 + 100;
+			var y1;
+			if (bitmask == 1) y1 = 20;
+			else if (bitmask == 2) y1 = ZUI.height - 100;
+			else y1 = ZUI.height / 2 - 40;
+			var y2 = y1 + rangeStart / this.chromosome.length * 80;
+			var y3 = y1 + rangeEnd / this.chromosome.length * 80;
+			var y4 = y1 + 80;
 			ZUI.processing.fill(ZUI.hexToColor(Eplant.Color.White));
-			ZUI.processing.rect(bottomTip.x + halfWidth + 10, y1, 20, y2 - y1);
-			ZUI.processing.rect(bottomTip.x + halfWidth + 10, y3 , 20, y4 - y3);
+			ZUI.processing.rect(bottomTip.x + halfWidth + 10, y1, 10, y4 - y1, 10);
 			ZUI.processing.fill(ZUI.hexToColor(Eplant.Color.LightGrey));
-			ZUI.processing.rect(bottomTip.x + halfWidth + 10, y2 , 20, y3 - y2);
+			ZUI.processing.rect(bottomTip.x + halfWidth + 10, y2 , 10, y3 - y2, 10);
 		}
 	};
 
