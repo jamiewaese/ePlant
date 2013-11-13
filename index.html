@@ -24,9 +24,10 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 		<![endif]-->
 
 
-		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-		<script type="text/javascript" src="lib/processing-1.4.1.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 		<script type="text/javascript" src="lib/JSmol.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+		<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/smoothness/jquery-ui.min.css"></link>
 		<script type="text/javascript" src="lib/cytoscape.min.js"></script>
 		<script type="text/javascript" src="lib/arbor.js"></script>
 
@@ -62,7 +63,7 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			<table width="90%">
 				<tr>
 					<td>
-						<div class="hint--right  hint--success  hint--rounded" data-hint="See more bio visualization tools at the BAR.">
+						<div class="hint--right  hint--success  hint--rounded" data-hint="See more bio visualization tools at the BAR." data-enabled="true">
 							<a href='http://bar.utoronto.ca'><img id="logo" src='img/BAR.png' alt='To the Bio-Array Resource Homepage' align="absmiddle" style="position:relative;left:40px;"></a>&nbsp;&nbsp;
 						</div>
 					</td>
@@ -71,8 +72,8 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 					</td>
 					<td>
 						<div style="float: right; padding: 17px 0px 0px 0px">
-							<div class="hint--left  hint--success  hint--rounded" data-hint="Save your work session."><input type="button" class="button" value="Save" onclick="saveFile();"/></div>
-							<div class="hint--left  hint--success  hint--rounded" data-hint="Load a previously saved session."><input type="button" class="button" id="fileinput" value="Load" onchange="readFile(this);"></div>
+							<div class="hint--left  hint--success  hint--rounded" data-hint="Save your work session." data-enabled="true"><input type="button" class="button" value="Save" onclick="saveFile();"/></div>
+							<div class="hint--left  hint--success  hint--rounded" data-hint="Load a previously saved session." data-enabled="true"><input type="button" class="button" id="fileinput" value="Load" onchange="readFile(this);"></div>
 						</div>
 					</td>
 				</tr>
@@ -88,57 +89,57 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 							</h3>							
 							Enter gene identifier or alias:<br>
 							<input type="text" name="GeneID" style="width:121px; padding:5px;">
-							<div class="hint--right hint--success hint--rounded" data-hint="Download all available data for this gene.">
+							<div class="hint--right hint--success hint--rounded" data-hint="Download all available data for this gene." data-enabled="true">
 									<input type="button" class="button" value="Get">
 								</div>
 							<br>
 							<br>
-							<div class="hint--right hint--success hint--rounded" data-hint="Quickly switch between loaded genes.">
-								<select id="genesOfInterest" style="width:180px;" onchange="genesOfInterest_onChange();">
-									<option disabled value="Currently loaded genes:" >Currently loaded genes:</option>
+							<div class="hint--right hint--success hint--rounded" data-hint="Quickly switch between loaded genes." data-enabled="true">
+								<select id="elementsOfInterest" style="width:180px;" onchange="elementsOfInterest_onChange();">
+									<option disabled value="Currently loaded genes:" selected>Currently loaded genes:</option>
 								</select>
  							</div>
 							<div style="text-align:center;position:relative;left:-20px;">
 							<br>
-							<div id="speciesViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Select your species of interest." onclick="Eplant.toSpeciesView();">
+							<div id="speciesViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Select your species of interest." data-enabled="true" onclick="Eplant.toSpeciesView();">
 								<img src="img/unavailable/species.png"></img>
 							</div>
 							<br>
-							<div id="chromosomeViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View chromosomes and select genes." onclick="Eplant.toChromosomeView();">
+							<div id="chromosomeViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View chromosomes and select genes." data-enabled="true" onclick="Eplant.toChromosomeView();">
 								<img src="img/unavailable/chromosome.png"></img>
 							</div>
 							<br>
-							<div id="worldViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View global distributions of your plant.">
+							<div id="worldViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View global distributions of your plant." data-enabled="true">
 								<img src="img/unavailable/world.png"></img>
 							</div>
 							<br>
-							<div id="plantViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View tissues expression profile of your gene.">
+							<div id="plantViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View tissues expression profile of your gene." data-enabled="true">
 								<img src="img/unavailable/plant.png"></img>
 							</div>
 							<br>
-							<div id="cellViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View subcellular expression profile of your gene.">
+							<div id="cellViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View subcellular expression profile of your gene." data-enabled="true">
 								<img src="img/unavailable/cell.png"></img>
 							</div>
 							<br>
-							<div id="interactionViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View protein-protein interactions of your gene product." onclick="Eplant.toInteractionView();">
+							<div id="interactionViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View protein-protein interactions of your gene product." data-enabled="true" onclick="Eplant.toInteractionView();">
 								<img src="img/unavailable/interaction.png"></img>
 							</div>
-							<div id="pathwayViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View metabolic pathways that your gene product participates in.">
+							<div id="pathwayViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View metabolic pathways that your gene product participates in." data-enabled="true" onclick="Eplant.toPathwayView();">
 								<img src="img/unavailable/pathway.png"></img>
 							</div>
 							<br>
-							<div id="moleculeViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View structure of the protein encoded by your gene." onclick="Eplant.toMoleculeView();">
+							<div id="moleculeViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View structure of the protein encoded by your gene." data-enabled="true" onclick="Eplant.toMoleculeView();">
 								<img src="img/unavailable/molecule.png"></img>
 							</div>
 							<br>
-							<div id="sequenceViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View annotations for your gene sequence.">
+							<div id="sequenceViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View annotations for your gene sequence." data-enabled="true">
 								<img src="img/unavailable/sequence.png"></img>
 							</div>
 							</div>
 						</div>
 					</td>
 					<td valign="top">
-						<div id="ZUI_container" style="width:900px;height:600px;margin:0 auto 0 50px;position:relative;left:-60px;border:3px solid #F0F0F0;border-radius:20px;">
+						<div id="ZUI_container" style="width:900px;height:600px;margin:0 auto 0 50px;position:relative;left:-60px;border:3px solid #F0F0F0;border-radius:20px;background:#fff;">
 							<div id="Cytoscape_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;">
 							</div>
 							<div id="JSmol_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;">
@@ -152,15 +153,21 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 								<tr>
 									<td id="viewSpecificUI" style="padding-left: 50px; width:550px;vertical-align:middle;">
 									</td>
-									<td id="crossViewUI" style="width:200px;vertical-align:middle;">
-										<div id="labelsColorIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Labels: off / light / dark." style="padding:5px;">
+									<td id="crossViewUI" style="width:300px;vertical-align:middle;">
+										<div id="labelsColorIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Labels: off / light / dark." data-enabled="true" style="padding:5px;">
 											<img src="img/labelscolor.png"></img>
 										</div>
-										<div id="getImageIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Save current screen as high resolution image." style="padding:5px;" onclick="ZUI.toImageInWindow();">
+										<div id="getImageIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Save current screen as high resolution image." data-enabled="true" style="padding:5px;" onclick="ZUI.toImageInWindow();">
 											<img src="img/getimage.png"></img>
 										</div>
-										<div id="paletteIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Color palette." style="padding:5px;">
+										<div id="paletteIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Color palette." data-enabled="true" style="padding:5px;">
 											<img src="img/palette.png"></img>
+										</div>
+										<div id="changeViewAnimationIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Toggle zooming animation." data-enabled="true" style="padding:5px;" onclick="Eplant.toggleChangeViewAnimation();">
+											<img src="img/on/zoom.png"></img>
+										</div>
+										<div id="tooltipIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Toggle tooltip." data-enabled="true" style="padding:5px;" onclick="Eplant.toggleTooltip();">
+											<img src="img/on/tooltip.png"></img>
 										</div>
 									</td>
 								</tr>
@@ -169,23 +176,29 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 					</td>
 				</tr>
 			</table>
-			<script type="text/javascript" src="js/framework.js"></script>
+			<script type="text/javascript" src="js/zui.js"></script>
 			<script type="text/javascript" src="js/eplant.js"></script>
 			<script type="text/javascript" src="js/views/chromosome.js"></script>
 			<script type="text/javascript" src="js/views/species.js"></script>
 			<script type="text/javascript" src="js/views/interaction.js"></script>
 			<script type="text/javascript" src="js/views/molecule.js"></script>
+			<script type="text/javascript" src="js/views/pathway.js"></script>
 			<script type="text/javascript">
-				/* Handles the onchange event fired by the genesOfInterest select element */
-				function genesOfInterest_onChange() {
+				/* Handles the onchange event fired by the elementsOfInterest select element */
+				function elementsOfInterest_onChange() {
 					/* Get selected identifier */
-					var genesOfInterest = document.getElementById("genesOfInterest");
-					var identifier = genesOfInterest.options[genesOfInterest.selectedIndex].value;
-					var geneOfInterest = Eplant.speciesOfFocus.getGeneOfInterestByIdentifier(identifier);
-					Eplant.speciesOfFocus.setGeneOfFocus(geneOfInterest);
+					var elementsOfInterest = document.getElementById("elementsOfInterest");
+					var identifier = elementsOfInterest.options[elementsOfInterest.selectedIndex].value;
+					var elementOfInterest = Eplant.speciesOfFocus.getElementOfInterestByIdentifier(identifier);
+					Eplant.speciesOfFocus.setElementOfFocus(elementOfInterest);
 				}
 
-				ZUI.attachProcessing("ZUI_canvas");
+				ZUI.initialize({
+					canvas: document.getElementById("ZUI_canvas"),
+					background: "#ffffff",
+					backgroundAlpha: 0,
+					frameRate: 60
+				});
 				ZUI.update = Eplant.update;
 				MoleculeView.initJMol();
 				Eplant.speciesView = new SpeciesView();
@@ -203,7 +216,7 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			<li><a href="#view3">Example Gallery</a></li>
 			<li><a href="#view4">Help</a></li>
 		</ul>
-		<div class="tabcontents">
+		<div class="tabcontents" style="background:#fff;">
 			<div id="view1" style="text-align:center;">
 				Welcome
 			</div>

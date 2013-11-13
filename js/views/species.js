@@ -5,6 +5,8 @@
  */
 
 function SpeciesView() {
+	ZUI.View.call(this);
+
 	/* Species shown on the right panel from mouse-over of its name */
 	this.speciesShown = null;
 
@@ -28,6 +30,78 @@ function SpeciesView() {
 		ZUI.camera.x = ZUI.width / 6 * (400 - ZUI.camera.distance) / 400;
 		this.draw();
 	}, this));
+/*this.viewObjects.push(new ZUI.ViewObject({
+	shape: "text",
+	positionScale: "world",
+	sizeScale: "screen",
+	x: ZUI.width / 6,
+	y: 50,
+	centerAt: "center top",
+	content: "Chr 1",
+	autoDraw: true,
+	size: 100,
+	font: "Ariel",
+	mouseOver: function(){console.log("MOUSEOVER");},
+	mouseOut: function(){console.log("MOUSEOUT");}
+}));
+this.viewObjects.push(new ZUI.ViewObject({
+	shape: "rect",
+	positionScale: "world",
+	sizeScale: "world",
+	x: ZUI.width / 6,
+	y: 0,
+	width: 50,
+	height: 0,
+	centerAt: "left bottom",
+	autoDraw: true,
+	mouseOver: function(){console.log("MOUSEOVER");},
+	mouseOut: function(){console.log("MOUSEOUT");}
+}));
+this.viewObjects.push(new ZUI.ViewObject({
+	shape: "polygon",
+	positionScale: "world",
+	sizeScale: "world",
+	x: 0,
+	y: 0,
+	vertices: [
+		{
+			x: 0,
+			y: 0
+		},
+		{
+			x: 0,
+			y: 100
+		},
+		{
+			x: 100,
+			y: 100
+		},
+		{
+			x: 100,
+			y: 0
+		},
+		{
+			x: 75,
+			y: 0
+		},
+		{
+			x: 75,
+			y: 50
+		},
+		{
+			x: 25,
+			y: 50
+		},
+		{
+			x: 25,
+			y: 0
+		}
+	],
+	fill: false,
+	autoDraw: true,
+	mouseOver: function(){console.log("MOUSEOVER");},
+	mouseOut: function(){console.log("MOUSEOUT");}
+}));*/
 }
 
 /* Inherit from View superclass */
@@ -83,21 +157,24 @@ SpeciesView.prototype.draw = function() {
 
 	//TODO change to something more appropriate
 	if (this.speciesShown != null && this.fade < 1) {
-		ZUI.drawViewObject(this.speciesShown.viewObject);
+		this.speciesShown.viewObject.draw();
 	}
 
 	/* Fade */
 	this.fade += this.fadeRate;
 	if (this.fade < 0) this.fade = 0;
 	if (this.fade > 1) this.fade = 1;
-	ZUI.processing.stroke(255, 255, 255, this.fade * 255);
-	ZUI.processing.fill(255, 255, 255, this.fade * 255);
-	ZUI.processing.rect(0, 0, ZUI.width, ZUI.height);
+	ZUI.context.save();
+	ZUI.context.strokeStyle = "#ffffff";
+	ZUI.context.fillStyle = "#ffffff";
+	ZUI.context.globalAlpha = this.fade;
+	ZUI.context.fillRect(0, 0, ZUI.width, ZUI.height);
+	ZUI.context.restore();
 };
 
 /* Species list class */
-SpeciesView.SpeciesList = function(speciesView) {
-	this.speciesView = speciesView;
+SpeciesView.SpeciesList = function(view) {
+	this.view = view;
 
 	/* Array of species */
 	this.items = [];
@@ -127,7 +204,7 @@ SpeciesView.SpeciesList = function(speciesView) {
 	$.ajax({
 		type: "GET",
 		url: "cgi-bin/speciesinfo.cgi",
-		dataType: "json"
+			dataType: "json"
 	}).done($.proxy(function(response) {
 		for (var n = 0; n < response.length; n++) {
 			var species = new Eplant.Species();
@@ -149,25 +226,25 @@ SpeciesView.SpeciesListItem = function(species, speciesList) {
 	this.element = document.createElement("span");
 	this.element.style.cursor = "default";
 	this.element.style.fontFamily = "Helvetica";
-	this.element.style.fontSize = "24px";
+	this.element.style.fontSize = "20px";
 	this.element.style.fontStyle = "italic";
 	this.element.style.textIndent = "20px";
-	this.element.style.lineHeight = "46px";
+	this.element.style.lineHeight = "40px";
 	this.element.style.color = Eplant.Color.DarkGrey;
 	this.element.style.display = "block";
 	this.element.style.cursor = "pointer";
 	this.element.textContent = this.species.scientificName;
 	this.element.onmouseover = $.proxy(function() {
-		if (this.speciesList.speciesView.speciesShown != null) {
-			this.speciesList.speciesView.speciesShown.element.style.backgroundColor = "transparent";
+		if (this.speciesList.view.speciesShown != null) {
+			this.speciesList.view.speciesShown.element.style.backgroundColor = "transparent";
 		}
 		this.element.style.backgroundColor = Eplant.Color.Green;
-		this.speciesList.speciesView.speciesShown = this;
-		this.speciesList.speciesView.fadeRate = -0.05;
+		this.speciesList.view.speciesShown = this;
+		this.speciesList.view.fadeRate = -0.05;
 	}, this);
 	this.element.onmouseout = $.proxy(function() {
 		this.element.style.backgroundColor = "transparent";
-		this.speciesList.speciesView.fadeRate = 0.05;
+		this.speciesList.view.fadeRate = 0.05;
 	}, this);
 	this.element.onclick = $.proxy(function() {
 		/* Add to species of interest */
@@ -187,20 +264,19 @@ SpeciesView.SpeciesListItem = function(species, speciesList) {
 			Eplant.speciesOfFocus.chromosomeView = new ChromosomeView(this.species);
 		}
 
-		/* Set species label */
-		document.getElementById("speciesLabel").innerHTML = Eplant.speciesOfFocus.species.scientificName;
-
 		/* change to chromosome view */
 		ZUI.container.style.left = "0";
-		ZUI.changeActiveView(Eplant.speciesOfFocus.chromosomeView, Eplant.speciesView.zoomInExitAnimation, Eplant.speciesOfFocus.chromosomeView.zoomInEntryAnimation);
+		ZUI.changeActiveView(Eplant.speciesOfFocus.chromosomeView, this.speciesList.view.zoomInExitAnimation, Eplant.speciesOfFocus.chromosomeView.zoomInEntryAnimation);
 	}, this);
 	this.speciesList.element.appendChild(this.element);
 
 	/* Create view object */
-	this.viewObject = new ZUI.ViewObject(ZUI.ViewObject.Type.Shape, ZUI.ViewObject.Scale.World, {});
-	this.viewObject.shape = ZUI.processing.loadShape("data/species/" + this.species.scientificName.replace(" ", "_") + ".svg");
-	this.viewObject.width = 250;
-	this.viewObject.height = 450;
-	this.viewObject.x = ZUI.width / 6 - this.viewObject.width / 2;
-	this.viewObject.y = -this.viewObject.height / 2;
+	this.viewObject = new ZUI.ViewObject({
+		shape: "svg",
+		positionScale: "world",
+		sizeScale: "world",
+		x: ZUI.width / 6,
+		y: 0,
+		url: "data/species/" + this.species.scientificName.replace(" ", "_") + ".svg"
+	});
 };

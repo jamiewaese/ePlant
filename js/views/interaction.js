@@ -16,17 +16,19 @@ function InteractionView(gene) {
 	this.cy = null;
 
 	/* Annotation popup */
-	this.annotationPopup = null;
+	this.nodePopup = null;
+	this.edgePopup = null;
 
 	/* Data status */
 	this.isDataReady = false;
 
-	this.clickOnNode = false;
+	this.mouseFramesIdle = 0;							// Number of frames that the mouse stays idle
 
 	/* Configure Cytoscape */
 	this.cytoscapeConf = {};
 	this.cytoscapeConf.layout = {
-		name: "grid"
+		name: "grid",
+		fit: false
 	};
 	this.cytoscapeConf.style = cytoscape.stylesheet()
 		.selector("node")
@@ -39,8 +41,21 @@ function InteractionView(gene) {
 			})
 		.selector("edge")
 			.css({
-				"width": "mapData(100, 70, 100, 2, 6)",
+				"width": "1",
 				"line-color": "data(color)"
+			})
+		.selector("node:selected")
+			.css({
+			})
+		.selector("node.highlight")
+			.css({
+				"border-width": "3",
+				"border-color": Eplant.Color.DarkGrey
+			})
+		.selector("edge.highlight")
+			.css({
+				"width": "2",
+				"line-color": Eplant.Color.DarkGrey
 			})
 	;
 	this.cytoscapeConf.elements = {
@@ -48,51 +63,67 @@ function InteractionView(gene) {
 		edges: []
 	};
 	this.cytoscapeConf.ready = $.proxy(function() {
+		/* Save Cytoscape handle */
 		this.cy = $(this.cytoscapeElement).cytoscape("get");
-		this.cy.nodes().bind("mouseover", $.proxy(function(event){
-			var node = event.cyTarget._private;
-			node.hovered = true;
-			if (this.annotationPopup == null) {
-				this.annotationPopup = new InteractionView.AnnotationPopup(this, node.data.id);
-				this.annotationPopup.source = node;
-				var position = ZUI.camera.projectPoint(node.position.x - ZUI.width / 2, node.position.y - ZUI.height / 2);
+
+		/* Set user input behaviours */
+		this.cy.on("mouseover", "node", $.proxy(function(event) {
+			ZUI.container.style.cursor = "pointer";
+			var node = event.cyTarget;
+			node.addClass("highlight");
+			if (this.nodePopup == null) {
+				this.nodePopup = new InteractionView.NodePopup(this, node.data("id"));
+				this.nodePopup.source = node;
+				var position = ZUI.camera.projectPoint(node.position().x - ZUI.width / 2, node.position().y - ZUI.height / 2);
 				if (position.x > ZUI.width / 2) {
-					this.annotationPopup.setPosition(position.x, position.y, null, null, null, null, "left");
+					this.nodePopup.setPosition(position.x, position.y, null, null, null, null, "left");
 				}
 				else {
-					this.annotationPopup.setPosition(position.x, position.y, null, null, null, null, "right");
+					this.nodePopup.setPosition(position.x, position.y, null, null, null, null, "right");
 				}
 			}
 		}, this));
-		this.cy.nodes().bind("mouseout", $.proxy(function(event){
-			var node = event.cyTarget._private;
-			node.hovered = false;
-			if (this.annotationPopup != null && !this.annotationPopup.isPinned && !this.annotationPopup.isInBound(ZUI.mouseStatus.x, ZUI.mouseStatus.y)) {
-				this.annotationPopup.remove();
-				this.annotationPopup = null;
-			}
-		}, this));
-		this.cy.nodes().bind("click", $.proxy(function(event){
-			this.clickOnNode = true;
-			if (this.annotationPopup != null) {
-				if (!this.annotationPopup.isPinned) {
-					this.annotationPopup.isPinned = true;
-				}
-				else {
-					this.annotationPopup.isPinned = false;
-					this.annotationPopup.remove();
-					this.annotationPopup = null;
+		this.cy.on("mouseout", "node", $.proxy(function(event) {
+			ZUI.container.style.cursor = "default";
+			var node = event.cyTarget;
+			if (!node.selected()) {
+				node.removeClass("highlight");
+				if (this.nodePopup != null && this.nodePopup.source == node) {
+					this.nodePopup.remove();
+					this.nodePopup = null;
 				}
 			}
 		}, this));
-		this.cy.edges().bind("mouseover", $.proxy(function(event){
-			console.log("edge mouseover");
+		this.cy.on("tap", "node", $.proxy(function(event) {
+			this.cy.nodes().unselect();
+			this.cy.nodes().removeClass("highlight");
+
+			var node = event.cyTarget;
+			node.addClass("highlight");
+			node.select();
 		}, this));
-		this.cy.edges().bind("mouseout", $.proxy(function(event){
-			console.log("edge mouseout");
+		this.cy.on("mouseover", "edge", $.proxy(function(event){
+			ZUI.container.style.cursor = "pointer";
+			var edge = event.cyTarget;
+			edge.addClass("highlight");
 		}, this));
-		this.cy.edges().bind("click", $.proxy(function(event){
-			console.log("edge click");
+		this.cy.on("mouseout", "edge", $.proxy(function(event){
+			ZUI.container.style.cursor = "default";
+			var edge = event.cyTarget;
+			edge.removeClass("highlight");
+		}, this));
+		this.cy.on("click", "edge", $.proxy(function(event){
+		}, this));
+		this.cy.on("tap", $.proxy(function(event) {
+			if (event.cyTarget == this.cy) {
+				this.cy.nodes().unselect();
+				this.cy.nodes().removeClass("highlight");
+
+				if (this.nodePopup != null) {
+					this.nodePopup.remove();
+					this.nodePopup = null;
+				}
+			}
 		}, this));
 	}, this);
 
@@ -100,32 +131,53 @@ function InteractionView(gene) {
 	$.ajax({
 		type: "GET",
 		url: "http://bar.utoronto.ca/webservices/aiv/get_interactions.php?request=[{\"agi\":\"" + this.gene.identifier + "\"}]",
+//url: "http://bar.utoronto.ca/~mierullo/get_interactions.php?request=[{\"agi\":\"" + this.gene.identifier + "\"}]",
 		dataType: "json"
 	}).done($.proxy(function(response) {
 //TODO if response.length == 0 then NO DATA AVAILABLE
 		var nodes = this.cytoscapeConf.elements.nodes;
 		var edges = this.cytoscapeConf.elements.edges;
-		nodes.push({
-			data: {
-				id: this.gene.identifier,
-				color: Eplant.Color.DarkGrey
+		for (var source in response) {
+			var exists = false;
+			for (var n = 0; n < nodes.length; n++) {
+				if (nodes[n].data.id.toUpperCase() == source.toUpperCase()) {
+					exists = true;
+					break;
+				}
 			}
-		});
-		var interactors = response[this.gene.identifier];
-		for (var n = 0; n < interactors.length; n++) {
-			nodes.push({
-				data: {
-					id: interactors[n].protein,
-					color: Eplant.Color.LightGrey
+			if (!exists) {
+				nodes.push({
+					data: {
+						id: source.toUpperCase(),
+						color: (source == this.gene.identifier) ? Eplant.Color.DarkGrey : Eplant.Color.LightGrey
+					}
+				});
+			}
+			var interactors = response[source];
+			for (n = 0; n < interactors.length; n++) {
+				exists = false;
+				for (var m = 0; m < nodes.length; m++) {
+					if (nodes[m].data.id.toUpperCase() == interactors[n].protein.toUpperCase()) {
+						exists = true;
+						break;
+					}
 				}
-			});
-			edges.push({
-				data: {
-					source: this.gene.identifier,
-					target: interactors[n].protein,
-					color: Eplant.Color.LightGrey
+				if (!exists) {
+					nodes.push({
+						data: {
+							id: interactors[n].protein.toUpperCase(),
+							color: (interactors[n].protein == this.gene.identifier) ? Eplant.Color.DarkGrey : Eplant.Color.LightGrey
+						}
+					});
 				}
-			});
+				edges.push({
+					data: {
+						source: this.gene.identifier.toUpperCase(),
+						target: interactors[n].protein.toUpperCase(),
+						color: Eplant.Color.LightGrey
+					}
+				});
+			}
 		}
 		if (nodes.length <= 1) {
 			this.cytoscapeConf.layout.name = "grid";
@@ -155,26 +207,44 @@ InteractionView.prototype.active = function() {
 		}
 		this.cytoscapeElement.dispatchEvent(e);
 	}, this);
+
+	this.mouseFramesIdle = 0;
 };
 
 InteractionView.prototype.inactive = function() {
 	this.cytoscapeElement.innerHTML = "";
 	ZUI.passInputEvent = null;
 
+	if (this.nodePopup != null) {
+		this.nodePopup.remove();
+		this.nodePopup = null;
+	}
 	this.cy.remove(this.cy.elements());
 };
 
 InteractionView.prototype.mouseMove = function() {
-	if (this.annotationPopup != null) {
-		var node = this.annotationPopup.source;
-		if (!this.annotationPopup.isPinned && !node.hovered && !this.annotationPopup.isInBound(ZUI.mouseStatus.x, ZUI.mouseStatus.y)) {
-			this.annotationPopup.remove();
-			this.annotationPopup = null;
-		}
+	/* Get mouse status */
+	var x = ZUI.mouseStatus.x;
+	var y = ZUI.mouseStatus.y;
+	var xLast = ZUI.mouseStatus.xLast;
+	var yLast = ZUI.mouseStatus.yLast;
+
+	if (xLast != x || yLast != y) {
+		this.mouseFramesIdle = 0;
 	}
+
+/*	if (this.nodePopup != null) {
+		var node = this.nodePopup.source;
+		if (!this.nodePopup.isPinned && !node.selected() && !this.nodePopup.isInBound(ZUI.mouseStatus.x, ZUI.mouseStatus.y)) {
+			this.nodePopup.remove();
+			this.nodePopup = null;
+		}
+	}*/
 };
 
 InteractionView.prototype.draw = function() {
+	this.mouseFramesIdle++;
+
 	if (this.cy != null) {
 		ZUI.camera.distance = ZUI.width / 2 / this.cy.zoom();
 		var pan = this.cy.pan();
@@ -183,22 +253,12 @@ InteractionView.prototype.draw = function() {
 	}
 	ZUI.camera.update();
 
-	if (this.annotationPopup != null) {
-		this.annotationPopup.updateIcons();
+	if (this.nodePopup != null) {
+		this.nodePopup.updateIcons();
 	}
 };
 
 InteractionView.prototype.leftClick = function() {
-	if (this.clickOnNode) {
-		this.clickOnNode = false;
-	}
-	else {
-		if (this.annotationPopup != null && this.annotationPopup.isPinned) {
-			this.annotationPopup.isPinned = false;
-			this.annotationPopup.remove();
-			this.annotationPopup = null;
-		}
-	}
 };
 
 InteractionView.prototype.getLoadProgress = function() {
@@ -206,7 +266,7 @@ InteractionView.prototype.getLoadProgress = function() {
 };
 
 /* Annotation class constructor */
-InteractionView.AnnotationPopup = function(view, geneIdentifier) {
+InteractionView.NodePopup = function(view, geneIdentifier) {
 	/* Field properties */
 	this.view = view;
 	this.orientation = "left";			// Side on which the popup is placed
@@ -380,7 +440,7 @@ InteractionView.AnnotationPopup = function(view, geneIdentifier) {
 };
 
 	/* Updates the icons */
-	InteractionView.AnnotationPopup.prototype.updateIcons = function() {
+	InteractionView.NodePopup.prototype.updateIcons = function() {
 		/* WorldView */
 		if (this.geneOfInterest == null || this.geneOfInterest.worldView == null || this.geneOfInterest.worldView.getLoadProgress() < 1) {
 			this.worldViewIcon.getElementsByTagName("img")[0].src = "img/unavailable/world.png";
@@ -460,15 +520,15 @@ InteractionView.AnnotationPopup = function(view, geneIdentifier) {
 	};
 
 	/* Sets the data button to Get Data */
-	InteractionView.AnnotationPopup.prototype.setToGetData = function() {
+	InteractionView.NodePopup.prototype.setToGetData = function() {
 		this.getDropData.value = "Get Data";
 		this.getDropData.onclick = $.proxy(function() {
 			this.geneOfInterest = Eplant.getSpeciesOfInterest(this.view.gene.chromosome.species).getGeneOfInterest(this.gene);
 			if (this.geneOfInterest == null) {
 				this.geneOfInterest = Eplant.getSpeciesOfInterest(this.view.gene.chromosome.species).addGeneOfInterest(this.gene);
 			}
-			if (this.view.annotationPopup != null && this.view.annotationPopup.gene == this.gene) {
-				this.view.annotationPopup.geneOfInterest = this.geneOfInterest;
+			if (this.view.nodePopup != null && this.view.nodePopup.gene == this.gene) {
+				this.view.nodePopup.geneOfInterest = this.geneOfInterest;
 			}
 
 			this.setToDropData();
@@ -476,7 +536,7 @@ InteractionView.AnnotationPopup = function(view, geneIdentifier) {
 	};
 
 	/* Sets the data button to Drop Data */
-	InteractionView.AnnotationPopup.prototype.setToDropData = function() {
+	InteractionView.NodePopup.prototype.setToDropData = function() {
 		this.getDropData.value = "Drop Data";
 		this.getDropData.onclick = $.proxy(function() {
 			/* Drop GeneOfInterest */
@@ -493,7 +553,7 @@ InteractionView.AnnotationPopup = function(view, geneIdentifier) {
 	};
 
 	/* Sets position of annotation popup */
-	InteractionView.AnnotationPopup.prototype.setPosition = function(x, y, xOffset, yOffset, width, height, orientation) {
+	InteractionView.NodePopup.prototype.setPosition = function(x, y, xOffset, yOffset, width, height, orientation) {
 		if (x != null) this.x = x;
 		if (y != null) this.y = y;
 		if (xOffset != null) this.xOffset = xOffset;
@@ -514,12 +574,12 @@ InteractionView.AnnotationPopup = function(view, geneIdentifier) {
 	};
 
 	/* Adds the annotation popup element to the specified container */
-	InteractionView.AnnotationPopup.prototype.addToContainer = function(container) {
+	InteractionView.NodePopup.prototype.addToContainer = function(container) {
 		container.appendChild(this.container);
 	};
 
 	/* Returns whether the specified position is within the bounds of the popup */
-	InteractionView.AnnotationPopup.prototype.isInBound = function(x, y) {
+	InteractionView.NodePopup.prototype.isInBound = function(x, y) {
 		var inBound = true;
 		if (this.orientation == "left") {
 			if (x < this.x - this.width - this.xOffset - 12 || x > this.x) {
@@ -538,7 +598,7 @@ InteractionView.AnnotationPopup = function(view, geneIdentifier) {
 	};
 
 	/* Sets data */
-	InteractionView.AnnotationPopup.prototype.setData = function(gene) {
+	InteractionView.NodePopup.prototype.setData = function(gene) {
 		/* Set data texts */
 		this.gene = gene;
 		this.setIdentifier(this.gene.identifier);
@@ -575,17 +635,17 @@ InteractionView.AnnotationPopup = function(view, geneIdentifier) {
 	};
 
 	/* Remove annotation popup */
-	InteractionView.AnnotationPopup.prototype.remove = function() {
+	InteractionView.NodePopup.prototype.remove = function() {
 		this.container.parentNode.removeChild(this.container);
 	};
 
 	/* Sets identifier text */
-	InteractionView.AnnotationPopup.prototype.setIdentifier = function(identifier) {
+	InteractionView.NodePopup.prototype.setIdentifier = function(identifier) {
 		this.identifier.innerHTML = "<label>Identifier:</label> &nbsp&nbsp&nbsp&nbsp" + identifier;
 	};
 
 	/* Sets aliases text */
-	InteractionView.AnnotationPopup.prototype.setAliases = function(aliases) {
+	InteractionView.NodePopup.prototype.setAliases = function(aliases) {
 		if (aliases.length == 0) {
 			this.aliases.innerHTML = "<label>Aliases:</label> &nbsp&nbsp&nbsp&nbsp&nbspNot available";
 		}
@@ -595,7 +655,7 @@ InteractionView.AnnotationPopup = function(view, geneIdentifier) {
 	};
 
 	/* Sets annotation text */
-	InteractionView.AnnotationPopup.prototype.setAnnotation = function(annotation) {
+	InteractionView.NodePopup.prototype.setAnnotation = function(annotation) {
 		if (annotation.length == 0) {
 			this.annotation.innerHTML = "<label>Annotation:</label> Not available";
 		}
