@@ -139,7 +139,7 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 						</div>
 					</td>
 					<td valign="top">
-						<div id="ZUI_container" style="width:900px;height:600px;margin:0 auto 0 50px;position:relative;left:-60px;border:3px solid #F0F0F0;border-radius:20px;background:#fff;">
+						<div id="ZUI_container" style="width:900px;height:600px;margin:0 auto 0 50px;position:relative;left:-100px;border:3px solid #F0F0F0;border-radius:20px;background:#fff;">
 							<div id="Cytoscape_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;">
 							</div>
 							<div id="JSmol_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;">
@@ -176,13 +176,27 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 					</td>
 				</tr>
 			</table>
-			<script type="text/javascript" src="js/zui.js"></script>
-			<script type="text/javascript" src="js/eplant.js"></script>
-			<script type="text/javascript" src="js/views/chromosome.js"></script>
-			<script type="text/javascript" src="js/views/species.js"></script>
-			<script type="text/javascript" src="js/views/interaction.js"></script>
-			<script type="text/javascript" src="js/views/molecule.js"></script>
-			<script type="text/javascript" src="js/views/pathway.js"></script>
+			<script type="text/javascript" src="src/ZUI/ZUI.js"></script>
+				<script type="text/javascript" src="src/ZUI/ZUI.camera.js"></script>
+				<script type="text/javascript" src="src/ZUI/ZUI.View.js"></script>
+				<script type="text/javascript" src="src/ZUI/ZUI.ViewObject.js"></script>
+				<script type="text/javascript" src="src/ZUI/ZUI.Animation.js"></script>
+			<script type="text/javascript" src="src/Eplant/Eplant.js"></script>
+				<script type="text/javascript" src="src/Eplant/Eplant.Color.js"></script>
+				<script type="text/javascript" src="src/Eplant/Eplant.Species.js"></script>
+				<script type="text/javascript" src="src/Eplant/Eplant.Chromosome.js"></script>
+				<script type="text/javascript" src="src/Eplant/Eplant.Centromere.js"></script>
+				<script type="text/javascript" src="src/Eplant/Eplant.Element.js"></script>
+				<script type="text/javascript" src="src/Eplant/Eplant.SpeciesOfInterest.js"></script>
+				<script type="text/javascript" src="src/Eplant/Eplant.ElementOfInterest.js"></script>
+					<script type="text/javascript" src="src/Eplant/Eplant.ElementOfInterest.Tag.js"></script>
+				<script type="text/javascript" src="src/Eplant/Eplant.AnnotationDialog.js"></script>
+					<script type="text/javascript" src="src/Eplant/Eplant.AnnotationDialog.Tag.js"></script>
+<script type="text/javascript" src="js/views/species.js"></script>
+<script type="text/javascript" src="js/views/chromosome.js"></script>
+<script type="text/javascript" src="js/views/interaction.js"></script>
+<script type="text/javascript" src="js/views/molecule.js"></script>
+<script type="text/javascript" src="js/views/pathway.js"></script>
 			<script type="text/javascript">
 				/* Handles the onchange event fired by the elementsOfInterest select element */
 				function elementsOfInterest_onChange() {
