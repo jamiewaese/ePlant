@@ -1,5 +1,5 @@
 body {
-	background-color: #FFF;
+	background-image: url("../img/background.png");
 	color: #666;
 	line-height: normal;
 	font-family: Lucida Grande, Lucida Sans, Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
@@ -134,6 +134,54 @@ div.popup {
 	-moz-transform: rotate(180deg);
 }
 
+/* ElementListDialogItem class */
+span.elementListDialogItem {
+	cursor: default;
+	font-family: Helvetica;
+	font-size: 14px;
+	line-height: 18px;
+	color: #3C3C3C;
+	background-color: #FFFFFF;
+	display: block;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+span.elementListDialogItem:hover {
+	cursor: pointer;
+	color: #FFFFFF;
+	background-color: #3C3C3C;
+}
+
+/* Class for circular tags */
+.circularTag {
+	-webkit-border-radius: 999px;
+	-moz-border-radius: 999px;
+	border-radius: 999px;
+	border: 1px solid #3C3C3C;
+	width: 10px;
+	height: 10px;
+	display: inline-block;
+	margin: 2px;
+	vertical-align: middle;
+}
+.circularTag:hover {
+	cursor: pointer;
+}
+.circularTag[selected="true"] {
+	border-width: 3px;
+	margin: 0;
+}
+
+/* noTitleBar class for disabling jQuery UI dialog title bar */
+.noTitleBar .ui-dialog-titlebar {
+	display: none;
+}
+
+.activeDialog .ui-dialog-titlebar {
+	background: #99CC00;
+}
+
 /* ePlant container */
 #ZUI_container {
 	transition: left .5s ease;
@@ -183,6 +231,5 @@ div.popup {
 	width: 1200px;
 	min-width: 300px;
 	border: 0px solid #DDD;
-	background-color: #FFF;
 }
 

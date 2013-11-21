@@ -1,0 +1,10 @@
+[
+	{
+		"view": "chromosome",
+		"source": "TAIR10 assembly"
+	},
+	{
+		"view": "interaction",
+		"source": ""
+	}
+]

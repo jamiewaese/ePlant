@@ -11,6 +11,8 @@ Eplant.speciessOfInterest = [];		// Array of SpeciesOfInterest objects
 Eplant.speciesOfFocus = null;		// The SpeciesOfInterest object in focus
 Eplant.speciesView = null;			// SpeciesView object
 Eplant.tooltipSwitch = true;		// Tooltip toggle switch
+Eplant.elementDialogs = [];			// Element dialogs
+Eplant.interactionDialogs = [];		// Interaction dialogs
 
 /* Update function for ePlant called at each frame */
 Eplant.update = function() {
@@ -92,7 +94,7 @@ Eplant.update = function() {
 
 	/* PathwayView */
 	img = document.getElementById("pathwayViewIcon").getElementsByTagName("img")[0];
-	if (!Eplant.speciesOfFocus || !Eplant.speciesOfFocus.elementOfFocus == || !Eplant.speciesOfFocus.elementOfFocus.pathwayView || Eplant.speciesOfFocus.elementOfFocus.pathwayView.getLoadProgress() < 1) {
+	if (!Eplant.speciesOfFocus || !Eplant.speciesOfFocus.elementOfFocus || !Eplant.speciesOfFocus.elementOfFocus.pathwayView || Eplant.speciesOfFocus.elementOfFocus.pathwayView.getLoadProgress() < 1) {
 		if (!ZUI.endsWith(img.src, "img/unavailable/pathway.png")) img.src = "img/unavailable/pathway.png";
 	}
 	else if (Eplant.speciesOfFocus.elementOfFocus.pathwayView == ZUI.activeView) {
@@ -124,6 +126,15 @@ Eplant.update = function() {
 	}
 	else {
 		if (!ZUI.endsWith(img.src, "img/available/sequence.png")) img.src = "img/available/sequence.png";
+	}
+
+
+
+	///////////////////////////////
+	// Sync element dialog icons //
+	///////////////////////////////
+	for (var n = 0; n < Eplant.elementDialogs.length; n++) {
+		Eplant.elementDialogs[n].updateIcons();
 	}
 };
 
@@ -182,6 +193,26 @@ Eplant.setSpeciesOfFocus = function(speciesOfFocus) {
 	}
 };
 
+/* Get the ElementDialog object associated with the given element */
+Eplant.getElementDialog = function(element) {
+	for (var n = 0; n < Eplant.elementDialogs.length; n++) {
+		if (Eplant.elementDialogs[n].element == element) {
+			return Eplant.elementDialogs[n];
+		}
+	}
+	return null;
+};
+
+/* Get the InteractionDialog object associated with the given interaction */
+Eplant.getInteractionDialog = function(interaction) {
+	for (var n = 0; n < Eplant.interactionDialogs.length; n++) {
+		if (Eplant.interactionDialogs[n].interaction == interaction) {
+			return Eplant.interactionDialogs[n];
+		}
+	}
+	return null;
+};
+
 /* Toggle tooltip */
 Eplant.toggleTooltip = function() {
 	var elements = document.getElementsByClassName("hint--rounded");
@@ -213,6 +244,55 @@ Eplant.toggleChangeViewAnimation = function() {
 	}
 };
 
+/* Get citation via popup */
+Eplant.getCitation = function() {
+	var containerElement = document.createElement("div");
+	containerElement.style.textAlign = "center";
+	containerElement.innerHTML = "Loading citation...";
+	$(containerElement).dialog({
+		title: "Citation",
+		width: 600,
+		minHeight: 0,
+		resizable: false,
+		modal: true,
+		buttons: [
+			{
+				text: "Close",
+				click: $.proxy(function(event, ui) {
+					$(this).dialog("close");
+				}, containerElement)
+			}
+		],
+		close: $.proxy(function() {
+			$(this).remove();
+		}, containerElement)
+	});
+	var obj = {
+		containerElement: containerElement,
+	};
+	if (ZUI.activeView instanceof ChromosomeView) {
+		obj.view = "chromosome";
+	}
+	else if (ZUI.activeView instanceof InteractionView) {
+		obj.view = "interaction";
+	}
+	$.ajax({
+		type: "GET",
+		url: "cgi-bin/citation.cgi?view=" + obj.view,
+		dataType: "json"
+	}).done($.proxy(function(response) {
+		obj.containerElement.innerHTML = "This image was generated using the " + obj.view + " viewer of ePlant at bar.utoronto.ca by Waese, Yu & Provart 2014. The data comes from " + response.source + ".";
+	}, obj));
+};
+
+Eplant.onchangeElementOfFocus = function() {
+	/* Get selected identifier */
+	var listElement = document.getElementById("elementsOfInterest");
+	var identifier = listElement.options[elementsOfInterest.selectedIndex].value;
+	var elementOfInterest = Eplant.speciesOfFocus.getElementOfInterestByIdentifier(identifier);
+	Eplant.speciesOfFocus.setElementOfFocus(elementOfInterest);
+};
+
 /* Change to SpeciesView */
 Eplant.toSpeciesView = function() {
 	if (ZUI.activeView instanceof ChromosomeView) {
@@ -229,7 +309,7 @@ Eplant.toSpeciesView = function() {
 /* Change to ChromosomeView */
 Eplant.toChromosomeView = function() {
 	if (ZUI.activeView instanceof InteractionView) {
-		ZUI.changeActiveView(Eplant.speciesOfFocus.chromosomeView, null, Eplant.speciesOfFocus.chromosomeView.zoomInEntryAnimation);
+		ZUI.changeActiveView(Eplant.speciesOfFocus.chromosomeView, ZUI.activeView.zoomOutExitAnimation, Eplant.speciesOfFocus.chromosomeView.zoomInEntryAnimation);
 	}
 	else if (ZUI.activeView instanceof MoleculeView) {
 		ZUI.changeActiveView(Eplant.speciesOfFocus.chromosomeView, null, Eplant.speciesOfFocus.chromosomeView.zoomInEntryAnimation);
@@ -239,7 +319,7 @@ Eplant.toChromosomeView = function() {
 /* Change to InteractionView */
 Eplant.toInteractionView = function() {
 	if (ZUI.activeView instanceof ChromosomeView) {
-		ZUI.changeActiveView(Eplant.speciesOfFocus.elementOfFocus.interactionView, ZUI.activeView.zoomOutExitAnimation, null);
+		ZUI.changeActiveView(Eplant.speciesOfFocus.elementOfFocus.interactionView, ZUI.activeView.zoomOutExitAnimation, Eplant.speciesOfFocus.elementOfFocus.interactionView.zoomInEntryAnimation);
 	}
 	else if (ZUI.activeView instanceof InteractionView) {
 		if (ZUI.activeView != Eplant.speciesOfFocus.elementOfFocus.interactionView) {

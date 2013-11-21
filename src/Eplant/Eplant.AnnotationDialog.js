@@ -5,6 +5,7 @@
 
 Eplant.AnnotationDialog = function() {
 	this.selectedTags = [];
+	this.color = "#000000";
 
 	/* Create element */
 	this.containerElement = document.createElement("div");
@@ -55,8 +56,15 @@ Eplant.AnnotationDialog = function() {
 				/* Color input */
 				td = document.createElement("td");
 					this.colorElement = document.createElement("input");
-					this.colorElement.type = "color";
+					this.colorElement.type = "text";
 					td.appendChild(this.colorElement);
+					$(this.colorElement).spectrum({
+						color: this.color,
+						showInput: true,
+						change: $.proxy(function(color) {
+							this.color = color.toHexString();
+						}, this)
+					});
 				tr.appendChild(td);
 			table.appendChild(tr);
 
@@ -104,15 +112,12 @@ Eplant.AnnotationDialog = function() {
 		width: 400,
 		height: 250,
 		resizable: false,
-		draggable: false,
-		modal: true,
 		buttons: [
 			{
-				text: "Submit",
+				text: "Add",
 				click: $.proxy(function(event, ui) {
 					var identifiers = this.identifiersElement.value.split(" ").join("").split(",");
 					this.size = this.sizeElement.value;
-					this.color = this.colorElement.value;
 					this.selectedTags = [];
 					for (var n = 0; n < 6; n++) {
 						if (this.tags[n].selected) this.selectedTags.push(this.tags[n].color);
@@ -129,39 +134,21 @@ Eplant.AnnotationDialog = function() {
 							Eplant.speciesOfFocus.setElementOfFocus(elementOfInterest);
 						}
 						else {
-							$.ajax({
-								type: "GET",
-								url: "cgi-bin/querygenebyidentifier.cgi?id=" + identifiers[n],
-								dataType: "json"
-							}).done($.proxy(function(response) {
-								var chromosome = Eplant.speciesOfFocus.species.getChromosome(response.chromosome);
-								if (chromosome) {
-									/* Create Element */
-									var element = new Eplant.Element(chromosome);
-									element.identifier = response.id;
-									element.start = response.start;
-									element.end = response.end;
-									element.strand = response.strand;
-									element.aliases = response.aliases;
-									element.annotation = response.annotation;
-									chromosome.elements.push(element);
-
-									/* Add ElementOfInterest */
-									var elementOfInterest = Eplant.speciesOfFocus.addElementOfInterest(element, {
-										size: this.size,
-										color: this.color,
-										tags: this.selectedTags
-									});
-									Eplant.speciesOfFocus.setElementOfFocus(elementOfInterest);
-								}
+							Eplant.speciesOfFocus.species.loadElement(identifiers[n], $.proxy(function(element) {
+								/* Add ElementOfInterest */
+								var elementOfInterest = Eplant.speciesOfFocus.addElementOfInterest(element, {
+									size: this.size,
+									color: this.color,
+									tags: this.selectedTags
+								});
+								Eplant.speciesOfFocus.setElementOfFocus(elementOfInterest);
 							}, this));
 						}
 					}
-					this.close();
 				}, this)
 			},
 			{
-				text: "Cancel",
+				text: "Close",
 				click: $.proxy(function(event, ui) {
 					this.close();
 				}, this)
@@ -171,6 +158,9 @@ Eplant.AnnotationDialog = function() {
 			$(this.containerElement).remove();
 		}, this)
 	});
+
+//this.containerElement.parentNode.style.background = "rgba(255,0,0,0.5)";
+//this.containerElement.style.background = "rgba(255,0,0,0.5)";
 };
 
 /* Close annotation dialog */

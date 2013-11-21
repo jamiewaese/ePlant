@@ -104,6 +104,12 @@ Eplant.SpeciesOfInterest.prototype.removeElementOfInterest = function(elementOfI
 		}
 		this.elementsOfInterest.splice(index, 1);
 		if (this.elementOfFocus == elementOfInterest) {
+			if (this.elementsOfInterest.length > 0) {
+				this.setElementOfFocus(this.elementsOfInterest[0]);
+			}
+			else {
+				this.elementOfFocus = null;
+			}
 			this.elementOfFocus = (this.elementsOfInterest.length > 0) ? this.elementsOfInterest[0] : null;
 		}
 
@@ -135,18 +141,34 @@ Eplant.SpeciesOfInterest.prototype.getElementOfInterestByIdentifier = function(i
 
 /* Set elementOfFocus */
 Eplant.SpeciesOfInterest.prototype.setElementOfFocus = function(elementOfFocus) {
-	/* Change elementOfFocus */
-	this.elementOfFocus = elementOfFocus;
+	if (this.elementOfFocus != elementOfFocus) {
+		/* Change elementOfFocus */
+		this.elementOfFocus = elementOfFocus;
 
-	/* Sync with drop down menu */
-	if (elementOfFocus != null) {
-		var elementsOfInterest = document.getElementById("elementsOfInterest");
-		if (elementsOfInterest.options[elementsOfInterest.selectedIndex].value != elementOfFocus.element.identifier) {
-			for (var n = 1; n < elementsOfInterest.options.length; n++) {
-				if (elementsOfInterest.options[n].value == elementOfFocus.element.identifier) {
-					elementsOfInterest.selectedIndex = n;
-					break;
+		if (Eplant.speciesOfFocus == this) {
+			/* Select corresponding ElementDialog */
+			for (var n = 0; n < Eplant.elementDialogs.length; n++) {
+				Eplant.elementDialogs[n].unselect();
+			}
+			var elementDialog = Eplant.getElementDialog(elementOfFocus.element);
+			if (elementDialog) elementDialog.select();
+
+			/* Sync with drop down menu */
+			if (elementOfFocus != null) {
+				var elementsOfInterest = document.getElementById("elementsOfInterest");
+				if (elementsOfInterest.options[elementsOfInterest.selectedIndex].value != elementOfFocus.element.identifier) {
+					for (var n = 1; n < elementsOfInterest.options.length; n++) {
+						if (elementsOfInterest.options[n].value == elementOfFocus.element.identifier) {
+							elementsOfInterest.selectedIndex = n;
+							break;
+						}
+					}
 				}
+			}
+
+			/* Update current view */
+			if (ZUI.activeView instanceof InteractionView) {
+				ZUI.changeActiveView(elementOfFocus.interactionView, null, null);
 			}
 		}
 	}

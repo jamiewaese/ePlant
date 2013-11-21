@@ -23,11 +23,12 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			<script type="text/javascript">alert("Sorry but your browser does not support the canvas tag. Try using a recent version of Firefox, Chrome or Safari.");</script>
 		<![endif]-->
 
-
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-		<script type="text/javascript" src="lib/JSmol.min.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+		<script type="text/javascript" src="lib/spectrum/spectrum.js"></script>
+		<link rel="stylesheet" href="lib/spectrum/spectrum.css"></link>
 		<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/smoothness/jquery-ui.min.css"></link>
+		<script type="text/javascript" src="lib/JSmol.min.nojq.js"></script>
 		<script type="text/javascript" src="lib/cytoscape.min.js"></script>
 		<script type="text/javascript" src="lib/arbor.js"></script>
 
@@ -95,7 +96,7 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 							<br>
 							<br>
 							<div class="hint--right hint--success hint--rounded" data-hint="Quickly switch between loaded genes." data-enabled="true">
-								<select id="elementsOfInterest" style="width:180px;" onchange="elementsOfInterest_onChange();">
+								<select id="elementsOfInterest" style="width:180px;" onchange="Eplant.onchangeElementOfFocus();">
 									<option disabled value="Currently loaded genes:" selected>Currently loaded genes:</option>
 								</select>
  							</div>
@@ -154,20 +155,17 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 									<td id="viewSpecificUI" style="padding-left: 50px; width:550px;vertical-align:middle;">
 									</td>
 									<td id="crossViewUI" style="width:300px;vertical-align:middle;">
-										<div id="labelsColorIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Labels: off / light / dark." data-enabled="true" style="padding:5px;">
-											<img src="img/labelscolor.png"></img>
-										</div>
-										<div id="getImageIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Save current screen as high resolution image." data-enabled="true" style="padding:5px;" onclick="ZUI.toImageInWindow();">
-											<img src="img/getimage.png"></img>
-										</div>
-										<div id="paletteIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Color palette." data-enabled="true" style="padding:5px;">
-											<img src="img/palette.png"></img>
-										</div>
 										<div id="changeViewAnimationIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Toggle zooming animation." data-enabled="true" style="padding:5px;" onclick="Eplant.toggleChangeViewAnimation();">
 											<img src="img/on/zoom.png"></img>
 										</div>
 										<div id="tooltipIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Toggle tooltip." data-enabled="true" style="padding:5px;" onclick="Eplant.toggleTooltip();">
 											<img src="img/on/tooltip.png"></img>
+										</div>
+										<div id="getImageIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Save current screen as high resolution image." data-enabled="true" style="padding:5px;" onclick="ZUI.toImageInWindow();">
+											<img src="img/getimage.png"></img>
+										</div>
+										<div id="citationIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Get citation." data-enabled="true" style="padding:5px;" onclick="Eplant.getCitation();">
+											<img src="img/citation.png"></img>
 										</div>
 									</td>
 								</tr>
@@ -190,23 +188,18 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 				<script type="text/javascript" src="src/Eplant/Eplant.SpeciesOfInterest.js"></script>
 				<script type="text/javascript" src="src/Eplant/Eplant.ElementOfInterest.js"></script>
 					<script type="text/javascript" src="src/Eplant/Eplant.ElementOfInterest.Tag.js"></script>
+				<script type="text/javascript" src="src/Eplant/Eplant.PopupDialog.js"></script>
+				<script type="text/javascript" src="src/Eplant/Eplant.ElementDialog.js"></script>
+					<script type="text/javascript" src="src/Eplant/Eplant.ElementDialog.Tag.js"></script>
+				<script type="text/javascript" src="src/Eplant/Eplant.InteractionDialog.js"></script>
 				<script type="text/javascript" src="src/Eplant/Eplant.AnnotationDialog.js"></script>
 					<script type="text/javascript" src="src/Eplant/Eplant.AnnotationDialog.Tag.js"></script>
-<script type="text/javascript" src="js/views/species.js"></script>
-<script type="text/javascript" src="js/views/chromosome.js"></script>
-<script type="text/javascript" src="js/views/interaction.js"></script>
-<script type="text/javascript" src="js/views/molecule.js"></script>
-<script type="text/javascript" src="js/views/pathway.js"></script>
+				<script type="text/javascript" src="src/SpeciesView/SpeciesView.js"></script>
+				<script type="text/javascript" src="src/ChromosomeView/ChromosomeView.js"></script>
+				<script type="text/javascript" src="src/InteractionView/InteractionView.js"></script>
+				<script type="text/javascript" src="src/MoleculeView/MoleculeView.js"></script>
+				<script type="text/javascript" src="src/PathwayView/PathwayView.js"></script>
 			<script type="text/javascript">
-				/* Handles the onchange event fired by the elementsOfInterest select element */
-				function elementsOfInterest_onChange() {
-					/* Get selected identifier */
-					var elementsOfInterest = document.getElementById("elementsOfInterest");
-					var identifier = elementsOfInterest.options[elementsOfInterest.selectedIndex].value;
-					var elementOfInterest = Eplant.speciesOfFocus.getElementOfInterestByIdentifier(identifier);
-					Eplant.speciesOfFocus.setElementOfFocus(elementOfInterest);
-				}
-
 				ZUI.initialize({
 					canvas: document.getElementById("ZUI_canvas"),
 					background: "#ffffff",
