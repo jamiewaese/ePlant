@@ -179,6 +179,7 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 				<script type="text/javascript" src="src/ZUI/ZUI.View.js"></script>
 				<script type="text/javascript" src="src/ZUI/ZUI.ViewObject.js"></script>
 				<script type="text/javascript" src="src/ZUI/ZUI.Animation.js"></script>
+				<script type="text/javascript" src="src/ZUI/ZUI.Geometry.js"></script>
 			<script type="text/javascript" src="src/Eplant/Eplant.js"></script>
 				<script type="text/javascript" src="src/Eplant/Eplant.Color.js"></script>
 				<script type="text/javascript" src="src/Eplant/Eplant.Species.js"></script>
@@ -218,23 +219,150 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 		<script src="lib/tabcontent.js" type="text/javascript"></script>
 		<link href="style/tabcontent-template2/tabcontent.css" rel="stylesheet" type="text/css"></link>
 		<ul class="tabs" data-persist="true">
-			<li><a href="#view1">Welcome</a></li>
-			<li><a href="#view2">About</a></li>
-			<li><a href="#view3">Example Gallery</a></li>
-			<li><a href="#view4">Help</a></li>
+			<li><a href="#view1">WELCOME</a></li>
+			<li><a href="#view2">ABOUT</a></li>
+			<li><a href="#view3">DATA SOURCES</a></li>
+			<li><a href="#view4">EXAMPLE GALLERY</a></li>
 		</ul>
 		<div class="tabcontents" style="background:#fff;">
-			<div id="view1" style="text-align:center;">
-				Welcome
+			<div id="view1">
+				<p>Welcome to ePlant, a user friendly data visualization tool for exploring multiple levels of biological data -- micro, meso, macro -- and related experimental findings.</p>
+
+				<p>Developed by Jamie Waese, Hans Yu and Nicholas Provart at the University of Toronto, ePlant combines proprietary and familiar data visualization tools with an intuitive user interface to facilitate the easy exploration of multiple plant biology databases.</p>
+
+				<p>With a zoomable user interface that allows users to move quickly between multiple levels of biological processes, ePlant helps researchers and educators make connections between DNA sequences, protein-protein interactions, cell and tissue expression patterns, natural variation, and proteomic responses to various experimental conditions. Dynamic links to the underlying data and other information pertaining to each view is available on demand.</p>
+
+				<p>Originally developed for the <a href="http://www.arabidopsis.org/portals/masc/IAIC.jsp">Arabidopsis Information Portal</a>, ePlant is species agnostic and new plants can be added by following an established protocol. Please <a href="mailto:jamie.waese@mail.utoronto.ca">contact us</a> if there is a particular species you'd like to add. </p>
+
+				<p>Developed in Nicholas Provart's lab in the department of Cell & Systems Biology at the University of Toronto, ePlant was funded with grants from Genome Canada, XYZ and XYZ. This version of ePlant is a major update from the original ePlant by <a href="http://www.plosone.org/article/fetchObject.action?uri=info%3Adoi%2F10.1371%2Fjournal.pone.0015237&representation=PDF">Fucile et al. (2011)</a>.</p>
+
+				<p>ePlant uses the HTML5 canvas, JavaScript and JQuery. It was designed to work with the Firefox and Chrome internet browsers. Some features may not display properly with Internet Explorer or Safari at this time.</p>
 			</div>
-			<div id="view2" style="text-align:center;">
-				About
+			<div id="view2">
+				<p>ePlant is an effort to leverage current thinking about data visualization to help educators and researchers make sense of the ever growing volumes of data describing multiple levels of biological processes that are now available online. For each of the species currently installed, ePlant connects to several web services to download the latest data pertaining to a plant's genome, proteome, metabolome, biochemical pathways, and tissue expression patterns. It was designed to be easily updated and we plan to add additional data and visualization tools in the future.</p>
+
+				<p>We have organized our visualization tools with a conceptual hierarchy that progresses from big to small. We use a zoom metaphor to represent moving closer to- or further away from each level of analysis in the hopes that the temporal and spatial connection made from the juxtaposition improves the ability to make conceptual connections as well. We recognize that each level of analysis is unique and arguments can be made for organizing the hierarchy in a different order. Future versions of ePlant will allow users to order the icons according to their personal preferences.</p>
+
+				<p>Some of ePlant's visualization tools are implementations of excellent systems you may be familiar with: <a href="http://cytoscape.github.io/cytoscape.js/">Cytoscape.js</a> for the protein interactions and reactome charts, <a href="http://wiki.jmol.org/index.php/Jmol_JavaScript_Object">JSmol</a> for the 3D molecular view, and <a href="http://jbrowse.org/">JBrowse</a> for the genome browser. Other visualization tools are based on well known viewers developed at <a href="http://bar.utoronto.ca">bar.utoronto.ca</a>: the eFP browser for <a href="http://bar.utoronto.ca/cell_efp/cgi-bin/cell_efp.cgi">cells</a>, <a href="http://bar.utoronto.ca/efp/cgi-bin/efpWeb.cgi">tissues</a>, and <a href="http://bar.utoronto.ca/efp/cgi-bin/efpWeb.cgi?dataSource=Natural_Variation">natural variations</a>, as well as the <a href="http://bar.utoronto.ca/ntools/cgi-bin/ntools_expression_angler.cgi">Expression Angler</a> and other bits and pieces we have reproduced and updated. </p>
+
+				<p>Recognizing the forest from the trees is especially challenging when your information must be accessed from separate sources, each with its own interface and methods for identifying and visualizing the data you’re interested in. ePlant brings new and familiar data visualization tools together into common framework, minimizing the steps necessary to explore a cluster of genes across several levels of analysis. </p>
+
+				<p>We designed ePlant to be open source and open ended, with the goal of adding additional plants and visualization tools as they become available. ePlant is licensed under a Creative Commons Attribution-Share Alike 2.5 Canada License, and the source code for the framework and visualization tools are available for download from GitHub.</p>   
+
+				<h2>Visualization Tools</h2>
+				Each level of data can be explored with the following tools: </p>
+
+				<p><h3>Species Selector</h3>
+				<img src="http://bar.utoronto.ca/~eplant/img/available/species.png" align="left">
+				This is the top-level view for ePlant. The species selector allows you to choose which plant databases you wish to explore. We currently support Arabidopsis thaliana, Solanum tuberosum (potato), Solanum lycopersicum (tomato), and Populus trichocarpa (poplar). </p>
+
+				<p><h3>Chromosome Selector</h3>
+				<img src="http://bar.utoronto.ca/~eplant/img/active/chromosome.png" align="left">
+				The chromosome selector visualizes chromosomes as vertical bars. Enter a gene ID or alias in the text box and ePlant will automatically download the data associated with that gene for each of the installed views. You can enter several gene ID's at a time if they are separated, by, commas, and there is an auto-complete function to help you identify genes by name. You can also load data by hovering over the chromosomes, selecting a gene from the context sensitive menu popup listing all the genes at that position, then clicking the 'get data' button in the annotation popup of the selected gene. The gene of focus can be adjusted via the combo box in the upper left corner, or by clicking on the star icon in the title bar of any annotation popup.</p>
+				<p>This view appears at the top of our visualization hierarchy because it provides a pictographic overview of the entire genome. It also conveniently indicates the positions of all the genes that have been downloaded. The thermometer icon at the bottom of the canvas generates a heat map indicating the density of genes along the chromosome. The pencil icon opens an annotation tool that facilitates customization of label colors and sizes.</p>
+
+				<p><h3>Natural Variations</h3>
+				<img src="http://bar.utoronto.ca/~eplant/img/unavailable/world.png" align="left">
+				The natural variations view offers an eFP browser displaying the relative variations of any given gene's expression levels in various samples from around the world.</p>
+				<p>This view appears near the top of the hierarchy because it shows expression patterns on a macro level, still focused on a specific gene but not as it pertains to a single organism.</p>
+
+				<p><h3>Plant Expression</h3>
+				<img src="http://bar.utoronto.ca/~eplant/img/unavailable/plant.png" align="left">
+				The plant expression view is an eFP browser that displays the expression pattern of any given gene as a heat map painted directly onto the tissues of a plant. Brighter colors denote a higher level of expression. </p>
+
+				<p><h3>Experimental Conditions</h3>
+				<img src="http://bar.utoronto.ca/~eplant/img/unavailable/experimentalEFP.png" align="left">
+				The experimental conditions view displays the results of experiments such as exposure to stress or hormones using an eFP display.</p>
+
+				<p><h3>Interactions Viewer</h3>
+				<img src="http://bar.utoronto.ca/~eplant/img/unavailable/interaction.png" align="left">
+				The interactions viewer displays documented and predicted protein-protein interactions for the selected gene identifier. This is an implementation of Cytoscape.js.</p>
+
+				<p><h3>Reactome Viewer</h3>
+				<img src="http://bar.utoronto.ca/~eplant/img/unavailable/pathway.png" align="left">
+				This view displays reactome data, using Cytoscape.js to draw the nodes and edges./p>
+
+				<p><h3>3D Molecular Viewer</h3>
+				<img src="http://bar.utoronto.ca/~eplant/img/unavailable/molecule.png" align="left">
+				The molecular view displays a 3D structure of the selected gene's protein product, from the Protein Data Bank, PDB, or predicted by Phyre.</p>
+
+				<p><h2>Optional Controls</h2>
+				At the bottom of the canvas there are several icons for controlling application specific and cross application options.</p>
+
+				<p><h3>Auto Citation</h3>
+				<img src="http://bar.utoronto.ca/~eplant/img/citation.png" align="left">
+				The auto citation icon opens a popup window with dynamically updated citation text, according to whichever species and view is currently active. We appreciate citations!</p>
+
+				<p><h3>Screen Grab</h3>
+				<img src="http://bar.utoronto.ca/~eplant/img/getimage.png" align="left">
+				The screen grab function creates a high resolution PNG image of the current canvas. Screen grabs do not include the user interface so they can be used to create clean diagrams for publication.</p>
+
+				<p><h3>Tooltips</h3>
+				<img src="http://bar.utoronto.ca/~eplant/img/on/zoom.png" align="left">
+				This icon toggles the tooltip help function on and off. The default is on, however once you become familiar with the interface you may prefer to turn it off.</p>
+
+				<p><h3>Zoom Animations</h3>
+				<img src="http://bar.utoronto.ca/~eplant/img/on/zoom.png" align="left">
+				We like the zoom animations but some purists do not. This button toggles the animated transitions on and off.</p>
 			</div>
-			<div id="view3" style="text-align:center;">
-				Example Gallery
+			<div id="view3">
+				<p><h2>Arabidopsis thaliana</h2>
+				<ul>
+				<li><em>Plant Expression</em>. Based on ATH1 gene expression data from Schmid et al. (2005), Nature Genetics 37:501-506 and other published data sets. </li>
+				<li><em>Tissue Expression</em>. Based on ATH1 gene expression data from Schmid et al. (2005), Nature Genetics 37:501-506 and other published data sets. </li>
+				<li><em>Subcellular Localization</em>. Based on data in the SUBA database by Heazelwood et al. (2007), Nucleic Acids Research 35:D213-218. </li>
+				<li><em>Pathways</em>. Based on...</li>
+				<li><em>Interactors View</em>. Based on data from the BAR's Arabidopsis Interactions database, described in Geisler-Lee et al. (2007), Plant Physiology 145: 317-329. </li>Example.    
+				<li><em>Protein Model</em>. Based on data from the Protein Data Bank, PDB, or predicted by Phyre.</li>
+				</ul>
+				</p>       
+
+				<p><h2>Solanum tuberosum</h2>
+				<ul>
+				<li><em>Plant Expression</em>. Based on...</li>
+				<li><em>Tissue Expression</em>. Based on...</li>
+				<li><em>Subcellular Localization</em>. Based on...</li>
+				<li><em>Pathways</em>. Based on...</li>
+				<li><em>Interactors View</em>. Based on...</li>Example.    
+				<li><em>Protein Model</em>. Based on data from the Protein Data Bank, PDB, or predicted by Phyre.</li>
+				</ul>
+				</p>       
+
+				<p><h2>Solanum lycopersicum</h2>
+				<ul>
+				<li><em>Plant Expression</em>. Based on...</li>
+				<li><em>Tissue Expression</em>. Based on...</li>
+				<li><em>Subcellular Localization</em>. Based on...</li>
+				<li><em>Pathways</em>. Based on...</li>
+				<li><em>Interactors View</em>. Based on...</li>Example.    
+				<li><em>Protein Model</em>. Based on data from the Protein Data Bank, PDB, or predicted by Phyre.</li>
+				</ul>
+				</p>   
+   
+				<p><h2>Populus trichocarpa</h2>
+				<ul>
+				<li><em>Plant Expression</em>. Based on...</li>
+				<li><em>Tissue Expression</em>. Based on...</li>
+				<li><em>Subcellular Localization</em>. Based on...</li>
+				<li><em>Pathways</em>. Based on...</li>
+				<li><em>Interactors View</em>. Based on...</li>Example.    
+				<li><em>Protein Model</em>. Based on data from the Protein Data Bank, PDB, or predicted by Phyre.</li>
+				</ul>
+				</p>
 			</div>
-			<div id="view4" style="text-align:center;">
-				Help
+			<div id="view4">
+				<p>Here are some genes from Arabidopsis that tell interesting stories:</p>
+				<ul>
+				<li>At1g04170 (Eukaryotic Translation Initiation Factor 2 Subunit)</li>
+				<li>At5g20620 UBQ4 (ubiquitin 4) </li>
+				<li>At5g46240 KAT1 (inward rectifier potassium channel) </li>
+				<li>At4g30600 (signal recognition particle receptor alpha subunit family protein) </li>
+				<li>At2g41460 ARP (apurinic endonuclease-redox protein) </li>
+				<li>At2g02760 UBC2__ATUBC2 (UBIQUITING-CONJUGATING ENZYME 2)    </li>
+				<li>At3g13445 TFIID-1__TBP1 (TATA BINDING PROTEIN 1)</li>
+				</ul>
+
+				<p>We will be building this example gallery over the next several months. Please send us a note if you find anything worth sharing!</p>
 			</div>
 		</div>
 	</body>

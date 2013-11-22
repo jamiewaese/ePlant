@@ -556,9 +556,8 @@ ZUI.ViewObject.prototype.isInBound = function(x, y) {
 			vertex = this.screenVertices[n];
 			var x2 = vertex.x + this.screenX;
 			var y2 = vertex.y + this.screenY;
-			var result = ZUI.testRayLineIntersect(x, y, 0, x1, y1, x2, y2);
-			if (result == 2) return true;
-			if (result == 1) intersectCount++;
+			var result = ZUI.Geometry.intersectHRayLine(x, y, x1, y1, x2, y2);
+			if (result.x && result.y) intersectCount++;
 			x1 = x2;
 			y1 = y2;
 		}
