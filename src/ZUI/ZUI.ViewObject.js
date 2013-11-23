@@ -75,18 +75,22 @@ ZUI.ViewObject = function(attributes) {
 		$.ajax({
 			type: "GET",
 			url: this.url,
-			dataType: "text"
+			dataType: "xml"
 		}).done($.proxy(function(response) {
-			this.image = new Image();
-			var DOMURL = self.URL || self.webkitURL || self;
-			var svg = new Blob([response], {type: "image/svg+xml;charset=utf-8"});
-			var url = DOMURL.createObjectURL(svg);
-			this.image.onload = $.proxy(function() {
-				this.ready = true;
-				this.width = this.image.width;
-				this.height = this.image.height;
-			}, this);
-			this.image.src = url;
+			var svg = response.getElementsByTagName("svg")[0];
+			this.width = svg.getAttribute("width");
+			this.height = svg.getAttribute("height");
+			if (this.width.indexOf("px") >= 0) this.width = this.width.substring(0, this.width.indexOf("px"));
+			if (this.height.indexOf("px") >= 0) this.height = this.height.substring(0, this.height.indexOf("px"));
+			var paths = svg.getElementsByTagName("path");
+			this.paths = [];
+			for (var n = 0; n < paths.length; n++) {
+				var path = {};
+				path.id = paths[n].getAttribute("id");
+				path.instructions = ZUI.Parser.pathToObj(paths[n].getAttribute("d"));
+				this.paths.push(path);
+			}
+			this.ready = true;
 		}, this));
 	}
 	else return null;
@@ -457,13 +461,17 @@ ZUI.ViewObject.prototype.draw = function() {
 			this.screenHeight = this.height * this.vscale;
 		}
 		ZUI.context.save();
+		ZUI.context.strokeStyle = this.strokeColor;
+		ZUI.context.lineWidth = this.strokeWidth;
+		ZUI.context.fillStyle = this.fillColor;
+		ZUI.context.globalAlpha = this.alpha;
 		var screenX, screenY;
 		var centerAt = this.centerAt.split(" ");
 		if (centerAt[0] == "left") {
 			screenX = 0;
 		}
 		else if (centerAt[0] == "center") {
-				screenX =  -this.screenWidth / 2;
+			screenX = -this.screenWidth / 2;
 		}
 		else if (centerAt[0] == "right") {
 			screenX = -this.screenWidth;
@@ -479,9 +487,20 @@ ZUI.ViewObject.prototype.draw = function() {
 			screenY = -this.screenHeight;
 		}
 		screenY += this.screenY + this.screenOffsetY;
+		ZUI.context.save();
 		ZUI.context.translate(screenX, screenY);
 		ZUI.context.scale(this.screenWidth / this.width, this.screenHeight / this.height);
-		ZUI.context.drawImage(this.image, 0, 0);
+		ZUI.context.beginPath();
+		for (var n = 0; n < this.paths.length; n++) {
+			var instructions = this.paths[n].instructions;
+			for (var m = 0; m < instructions.length; m++) {
+				ZUI.context[instructions[m].instruction].apply(ZUI.context, instructions[m].args);
+			}
+		}
+		ZUI.context.restore();
+		if (this.stroke) {
+			ZUI.context.stroke();
+		}
 		ZUI.context.restore();
 		this.isOnScreen = true;
 	}
