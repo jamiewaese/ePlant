@@ -34,33 +34,30 @@ Eplant.Species.prototype.getChromosome = function(name) {
 };
 
 /* Load data for an element with the given identifier and execute the given callback function when loading is complete */
-Eplant.Species.prototype.loadElement = function(identifier, callback) {
-	var element = this.getElementByIdentifier(identifier);
-	if (!element) {
-		var obj = {};
-		obj.context = this;
-		obj.callback = callback;
-		$.ajax({
-			type: "GET",
-			url: "cgi-bin/querygenebyidentifier.cgi?id=" + identifier,
-			dataType: "json"
-		}).done($.proxy(function(response) {
-			var chromosome = this.context.getChromosome(response.chromosome);
-			if (chromosome) {
-				var element = this.context.getElementByIdentifier(response.id);
-				if (!element) {
-					/* Create Element */
-					element = new Eplant.Element(chromosome);
-					element.identifier = response.id;
-					element.start = response.start;
-					element.end = response.end;
-					element.strand = response.strand;
-					element.aliases = response.aliases;
-					element.annotation = response.annotation;
-					chromosome.elements.push(element);
-				}
-				this.callback(element);
+Eplant.Species.prototype.loadElement = function(term, callback) {
+	var obj = {};
+	obj.context = this;
+	obj.callback = callback;
+	$.ajax({
+		type: "GET",
+		url: "cgi-bin/querygene.cgi?species=" + this.scientificName.split(" ").join("_") + "&term=" + term,
+		dataType: "json"
+	}).done($.proxy(function(response) {
+		var chromosome = this.context.getChromosome(response.chromosome);
+		if (chromosome) {
+			var element = this.context.getElementByIdentifier(response.id);
+			if (!element) {
+				/* Create Element */
+				element = new Eplant.Element(chromosome);
+				element.identifier = response.id;
+				element.start = response.start;
+				element.end = response.end;
+				element.strand = response.strand;
+				element.aliases = response.aliases;
+				element.annotation = response.annotation;
+				chromosome.elements.push(element);
 			}
-		}, obj));
-	}
+			this.callback(element);
+		}
+	}, obj));
 };

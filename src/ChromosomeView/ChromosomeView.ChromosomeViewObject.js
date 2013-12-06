@@ -1,5 +1,5 @@
-/* Chromosome class constructor */
-ChromosomeView.Chromosome = function(chromosome, view, index) {
+/* ChromosomeViewObject class constructor */
+ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 	/* Field properties */
 	this.chromosome = chromosome;
 	this.view = view;
@@ -76,7 +76,7 @@ ChromosomeView.Chromosome = function(chromosome, view, index) {
 				var range = this.mapPixelToBp(y);
 				this.view.elementListDialogCountdown = {
 					finish: ZUI.appStatus.progress + 500,
-					chromosome: this,
+					chromosomeViewObject: this,
 					orientation: (this.getScreenX() < ZUI.width / 2) ? "right" : "left",
 					x: (this.getScreenX() < ZUI.width / 2) ? this.getScreenX() + this.getScreenWidth() / 2 : this.getScreenX() - this.getScreenWidth() / 2,
 					y: y,
@@ -111,7 +111,7 @@ ChromosomeView.Chromosome = function(chromosome, view, index) {
 				var range = this.mapPixelToBp(y);
 				this.view.elementListDialogCountdown = {
 					finish: ZUI.appStatus.progress,
-					chromosome: this,
+					chromosomeViewObject: this,
 					orientation: (this.getScreenX() < ZUI.width / 2) ? "right" : "left",
 					x: (this.getScreenX() < ZUI.width / 2) ? this.getScreenX() + this.getScreenWidth() / 2 : this.getScreenX() - this.getScreenWidth() / 2,
 					y: y,
@@ -180,77 +180,15 @@ ChromosomeView.Chromosome = function(chromosome, view, index) {
 		stroke: false,
 		fillColor: Eplant.Color.LightGrey
 	});
-
-	/* Clips */
-	this.topClip = new ZUI.ViewObject({
-		shape: "polygon",
-		positionScale: "screen",
-		sizeScale: "world",
-		y: 0,
-		vertices: [
-			{
-				x: 0,
-				y: 0
-			},
-			{
-				x: -5,
-				y: 5
-			},
-			{
-				x: -5,
-				y: 0
-			},
-			{
-				x: 5,
-				y: 0
-			},
-			{
-				x: 5,
-				y: 5
-			}
-		],
-		strokeColor: Eplant.Color.White,
-		fillColor: Eplant.Color.White
-	});
-	this.bottomClip = new ZUI.ViewObject({
-		shape: "polygon",
-		positionScale: "screen",
-		sizeScale: "world",
-		y: ZUI.height,
-		vertices: [
-			{
-				x: 0,
-				y: 0
-			},
-			{
-				x: -5,
-				y: -5
-			},
-			{
-				x: -5,
-				y: 0
-			},
-			{
-				x: 5,
-				y: 0
-			},
-			{
-				x: 5,
-				y: -5
-			}
-		],
-		strokeColor: Eplant.Color.White,
-		fillColor: Eplant.Color.White
-	});
 };
 
 	/* Converts a pixel to number of base pairs */
-	ChromosomeView.Chromosome.prototype.getBpPerPixel = function() {
+	ChromosomeView.ChromosomeViewObject.prototype.getBpPerPixel = function() {
 		return this.chromosome.length / (this.getScreenHeight() - 1);
 	};
 
 	/* Returns whether the specified position is within the bounds of the chromosome */
-	ChromosomeView.Chromosome.prototype.isInBound = function(x, y) {
+	ChromosomeView.ChromosomeViewObject.prototype.isInBound = function(x, y) {
 		if (x > this.getScreenX() && x < this.getScreenX() + this.getScreenWidth() &&
 		    y > this.getScreenY() && y < this.getScreenY() + this.getScreenHeight()) {
 			return true;
@@ -261,7 +199,7 @@ ChromosomeView.Chromosome = function(chromosome, view, index) {
 	};
 
 	/* Draws chromosome */
-	ChromosomeView.Chromosome.prototype.draw = function() {
+	ChromosomeView.ChromosomeViewObject.prototype.draw = function() {
 		/* Draw chromosome view objects */
 		for (var n = 0; n < this.viewObjects.length; n++) {
 			this.viewObjects[n].draw();
@@ -299,8 +237,22 @@ ChromosomeView.Chromosome = function(chromosome, view, index) {
 				this.lowBpRangeLabel.draw();
 
 				/* Draw clipped top */
-				this.topClip.x = topTip.x;
-				this.topClip.draw();
+				var clipHeight = halfWidth;
+				if (clipHeight > 20) clipHeight = 20;
+				ZUI.context.save();
+				ZUI.context.beginPath();
+				ZUI.context.moveTo(topTip.x - halfWidth, 0);
+				ZUI.context.lineTo(topTip.x + halfWidth, 0);
+				ZUI.context.lineTo(topTip.x + halfWidth, clipHeight);
+				ZUI.context.lineTo(topTip.x, 0);
+				ZUI.context.lineTo(topTip.x - halfWidth, clipHeight);
+				ZUI.context.lineTo(topTip.x - halfWidth, 0);
+				ZUI.context.closePath();
+				ZUI.context.strokeStyle = Eplant.Color.White;
+				ZUI.context.fillStyle = Eplant.Color.White;
+				ZUI.context.stroke();
+				ZUI.context.fill();
+				ZUI.context.restore();
 			}
 		}
 		else {
@@ -323,8 +275,22 @@ ChromosomeView.Chromosome = function(chromosome, view, index) {
 				this.highBpRangeLabel.draw();
 
 				/* Draw clipped bottom */
-				this.bottomClip.x = bottomTip.x;
-				this.bottomClip.draw();
+				var clipHeight = halfWidth;
+				if (clipHeight > 20) clipHeight = 20;
+				ZUI.context.save();
+				ZUI.context.beginPath();
+				ZUI.context.moveTo(bottomTip.x - halfWidth, ZUI.height);
+				ZUI.context.lineTo(bottomTip.x + halfWidth, ZUI.height);
+				ZUI.context.lineTo(bottomTip.x + halfWidth, ZUI.height - clipHeight);
+				ZUI.context.lineTo(bottomTip.x, ZUI.height);
+				ZUI.context.lineTo(bottomTip.x - halfWidth, ZUI.height - clipHeight);
+				ZUI.context.lineTo(bottomTip.x - halfWidth, ZUI.height);
+				ZUI.context.closePath();
+				ZUI.context.strokeStyle = Eplant.Color.White;
+				ZUI.context.fillStyle = Eplant.Color.White;
+				ZUI.context.stroke();
+				ZUI.context.fill();
+				ZUI.context.restore();
 			}
 		}
 		else {
@@ -361,48 +327,48 @@ ChromosomeView.Chromosome = function(chromosome, view, index) {
 	};
 
 	/* Returns the x position of the chromosome view object on the screen */
-	ChromosomeView.Chromosome.prototype.getScreenX = function() {
+	ChromosomeView.ChromosomeViewObject.prototype.getScreenX = function() {
 		return this.mouseEventLayer.screenX;
 	};
 
 	/* Returns the y position of the chromosome view object on the screen */
-	ChromosomeView.Chromosome.prototype.getScreenY = function() {
+	ChromosomeView.ChromosomeViewObject.prototype.getScreenY = function() {
 		return this.mouseEventLayer.screenY;
 	};
 
 	/* Returns the width of the chromosome view object on the screen */
-	ChromosomeView.Chromosome.prototype.getScreenWidth = function() {
+	ChromosomeView.ChromosomeViewObject.prototype.getScreenWidth = function() {
 		return this.mouseEventLayer.screenWidth;
 	};
 
 	/* Returns the height of the chromosome view object on the screen */
-	ChromosomeView.Chromosome.prototype.getScreenHeight = function() {
+	ChromosomeView.ChromosomeViewObject.prototype.getScreenHeight = function() {
 		return this.mouseEventLayer.screenHeight;
 	};
 
-	ChromosomeView.Chromosome.prototype.getX = function() {
+	ChromosomeView.ChromosomeViewObject.prototype.getX = function() {
 		return this.mouseEventLayer.x;
 	};
 
-	ChromosomeView.Chromosome.prototype.getY = function() {
+	ChromosomeView.ChromosomeViewObject.prototype.getY = function() {
 		return this.mouseEventLayer.y;
 	};
 
-	ChromosomeView.Chromosome.prototype.getWidth = function() {
+	ChromosomeView.ChromosomeViewObject.prototype.getWidth = function() {
 		return this.mouseEventLayer.width;
 	};
 
-	ChromosomeView.Chromosome.prototype.getHeight = function() {
+	ChromosomeView.ChromosomeViewObject.prototype.getHeight = function() {
 		return this.mouseEventLayer.height;
 	};
 
 	/* Converts a base pair position to the y pixel position corresponding to the chromosome view object */
-	ChromosomeView.Chromosome.prototype.mapBpToPixel = function(bp) {
+	ChromosomeView.ChromosomeViewObject.prototype.mapBpToPixel = function(bp) {
 		return this.getScreenY() + (bp - 1) / this.getBpPerPixel() + 1;
 	};
 
 	/* Converts a y pixel position corresponding to the chromosome view object to a range of base pair positions */
-	ChromosomeView.Chromosome.prototype.mapPixelToBp = function(pixel) {
+	ChromosomeView.ChromosomeViewObject.prototype.mapPixelToBp = function(pixel) {
 		if (pixel > this.getScreenY() && pixel < this.getScreenY() + this.getScreenHeight()) {
 			range = {
 				start: (pixel - 1 - this.getScreenY()) * this.getBpPerPixel() + 1,

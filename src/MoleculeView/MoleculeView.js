@@ -66,7 +66,7 @@ MoleculeView.initJMol = function() {
 		width: ZUI.width,
 		height: ZUI.height,
 		use: "HTML5",
-		j2sPath: "lib/j2s",
+		j2sPath: "lib/JSmol/j2s",
 		script: 'set defaultloadscript "' + defaultLoadScript + '";',
 		disableJ2SLoadMonitor: true,
 		disableInitialConsole: true

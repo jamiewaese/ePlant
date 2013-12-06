@@ -6,8 +6,10 @@
 /* Class constructor */
 Eplant.ElementDialog = function(attributes) {
 	if (attributes.xOffset === undefined) attributes.xOffset = 35;
-	if (attributes.yOffset === undefined) attributes.yOffset = -95;
+	if (attributes.yOffset === undefined) attributes.yOffset = -40;
 	if (attributes.title === undefined) attributes.title = (attributes.element === undefined) ? "" : attributes.element.identifier;
+
+	this.minimized = false;
 
 	/* Call superclass constructor */
 	Eplant.PopupDialog.call(this, attributes);
@@ -19,7 +21,7 @@ Eplant.ElementDialog = function(attributes) {
 		/* Data container */
 		var container = document.createElement("div");
 		container.style.padding = "5px";
-		$(container).height(130);
+		$(container).css("maxHeight", 130);
 		$(container).width(350);
 		container.style.overflow = "auto";
 			/* Data table */
@@ -57,6 +59,20 @@ Eplant.ElementDialog = function(attributes) {
 					tr.appendChild(this.aliasesElement);
 				table.appendChild(tr);
 
+				/* Strand row */
+				tr = document.createElement("tr");
+					/* Label */
+					var td = document.createElement("td");
+					td.style.verticalAlign = "top";
+					td.innerHTML = "<label>Strand:</label>";
+					tr.appendChild(td);
+
+					/* Content */
+					this.strandElement = document.createElement("td");
+					this.strandElement.innerHTML = this.element.strand;
+					tr.appendChild(this.strandElement);
+				table.appendChild(tr);
+
 				/* Annotation row */
 				tr = document.createElement("tr");
 					/* Label */
@@ -87,12 +103,6 @@ Eplant.ElementDialog = function(attributes) {
 			this.getDropDataElement.className = "button";
 			this.getDropDataElement.value = "";
 			this.getDropDataElement.onclick = null;
-			if (this.elementOfInterest) {
-				this.toDropData();
-			}
-			else {
-				this.toGetData();
-			}
 			container.appendChild(this.getDropDataElement);
 
 			/* Tags */
@@ -212,21 +222,78 @@ Eplant.ElementDialog = function(attributes) {
 
 	/* Get ElementOfInterest */
 	this.elementOfInterest = Eplant.getSpeciesOfInterest(this.element.chromosome.species).getElementOfInterest(this.element);
-	if (this.elementOfInterest) {
-		this.toDropData();
-	}
 
 	/* Open dialog */
 	this.open();
+	$(this.containerElement.parentNode).addClass("popupDialog");
 
-	/* Add event listeners to titlebar */
-	this.containerElement.parentNode.getElementsByClassName("ui-dialog-titlebar")[0].onmousedown = $.proxy(function() {
+	var titlebar = this.containerElement.parentNode.getElementsByClassName("ui-dialog-titlebar")[0];
+
+	/* Create minimize button */
+	this.minimizeButtonElement = document.createElement("button");
+	this.minimizeButtonElement.title = "minimize";
+	$(this.minimizeButtonElement).button({
+		icons: {
+			primary: "ui-icon-minus"
+		},
+		text: false
+	});
+	$(this.minimizeButtonElement).addClass("ui-dialog-titlebar-minimize");
+	this.minimizeButtonElement.onclick = $.proxy(function() {
+		this.minimized = !this.minimized;
+		if (this.minimized) {
+			$(this.minimizeButtonElement).button({
+				icons: {
+					primary: "ui-icon-plus"
+				},
+				text: false
+			});
+			this._height = $(this.containerElement).height();
+			$(this.containerElement).height(this._height);
+			$(this.containerElement).hide().show(0);		// Hack to force redraw
+			$(this.containerElement).addClass("minimized");
+			$(this.containerElement).height(0);
+			this.minimizeButtonElement.title = "restore";
+		}
+		else {
+			$(this.minimizeButtonElement).button({
+				icons: {
+					primary: "ui-icon-minus"
+				},
+				text: false
+			});
+			$(this.containerElement).removeClass("minimized");
+			$(this.containerElement).height(this._height);
+			this.minimizeButtonElement.title = "minimize";
+		}
+	}, this);
+	titlebar.appendChild(this.minimizeButtonElement);
+
+	this.focusButtonElement = document.createElement("button");
+	this.focusButtonElement.title = "focus";
+	$(this.focusButtonElement).button({
+		icons: {
+			primary: "ui-icon-star"
+		},
+		text: false
+	});
+	$(this.focusButtonElement).addClass("ui-dialog-titlebar-focus");
+	this.focusButtonElement.onclick = $.proxy(function() {
 		if (this.elementOfInterest) {
 			var speciesOfInterest = Eplant.getSpeciesOfInterest(this.element.chromosome.species);
 			if (speciesOfInterest != Eplant.speciesOfFocus) Eplant.setSpeciesOfFocus(speciesOfInterest);
 			Eplant.speciesOfFocus.setElementOfFocus(this.elementOfInterest);
 		}
 	}, this);
+	titlebar.appendChild(this.focusButtonElement);
+
+	/* Set data button */
+	if (this.elementOfInterest) {
+		this.toDropData();
+	}
+	else {
+		this.toGetData();
+	}
 
 	/* Select dialog if appropriate */
 	if (this.elementOfInterest && this.elementOfInterest == Eplant.getSpeciesOfInterest(this.element.chromosome.species).elementOfFocus) {
@@ -258,6 +325,7 @@ Eplant.ElementDialog.prototype.unselect = function() {
 
 Eplant.ElementDialog.prototype.toGetData = function() {
 	this.getDropDataElement.value = "Get Data";
+	$(this.containerElement.parentNode).removeClass("loadedDialog");
 	this.getDropDataElement.onclick = $.proxy(function() {
 		var elementOfFocus = Eplant.getSpeciesOfInterest(this.element.chromosome.species).elementOfFocus;
 		var elementDialog = (elementOfFocus) ? Eplant.getElementDialog(elementOfFocus.element) : null;
@@ -271,6 +339,7 @@ Eplant.ElementDialog.prototype.toGetData = function() {
 
 Eplant.ElementDialog.prototype.toDropData = function() {
 	this.getDropDataElement.value = "Drop Data";
+	$(this.containerElement.parentNode).addClass("loadedDialog");
 	this.getDropDataElement.onclick = $.proxy(function() {
 		Eplant.getSpeciesOfInterest(this.element.chromosome.species).removeElementOfInterest(this.elementOfInterest);
 		this.elementOfInterest = null;
@@ -280,6 +349,7 @@ Eplant.ElementDialog.prototype.toDropData = function() {
 			this.tags[n].selected = false
 			this.tags[n].containerElement.setAttribute("selected", "false");
 		}
+		this.close();
 	}, this);
 };
 

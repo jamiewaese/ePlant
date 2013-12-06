@@ -8,6 +8,7 @@ Eplant.PopupDialog = function(attributes) {
 	this.y = (attributes.y === undefined) ? 0 : attributes.y;
 	this.width = (attributes.width === undefined) ? "auto" : attributes.width;
 	this.height = (attributes.height === undefined) ? "auto" : attributes.height;
+	this.maxHeight = (attributes.maxHeight === undefined) ? 0 : attributes.maxHeight;
 	this.orientation = (attributes.orientation === undefined) ? ((this.x < ZUI.width / 2) ? "right" : "left") : attributes.orientation;
 	this.xOffset = (attributes.xOffset === undefined) ? 0 : attributes.xOffset;
 	this.yOffset = (attributes.yOffset === undefined) ? 0 : attributes.yOffset;
@@ -22,6 +23,7 @@ Eplant.PopupDialog.prototype.open = function() {
 	var parentPosition = $(ZUI.container).position();
 	var hPosition = (this.orientation == "left") ? "right" : "left";
 	var xOffset = (this.orientation == "left") ? -this.xOffset : this.xOffset;
+
 	$(this.containerElement).dialog({
 		title: this.title,
 		dialogClass: this.dialogClass,
@@ -33,6 +35,7 @@ Eplant.PopupDialog.prototype.open = function() {
 		width: this.width,
 		height: this.height,
 		minHeight: 0,
+		maxHeight: (this.maxHeight) ? this.maxHeight : "none",
 		resizable: this.resizable,
 		modal: this.modal,
 		close: $.proxy(function(event, ui) {

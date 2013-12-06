@@ -18,7 +18,7 @@ Eplant.InteractionDialog = function(attributes) {
 	/* Set up dialog content */
 		/* Data container */
 		var container = document.createElement("div");
-		container.style.padding = "5px";
+		container.style.padding = "0";
 		$(container).height(50);
 		container.style.overflow = "auto";
 			/* Data table */

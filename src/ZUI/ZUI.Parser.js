@@ -6,7 +6,7 @@ ZUI.Parser.pathToObj = function(path) {
 		var instruction = path[n];
 		var next = ZUI.Util.regexIndexOf(path, "[A-Za-z]", n + 1);
 		if (next < 0) next = path.length;
-		var args = path.substring(n + 1, next).replace(new RegExp("([0-9])-", "gi"), "$1 -").split(/[ ,]+/);
+		var args = path.substring(n + 1, next).replace(new RegExp("([0-9])-", "gi"), "$1,-").replace(new RegExp("[\t\n ,]+", "gi"), ",").split(/[,]+/);
 		for (var m = 0; m < args.length; m++) {
 			args[m] = Number(args[m]);
 		}
@@ -75,16 +75,16 @@ ZUI.Parser.pathToObj = function(path) {
 		else if (instructions[n].instruction == "V") {		// vertical lineto (absolute)
 			var obj = {};
 			obj.instruction = "lineTo";
-			obj.args = [lastX, instructions[n].args[1]];
+			obj.args = [lastX, instructions[n].args[0]];
 			objs.push(obj);
-			lastY = instructions[n].args[1];
+			lastY = instructions[n].args[0];
 		}
 		else if (instructions[n].instruction == "v") {		// vertical lineto (relative)
 			var obj = {};
 			obj.instruction = "lineTo";
-			obj.args = [lastX, instructions[n].args[1] + lastY];
+			obj.args = [lastX, instructions[n].args[0] + lastY];
 			objs.push(obj);
-			lastY += instructions[n].args[1];
+			lastY += instructions[n].args[0];
 		}
 		else if (instructions[n].instruction == "C") {		// curveto (absolute)
 			var obj = {};

@@ -41,3 +41,7 @@ ZUI.Util.regexIndexOf = function(string, regex, start) {
 	var index = string.substring(start || 0).search(regex);
 	return (index >= 0) ? (index + (start || 0)) : index;
 };
+
+ZUI.Util.getTime = function() {
+	return (new Date()).getTime();
+};

@@ -46,7 +46,7 @@
     -webkit-transition: 0.3s ease;
     -moz-transition: 0.3s ease;
     transition: 0.3s ease; }
-  .hint:hover:before, .hint:hover:after, [data-hint]:hover:before, [data-hint]:hover:after {
+  .hint[data-enabled="true"]:hover:before, .hint[data-enabled="true"]:hover:after, [data-hint][data-enabled="true"]:hover:before, [data-hint][data-enabled="true"]:hover:after {
     visibility: visible;
     opacity: 1; }
   .hint:before, [data-hint]:before {

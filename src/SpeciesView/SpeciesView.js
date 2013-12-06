@@ -18,90 +18,6 @@ function SpeciesView() {
 	/* Fade */
 	this.fade = 1;
 	this.fadeRate = 0;
-
-	/* Animations */
-	this.zoomInExitAnimation = new ZUI.Animation(30, $.proxy(function(currentFrame) {
-		ZUI.camera.distance = 400 * Math.pow(0.85, currentFrame);
-		ZUI.camera.x = ZUI.width / 6 * (400 - ZUI.camera.distance) / 400;
-		this.draw();
-	}, this));
-	this.zoomOutEntryAnimation = new ZUI.Animation(30, $.proxy(function(currentFrame) {
-		ZUI.camera.distance = 400 * Math.pow(0.85, 29 - currentFrame);
-		ZUI.camera.x = ZUI.width / 6 * (400 - ZUI.camera.distance) / 400;
-		this.draw();
-	}, this));
-/*this.viewObjects.push(new ZUI.ViewObject({
-	shape: "text",
-	positionScale: "world",
-	sizeScale: "screen",
-	x: ZUI.width / 6,
-	y: 50,
-	centerAt: "center top",
-	content: "Chr 1",
-	autoDraw: true,
-	size: 100,
-	font: "Ariel",
-	mouseOver: function(){console.log("MOUSEOVER");},
-	mouseOut: function(){console.log("MOUSEOUT");}
-}));
-this.viewObjects.push(new ZUI.ViewObject({
-	shape: "rect",
-	positionScale: "world",
-	sizeScale: "world",
-	x: ZUI.width / 6,
-	y: 0,
-	width: 50,
-	height: 0,
-	centerAt: "left bottom",
-	autoDraw: true,
-	mouseOver: function(){console.log("MOUSEOVER");},
-	mouseOut: function(){console.log("MOUSEOUT");}
-}));
-this.viewObjects.push(new ZUI.ViewObject({
-	shape: "polygon",
-	positionScale: "world",
-	sizeScale: "world",
-	x: 0,
-	y: 0,
-	vertices: [
-		{
-			x: 0,
-			y: 0
-		},
-		{
-			x: 0,
-			y: 100
-		},
-		{
-			x: 100,
-			y: 100
-		},
-		{
-			x: 100,
-			y: 0
-		},
-		{
-			x: 75,
-			y: 0
-		},
-		{
-			x: 75,
-			y: 50
-		},
-		{
-			x: 25,
-			y: 50
-		},
-		{
-			x: 25,
-			y: 0
-		}
-	],
-	fill: false,
-	autoDraw: true,
-	mouseOver: function(){console.log("MOUSEOVER");},
-	mouseOut: function(){console.log("MOUSEOUT");}
-}));*/
 }
 
 /* Inherit from View superclass */
@@ -109,6 +25,11 @@ SpeciesView.prototype = new ZUI.View();
 SpeciesView.prototype.constructor = SpeciesView;
 
 SpeciesView.prototype.active = function() {
+	/* Append to view history */
+	if (Eplant.viewHistory[Eplant.viewHistorySelected] != this) {
+		Eplant.pushViewHistory(this);
+	}
+
 	/* Hide extra UI */
 	document.getElementById("navigation_container").style.opacity = "0";
 	document.getElementById("settings_container").style.opacity = "0";
@@ -123,8 +44,7 @@ SpeciesView.prototype.active = function() {
 
 	/* Set camera */
 	ZUI.camera.reset();
-	ZUI.camera.distance = 400;
-	ZUI.camera._distance = 400;
+	ZUI.camera._distance = ZUI.camera.distance = 500;
 
 	/* Fade */
 	this.fade = 1;
@@ -170,6 +90,39 @@ SpeciesView.prototype.draw = function() {
 	ZUI.context.globalAlpha = this.fade;
 	ZUI.context.fillRect(0, 0, ZUI.width, ZUI.height);
 	ZUI.context.restore();
+};
+
+SpeciesView.prototype.getZoomOutEntryAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.25, 0.1, 0.25, 1],
+		sourceX: ZUI.width / 6,
+		sourceY: 0,
+		sourceDistance: 0,
+		targetX: 0,
+		targetY: 0,
+		targetDistance: 500,
+		draw: function(elapsedTime, remainingTime, view) {
+			view.draw();
+		}
+	};
+};
+
+SpeciesView.prototype.getZoomInExitAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.25, 0.1, 0.25, 1],
+		targetX: ZUI.width / 6,
+		targetY: 0,
+		targetDistance: 0,
+		draw: function(elapsedTime, remainingTime, view) {
+			view.draw();
+		}
+	};
 };
 
 /* Species list class */
@@ -266,7 +219,7 @@ SpeciesView.SpeciesListItem = function(species, speciesList) {
 
 		/* change to chromosome view */
 		ZUI.container.style.left = "0";
-		ZUI.changeActiveView(Eplant.speciesOfFocus.chromosomeView, this.speciesList.view.zoomInExitAnimation, Eplant.speciesOfFocus.chromosomeView.zoomInEntryAnimation);
+		Eplant.changeActiveView(Eplant.speciesOfFocus.chromosomeView, this.speciesList.view.getZoomInExitAnimationSettings(), Eplant.speciesOfFocus.chromosomeView.getZoomInEntryAnimationSettings());
 	}, this);
 	this.speciesList.element.appendChild(this.element);
 

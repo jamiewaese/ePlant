@@ -21,14 +21,7 @@ ZUI.frameRate = 60;			// Frame rate
 ZUI.lastTimestamp = 0;		// Last timestamp taken
 ZUI.width = 900;			// Canvas width
 ZUI.height = 600;			// Canvas height
-ZUI.animation = null;		// Active animation
 ZUI.activeView = null;		// Active view
-ZUI.isChangeView = false;		// Whether view should be changed
-ZUI.isAnimateChangeView = true;	// Whether view change should be animated
-ZUI.oldView = null;			// View before view change
-ZUI.exitOldViewAnimation = null;	// Animation for exiting old view
-ZUI.newView = null;			// View after view change
-ZUI.enterNewViewAnimation = null;	// Animation for entering new view
 ZUI.mouseStatus = {			// Mouse status
 	x : 0,
 	y : 0,
@@ -83,12 +76,10 @@ ZUI.initialize = function(settings) {
 	ZUI.backgroundAlpha = (settings.backgroundAlpha === undefined) ? 1 : settings.backgroundAlpha;
 
 	/* Set frame rate */
-	if (settings.frameRate) {
-		ZUI.frameRate = settings.frameRate;
-	}
-	else {
-		ZUI.frameRate = 60;
-	}
+	ZUI.frameRate = (settings.frameRate === undefined) ? 60 : settings.frameRate;
+
+	/* Set camera move rate */
+	ZUI.camera.moveRate = (settings.cameraMoveRate === undefined) ? 1 : settings.cameraMoveRate;
 
 	/* Add listeneres for input events */
 	ZUI.canvas.addEventListener("mousedown", ZUI.mouseDown, false);
@@ -151,30 +142,11 @@ ZUI.draw = function(timestamp) {
 		}
 
 		/* Draw */
-		if (ZUI.animation == null) {
-			if (ZUI.isChangeView) {
-				ZUI.activeView.inactive();
-				ZUI.activeView = ZUI.newView;
-				ZUI.isChangeView = false;
-				ZUI.oldView = null;
-				ZUI.newView = null;
-				ZUI.activeView.active();
-				ZUI.animate(ZUI.enterNewViewAnimation);
-			}
-			else {
-				ZUI.activeView.draw();
-			}
+		if (ZUI.activeView.animation) {
+			ZUI.activeView.animation.draw();
 		}
 		else {
-			if (!ZUI.animation.isOver()) {
-				ZUI.animation.next();
-			}
-			else {
-				if (ZUI.animation.end) {
-					ZUI.animation.end();
-				}
-				ZUI.animation = null;
-			}
+			ZUI.activeView.draw();
 		}
 
 		/* Check for mouse over/out events */
@@ -200,27 +172,10 @@ ZUI.draw = function(timestamp) {
 	}
 };
 
-/* Change active view */
-ZUI.changeActiveView = function(view, exitAnimation, entryAnimation) {
-	ZUI.oldView = ZUI.activeView;
-	ZUI.newView = view;
-	if (!ZUI.isAnimateChangeView) {
-		exitAnimation = null;
-		entryAnimation = null;
-	}
-	ZUI.exitOldViewAnimation = exitAnimation;
-	ZUI.enterNewViewAnimation = entryAnimation;
-	ZUI.isChangeView = true;
-	ZUI.animate(ZUI.exitOldViewAnimation);
-};
-
-/* Animate the given Animation object */
-ZUI.animate = function(animation) {
-	ZUI.animation = animation;
-	if (ZUI.animation != null) {
-		ZUI.animation.reset();
-		ZUI.animation.begin();
-	}
+ZUI.changeActiveView = function(view) {
+	ZUI.activeView.inactive();
+	ZUI.activeView = view;
+	ZUI.activeView.active();
 };
 
 /* Update application at every frame, override with custom function */

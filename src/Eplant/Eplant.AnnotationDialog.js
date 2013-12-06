@@ -38,11 +38,15 @@ Eplant.AnnotationDialog = function() {
 				/* Text input */
 				td = document.createElement("td");
 					this.sizeElement = document.createElement("input");
-					this.sizeElement.type = "number";
-					this.sizeElement.min = 0;
-					this.sizeElement.value = 0;
-					$(this.sizeElement).width(60);
 					td.appendChild(this.sizeElement);
+					$(this.sizeElement).spinner({
+						spin: function(event, ui) {
+							if (ui.value < 0) {
+								$(this).spinner("value", 0);
+								return false;
+							}
+						}
+					});
 				tr.appendChild(td);
 			table.appendChild(tr);
 

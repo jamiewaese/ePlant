@@ -116,6 +116,14 @@ Eplant.SpeciesOfInterest.prototype.removeElementOfInterest = function(elementOfI
 		/* Sync with view-specific annotations */
 		var annotation = this.chromosomeView.getAnnotation(elementOfInterest);
 		if (annotation) annotation.remove();
+
+		/* Sync with view history */
+		for (n = 0; n < Eplant.viewHistory.length; n++) {
+			if (Eplant.viewHistory[n].element && Eplant.viewHistory[n].element == elementOfInterest.element) {
+				Eplant.viewHistory.splice(n, 1);
+				if (Eplant.viewHistorySelected > n) Eplant.viewHistorySelected--;
+			}
+		}
 	}
 };
 
@@ -142,6 +150,18 @@ Eplant.SpeciesOfInterest.prototype.getElementOfInterestByIdentifier = function(i
 /* Set elementOfFocus */
 Eplant.SpeciesOfInterest.prototype.setElementOfFocus = function(elementOfFocus) {
 	if (this.elementOfFocus != elementOfFocus) {
+		/* Sync with views */
+		var annotation = Eplant.speciesOfFocus.chromosomeView.getAnnotation(this.elementOfFocus);
+		if (annotation) {
+			annotation.label.size = 12;
+			annotation.label.underline = false;
+		}
+		annotation = Eplant.speciesOfFocus.chromosomeView.getAnnotation(elementOfFocus);
+		if (annotation) {
+			annotation.label.size = 14;
+			annotation.label.underline = true;
+		}
+
 		/* Change elementOfFocus */
 		this.elementOfFocus = elementOfFocus;
 
