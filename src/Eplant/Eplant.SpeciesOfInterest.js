@@ -20,40 +20,7 @@ Eplant.SpeciesOfInterest = function(species) {
 	 */
 	Eplant.elementOfFocus = null;
 
-	/**
-	 * WorldView.
-	 */
-	Eplant.worldView = null;
-
-	/**
-	 * PlantView.
-	 */
-	Eplant.plantView = null;
-
-	/**
-	 * CellView.
-	 */
-	Eplant.cellView = null;
-
-	/**
-	 * InteractionView.
-	 */
-	Eplant.interactionView = null;
-
-	/**
-	 * PathwayView.
-	 */
-	Eplant.pathwayView = null;
-
-	/**
-	 * MoleculeView.
-	 */
-	Eplant.moleculeView = null;
-
-	/**
-	 * SequenceView.
-	 */
-	Eplant.sequenceView = null;
+	this.chromosomeView = new ChromosomeView(this.species);
 };
 
 /* Gets elementsOfInterest */
@@ -189,6 +156,27 @@ Eplant.SpeciesOfInterest.prototype.setElementOfFocus = function(elementOfFocus) 
 			/* Update current view */
 			if (ZUI.activeView instanceof InteractionView) {
 				ZUI.changeActiveView(elementOfFocus.interactionView, null, null);
+			}
+			else if (ZUI.activeView instanceof PlantView) {
+				ZUI.changeActiveView(elementOfFocus.plantView, null, null);
+			}
+			else if (ZUI.activeView instanceof WorldView) {
+				ZUI.changeActiveView(elementOfFocus.worldView, null, null);
+			}
+			else if (ZUI.activeView instanceof ExperimentView) {
+				ZUI.changeActiveView(elementOfFocus.experimentView, null, null);
+			}
+			else if (ZUI.activeView instanceof CellView) {
+				ZUI.changeActiveView(elementOfFocus.cellView, null, null);
+			}
+			else if (ZUI.activeView instanceof PathwayView) {
+				ZUI.changeActiveView(elementOfFocus.pathwayView, null, null);
+			}
+			else if (ZUI.activeView instanceof MoleculeView) {
+				ZUI.changeActiveView(elementOfFocus.moleculeView, null, null);
+			}
+			else if (ZUI.activeView instanceof SequenceView) {
+				ZUI.changeActiveView(elementOfFocus.sequenceView, null, null);
 			}
 		}
 	}

@@ -334,6 +334,14 @@ Eplant.ElementDialog.prototype.toGetData = function() {
 		Eplant.getSpeciesOfInterest(this.element.chromosome.species).setElementOfFocus(this.elementOfInterest);
 		this.select();
 		this.toDropData();
+
+		/* Remove element list dialog if current view is ChromosomeView */
+		if (ZUI.activeView instanceof ChromosomeView) {
+			if (ZUI.activeView.elementListDialog) {
+				ZUI.activeView.elementListDialog.close();
+				ZUI.activeView.elementListDialog = null;
+			}
+		}
 	}, this);
 };
 

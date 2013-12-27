@@ -11,6 +11,7 @@ ZUI.Animation = function(attributes) {
 	this._begin = (attributes.begin === undefined) ? function(){} : attributes.begin;
 	this._end = (attributes.end === undefined) ? function(){} : attributes.end;
 	this._draw = (attributes.draw === undefined) ? function(elapsedTime, remainingTime, view){} : attributes.draw;
+	this.data = (attributes.data === undefined) ? null : attributes.data;
 	if (this.type == "zoom") {
 		this.bezier = (attributes.bezier === undefined) ? [0.25, 0.1, 0.25, 1] : attributes.bezier;
 		this.spline = new ZUI.Util.KeySpline(this.bezier[0], this.bezier[1], this.bezier[2], this.bezier[3]);
@@ -34,7 +35,7 @@ ZUI.Animation.prototype.begin = function() {
 		if (this.sourceY === undefined) this.sourceY = ZUI.camera._y;
 		if (this.sourceDistance === undefined) this.sourceDistance = ZUI.camera._distance;
 	}
-	this._begin();
+	this._begin(this.data);
 	if (this.remainingTime <= 0) {
 		this.end();
 	}
@@ -49,7 +50,7 @@ ZUI.Animation.prototype.end = function() {
 		ZUI.camera._y = ZUI.camera.y = this.targetY;
 		ZUI.camera._distance = ZUI.camera.distance = this.targetDistance;
 	}
-	this._end();
+	this._end(this.data);
 };
 
 ZUI.Animation.prototype.draw = function() {
@@ -64,7 +65,7 @@ ZUI.Animation.prototype.draw = function() {
 			ZUI.camera._y = ZUI.camera.y = (this.targetY - this.sourceY) * progress + this.sourceY;
 			ZUI.camera._distance = ZUI.camera.distance = (this.targetDistance - this.sourceDistance) * progress + this.sourceDistance;
 		}
-		this._draw(this.elapsedTime, this.remainingTime, this.view);
+		this._draw(this.elapsedTime, this.remainingTime, this.view, this.data);
 	}
 	else {
 		this.end();

@@ -1,12 +1,15 @@
 /* Class for handling annotations in the ChromosomeView */
 ChromosomeView.Annotation = function(elementOfInterest, view) {
-	this.elementOfInterest = elementOfInterest;
-	this.view = view;
+	/* Properties */
+	this.elementOfInterest = elementOfInterest;	// Corresponding ElementOfInterest
+	this.view = view;		// Parent view
+	this.whisker = null;		// Whisker view object
+	this.label = null;		// Label view object
 
 	/* Create whisker */
 	var chromosomeViewObject = view.getChromosomeViewObject(elementOfInterest.element.chromosome);
 	var size = (elementOfInterest.size === undefined) ? 5 : elementOfInterest.size * 5;
-	var color = (elementOfInterest.color === undefined) ? Eplant.Color.LightGrey : elementOfInterest.color;
+	var color = (elementOfInterest.color === undefined) ? Eplant.Color.Black : elementOfInterest.color;
 	this.whisker = new ZUI.ViewObject({
 		shape: "path",
 		positionScale: "world",

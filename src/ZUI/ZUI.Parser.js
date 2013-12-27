@@ -6,7 +6,7 @@ ZUI.Parser.pathToObj = function(path) {
 		var instruction = path[n];
 		var next = ZUI.Util.regexIndexOf(path, "[A-Za-z]", n + 1);
 		if (next < 0) next = path.length;
-		var args = path.substring(n + 1, next).replace(new RegExp("([0-9])-", "gi"), "$1,-").replace(new RegExp("[\t\n ,]+", "gi"), ",").split(/[,]+/);
+		var args = path.substring(n + 1, next).replace(new RegExp("([0-9])-", "gi"), "$1,-").trim().replace(new RegExp("[\t\n ,]+", "gi"), ",").split(/[,]+/);
 		for (var m = 0; m < args.length; m++) {
 			args[m] = Number(args[m]);
 		}
@@ -16,7 +16,6 @@ ZUI.Parser.pathToObj = function(path) {
 		});
 		n = next;
 	}
-
 	var objs = []
 	var lastX = 0, lastY = 0;
 	for (n = 0; n < instructions.length; n++) {
@@ -151,12 +150,20 @@ ZUI.Parser.pathToObj = function(path) {
 			lastY += instructions[n].args[1];
 		}
 		else if (instructions[n].instruction == "A") {		// elliptical arc (absolute)
-			lastX = instructions[n].args[5];
-			lastY = instructions[n].args[6];
+			var obj = {};
+			obj.instruction = "arcTo";
+			obj.args = [instructions[n].args[0], instructions[n].args[1], instructions[n].args[2], instructions[n].args[3], instructions[n].args[4]];
+			objs.push(obj);
+			lastX = instructions[n].args[2];
+			lastY = instructions[n].args[3];
 		}
 		else if (instructions[n].instruction == "a") {		// elliptical arc (relative)
-			lastX += instructions[n].args[5];
-			lastY += instructions[n].args[6];
+			var obj = {};
+			obj.instruction = "arcTo";
+			obj.args = [instructions[n].args[0] + lastX, instructions[n].args[1] + lastY, instructions[n].args[2] + lastX, instructions[n].args[3] + lastY, instructions[n].args[4]];
+			objs.push(obj);
+			lastX += instructions[n].args[2];
+			lastY += instructions[n].args[3];
 		}
 	}
 

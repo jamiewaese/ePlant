@@ -10,6 +10,17 @@
 	window.requestAnimationFrame = requestAnimationFrame;
 })();
 
+/* Define String.prototype.indexOf if undefined */
+(function() {
+	if (!String.prototype.indexOf) {
+		String.prototype.indexOf = function(obj, start) {
+			for (var n = (start || 0), length = this.length; i < length; i++) {
+				if (this[n] === obj) return n;
+			}
+		};
+	}
+})();
+
 /* ZUI namespace */
 var ZUI = {};
 
@@ -22,6 +33,7 @@ ZUI.lastTimestamp = 0;		// Last timestamp taken
 ZUI.width = 900;			// Canvas width
 ZUI.height = 600;			// Canvas height
 ZUI.activeView = null;		// Active view
+ZUI.viewObjects = [];		// All view objects
 ZUI.mouseStatus = {			// Mouse status
 	x : 0,
 	y : 0,
@@ -48,6 +60,11 @@ ZUI.initialize = function(settings) {
 	if (settings.canvas) {
 		ZUI.canvas = settings.canvas;
 		ZUI.context = ZUI.canvas.getContext("2d");
+		ZUI.context.advArcTo = function() {
+			ZUI.context.save();
+			
+			ZUI.context.restore();
+		}
 		ZUI.container = ZUI.canvas.parentNode;
 	}
 	else {
@@ -158,7 +175,9 @@ ZUI.draw = function(timestamp) {
 			if (viewObjects[n].isInBound(x, y)) {
 				viewObject = viewObjects[n];
 			}
-			else if (viewObjects[n].isHovered) {
+		}
+		for (n = 0; n < viewObjects.length; n++) {
+			if (viewObjects[n] != viewObject && viewObjects[n].isHovered) {
 				viewObjects[n].isHovered = false;
 				viewObjects[n].mouseOut();
 			}
@@ -265,13 +284,15 @@ ZUI.mouseMove = function(event) {
 		if (viewObjects[n].isInBound(x, y)) {
 			viewObject = viewObjects[n];
 		}
-		else if (viewObjects[n].isHovered) {
+	}
+
+	ZUI.activeView.mouseMove();
+	for (n = 0; n < viewObjects.length; n++) {
+		if (viewObjects[n] != viewObject && viewObjects[n].isHovered) {
 			viewObjects[n].isHovered = false;
 			viewObjects[n].mouseOut();
 		}
 	}
-
-	ZUI.activeView.mouseMove();
 	if (viewObject) {
 		viewObject.mouseMove();
 		if (!viewObject.isHovered) {

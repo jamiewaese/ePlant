@@ -4,6 +4,7 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 	this.chromosome = chromosome;
 	this.view = view;
 	this.index = index;
+	this.heatmap = null;
 
 	/* Create view objects */
 	this.viewObjects = [];
@@ -323,6 +324,33 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 			this.miniInner.y = y2;
 			this.miniInner.height = y3 - y2;
 			this.miniInner.draw();
+		}
+
+		/* Draw heatmap or delete it if zoom changed */
+		if (this.heatmap) {
+			if (Math.abs(this.heatmap.length - this.getScreenHeight()) < 1) {
+				var max = Math.log(this.heatmap.slice(0).sort()[this.heatmap.length - 1]);
+
+				ZUI.context.save();
+				var y0 = Math.floor(this.getScreenY()) + 0.5;
+				var width = this.getScreenWidth() * 0.3;
+				var x = this.getScreenX() - width / 2;
+				for (var n = 0; n < this.heatmap.length; n++) {
+					var ratio = 1 - Math.log(this.heatmap[n]) / max;
+					if (ratio < 0) ratio = 0;
+					var green = Math.floor(ratio * 255).toString(16);
+					if (green.length < 2) green = "0" + green;
+					ZUI.context.strokeStyle = "#FF" + green + "00";
+					ZUI.context.beginPath();
+					ZUI.context.moveTo(x, y0 + n);
+					ZUI.context.lineTo(x + width, y0 + n);
+					ZUI.context.stroke();
+				}
+				ZUI.context.restore();
+			}
+			else {
+				this.heatmap = null;
+			}
 		}
 	};
 

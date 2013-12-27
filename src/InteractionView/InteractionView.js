@@ -16,13 +16,13 @@ function InteractionView(element) {
 	this.cy = null;
 
 	/* Annotation popup */
-	this.interactionDialogs = [];
+	this.interactionTooltips = [];
 
 	/* Data status */
 	this.isDataReady = false;
 
 	this.elementDialogCountdown = null;
-	this.interactionDialogCountdown = null;
+	this.interactionTooltipCountdown = null;
 
 	/* Create view-specific UI elements */
 	/* Filter */
@@ -82,7 +82,9 @@ function InteractionView(element) {
 				"width": "data(size)",
 				"height": "data(size)",
 				"content": "data(id)",
-				"color": "data(labelColor)",
+				"color": Eplant.Color.Black,
+				"text-outline-width": "data(labelOutlineWidth)",
+				"text-outline-color": "#E6F9AF",
 				"background-color": "data(color)",
 				"border-width": "3",
 				"border-color": Eplant.Color.DarkGrey
@@ -184,7 +186,7 @@ function InteractionView(element) {
 			if (elementDialog && !elementDialog.pinned) {
 				elementDialog.close();
 			}
-			else if (this.elementDialogCountdown && this.elementDialogCountdown.element == element) {
+			else if (this.elementDialogCountdown && this.elementDialogCountdown.element == element && !this.elementDialogCountdown.pin) {
 				this.elementDialogCountdown = null;
 			}
 		}, this));
@@ -195,21 +197,44 @@ function InteractionView(element) {
 			node.select();
 
 			var element = this.element.chromosome.species.getElementByIdentifier(node.data("id"));
-			var elementDialog = Eplant.getElementDialog(element);
-			if (elementDialog) {
-				elementDialog.pinned = true;
+			if (element) {
+				var elementDialog = Eplant.getElementDialog(element);
+				if (elementDialog) {
+					elementDialog.pinned = true;
+				}
+				else {
+					var position = ZUI.camera.projectPoint(node.position().x - ZUI.width / 2, node.position().y - ZUI.height / 2);
+					this.elementDialogCountdown = {
+						finish: ZUI.appStatus.progress,
+						element: element,
+						orientation: (position.x > ZUI.width / 2) ? "left" : "right",
+						x: position.x,
+						y: position.y,
+						pin: true
+					};
+				}
 			}
 			else {
-				var position = ZUI.camera.projectPoint(node.position().x - ZUI.width / 2, node.position().y - ZUI.height / 2);
-				this.elementDialogCountdown = {
-					finish: ZUI.appStatus.progress,
-					element: element,
-					orientation: (position.x > ZUI.width / 2) ? "left" : "right",
-					x: position.x,
-					y: position.y,
-					pin: true
-				};
+				this.element.chromosome.species.loadElement(node.data("id"), $.proxy(function(element) {
+					var node = this.cy.nodes("node#" + element.identifier)[0];
+					var elementDialog = Eplant.getElementDialog(element);
+					if (elementDialog) {
+						elementDialog.pinned = true;
+					}
+					else {
+						var position = ZUI.camera.projectPoint(node.position().x - ZUI.width / 2, node.position().y - ZUI.height / 2);
+						this.elementDialogCountdown = {
+							finish: ZUI.appStatus.progress,
+							element: element,
+							orientation: (position.x > ZUI.width / 2) ? "left" : "right",
+							x: position.x,
+							y: position.y,
+							pin: true
+						};
+					}
+				}, this));
 			}
+
 		}, this));
 		this.cy.on("mouseover", "edge", $.proxy(function(event){
 			ZUI.container.style.cursor = "pointer";
@@ -219,17 +244,11 @@ function InteractionView(element) {
 			var interaction = edge._private.data;
 			var node1 = edge.source();
 			var node2 = edge.target();
-			var interactionDialog = Eplant.getInteractionDialog(interaction);
-			if (!interactionDialog) {
-				var position = ZUI.camera.projectPoint((node1.position().x + node2.position().x) / 2 - ZUI.width / 2, (node1.position().y + node2.position().y) / 2 - ZUI.height / 2);
-				this.interactionDialogCountdown = {
+			var interactionTooltip = this.getInteractionTooltip(interaction);
+			if (!interactionTooltip) {
+				this.interactionTooltipCountdown = {
 					finish: ZUI.appStatus.progress + 500,
 					interaction: interaction,
-					title: node1.data("id") + " and " + node2.data("id"),
-					orientation: (position.x > ZUI.width / 2) ? "left" : "right",
-					x: position.x,
-					y: position.y,
-					pin: false
 				};
 			}
 		}, this));
@@ -238,12 +257,14 @@ function InteractionView(element) {
 			var edge = event.cyTarget;
 			edge.removeClass("highlight");
 			var interaction = edge._private.data;
-			var interactionDialog = Eplant.getInteractionDialog(interaction);
-			if (interactionDialog && !interactionDialog.pinned) {
-				interactionDialog.close();
+			var interactionTooltip = this.getInteractionTooltip(interaction);
+			if (interactionTooltip) {
+				interactionTooltip.remove();
+				var index = this.interactionTooltips.indexOf(interactionTooltip);
+				this.interactionTooltips.splice(index, 1);
 			}
-			else if (this.interactionDialogCountdown && this.interactionDialogCountdown.interaction == interaction) {
-				this.interactionDialogCountdown = null;
+			else if (this.interactionTooltipCountdown && this.interactionTooltipCountdown.interaction == interaction) {
+				this.interactionTooltipCountdown = null;
 			}
 		}, this));
 		this.cy.on("tap", "edge", $.proxy(function(event){
@@ -253,19 +274,14 @@ function InteractionView(element) {
 			edge.select();
 
 			var interaction = edge._private.data;
-			var interactionDialog = Eplant.getInteractionDialog(interaction);
-			if (interactionDialog) {
-				interactionDialog.pinned = true;
+			var interactionTooltip = this.getInteractionTooltip(interaction);
+			if (interactionTooltip) {
+				interactionTooltip.pinned = true;
 			}
-			else {
-				this.interactionDialogCountdown = {
+			if (!interactionTooltip) {
+				this.interactionTooltipCountdown = {
 					finish: ZUI.appStatus.progress,
 					interaction: interaction,
-					title: node1.data("id") + " and " + node2.data("id"),
-					orientation: (position.x > ZUI.width / 2) ? "left" : "right",
-					x: position.x,
-					y: position.y,
-					pin: true
 				};
 			}
 		}, this));
@@ -280,7 +296,7 @@ function InteractionView(element) {
 	$.ajax({
 		type: "GET",
 //		url: "http://bar.utoronto.ca/webservices/aiv/get_interactions.php?request=[{\"agi\":\"" + this.element.identifier + "\"}]",
-url: "http://bar.utoronto.ca/~mierullo/get_interactions.php?request=[{\"agi\":\"" + this.element.identifier + "\"}]",
+		url: "http://bar.utoronto.ca/~mierullo/get_interactions.php?request=[{\"agi\":\"" + this.element.identifier + "\"}]",
 		dataType: "json"
 	}).done($.proxy(function(response) {
 		var nodes = this.cytoscapeConf.elements.nodes;
@@ -298,11 +314,11 @@ url: "http://bar.utoronto.ca/~mierullo/get_interactions.php?request=[{\"agi\":\"
 					data: {
 						id: query.toUpperCase(),
 						color: Eplant.Color.White,
-						labelColor: (query.toUpperCase() == this.element.identifier.toUpperCase()) ? Eplant.Color.Green : Eplant.Color.DarkGrey,
+						labelOutlineWidth: (query.toUpperCase() == this.element.identifier.toUpperCase()) ? 2 : 0,
 						size: (query.toUpperCase() == this.element.identifier.toUpperCase()) ? 50 : 30
 					}
 				};
-				InteractionView.getNodeLocalisation(node);
+				InteractionView.getNodeLocalisation(node, this);
 				nodes.push(node);
 			}
 			for (var n = 0; n < interactions.length; n++) {
@@ -321,11 +337,11 @@ url: "http://bar.utoronto.ca/~mierullo/get_interactions.php?request=[{\"agi\":\"
 						data: {
 							id: interactions[n].source.toUpperCase(),
 							color: Eplant.Color.White,
-							labelColor: (interactions[n].target.toUpperCase() == this.element.identifier.toUpperCase()) ? Eplant.Color.Green : Eplant.Color.DarkGrey,
+							labelOutlineWidth: (interactions[n].source.toUpperCase() == this.element.identifier.toUpperCase()) ? 2 : 0,
 							size: (interactions[n].source.toUpperCase() == this.element.identifier.toUpperCase()) ? 50 : 30
 						}
 					};
-					InteractionView.getNodeLocalisation(node);
+					InteractionView.getNodeLocalisation(node, this);
 					nodes.push(node);
 				}
 				if (!targetExists) {
@@ -333,11 +349,11 @@ url: "http://bar.utoronto.ca/~mierullo/get_interactions.php?request=[{\"agi\":\"
 						data: {
 							id: interactions[n].target.toUpperCase(),
 							color: Eplant.Color.White,
-							labelColor: (interactions[n].target.toUpperCase() == this.element.identifier.toUpperCase()) ? Eplant.Color.Green : Eplant.Color.DarkGrey,
+							labelOutlineWidth: (interactions[n].target.toUpperCase() == this.element.identifier.toUpperCase()) ? 2 : 0,
 							size: (interactions[n].target.toUpperCase() == this.element.identifier.toUpperCase()) ? 50 : 30
 						}
 					};
-					InteractionView.getNodeLocalisation(node);
+					InteractionView.getNodeLocalisation(node, this);
 					nodes.push(node);
 				}
 				var lineStyle = "solid";
@@ -423,6 +439,12 @@ InteractionView.prototype.inactive = function() {
 	/* Clear elements */
 	this.cy.remove(this.cy.elements());
 
+	/* Remove interaction tooltips */
+	for (n = 0; n < this.interactionTooltips.length; n++) {
+		this.interactionTooltips[n].remove();
+	}
+	this.interactionTooltips = [];
+
 	/* Remove application specific UI */
 	document.getElementById("viewSpecificUI").innerHTML = "";
 };
@@ -451,16 +473,32 @@ InteractionView.localisationToColor = function(localisation) {
 	return color;
 };
 
-InteractionView.getNodeLocalisation = function(node) {
+InteractionView.getNodeLocalisation = function(node, interactionView) {
+	var obj = {
+		node: node,
+		interactionView: interactionView
+	};
 	$.ajax({
 		type: "GET",
 		url: "http://bar.utoronto.ca/~eplant/cgi-bin/suba3.cgi?id=" + node.data.id,
 		dataType: "json"
 	}).done($.proxy(function(response) {
 		var localisation = "";
-		if (response.location_subloc && response.location_subloc.length > 0) localisation = response.location_subloc[0];
-		node.data.color = InteractionView.localisationToColor(localisation);
-	}, node));
+		var highestScore = 0;
+		for (var location in response) {
+			if (response[location] > highestScore) {
+				localisation = location;
+				highestScore = response[location];
+			}
+		}
+		var color = InteractionView.localisationToColor(localisation)
+		if (this.interactionView.cy) {
+			this.interactionView.cy.elements("node#" + this.node.data.id).data("color", color);
+		}
+		else {
+			this.node.data.color = color;
+		}
+	}, obj));
 };
 
 InteractionView.zoomCytoscapeToZUI = function(zoom) {
@@ -512,17 +550,14 @@ InteractionView.prototype.draw = function() {
 	}
 
 	/* Check whether interaction dialog should be created */
-	if (this.interactionDialogCountdown && this.interactionDialogCountdown.finish <= ZUI.appStatus.progress) {
-		var conf = this.interactionDialogCountdown;
-		var interactionDialog = new Eplant.InteractionDialog({
-			title: conf.title,
-			x: conf.x,
-			y: conf.y,
-			orientation: conf.orientation,
-			interaction: conf.interaction
+	if (this.interactionTooltipCountdown && this.interactionTooltipCountdown.finish <= ZUI.appStatus.progress) {
+		var conf = this.interactionTooltipCountdown;
+		var interactionTooltip = new Eplant.Tooltip({
+			content: "Correlation coefficient: " + conf.interaction.correlation + "<br>Interolog confidence: " + conf.interaction.confidence,
 		});
-		interactionDialog.pinned = conf.pin;
-		this.interactionDialogCountdown = null;
+		interactionTooltip.data.interaction = conf.interaction;
+		this.interactionTooltips.push(interactionTooltip);
+		this.interactionTooltipCountdown = null;
 	}
 };
 
@@ -562,4 +597,13 @@ InteractionView.prototype.getZoomOutExitAnimationSettings = function() {
 InteractionView.prototype.getLoadProgress = function() {
 	if (this.isDataReady) return 1;
 	else return 0;
+};
+
+InteractionView.prototype.getInteractionTooltip = function(interaction) {
+	for (var n = 0; n < this.interactionTooltips.length; n++) {
+		if (this.interactionTooltips[n].data.interaction == interaction) {
+			return this.interactionTooltips[n];
+		}
+	}
+	return null;
 };

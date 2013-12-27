@@ -21,11 +21,11 @@ Eplant.ElementOfInterest = function(element, speciesOfInterest) {
 	this.tags = [];
 
 	/* Preload views */
-	this.worldView = null;
-	this.plantView = null;
-	this.cellView = null;
+	this.worldView = new WorldView(element);
+	this.plantView = new PlantView(element);
+	this.cellView = new CellView(element);
 	this.interactionView = new InteractionView(element);
-	this.pathwayView = null;
+	this.pathwayView = new PathwayView(element);
 	this.moleculeView = null;
 	this.sequenceView = null;
 };

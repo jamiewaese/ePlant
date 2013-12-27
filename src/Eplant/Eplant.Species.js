@@ -38,6 +38,7 @@ Eplant.Species.prototype.loadElement = function(term, callback) {
 	var obj = {};
 	obj.context = this;
 	obj.callback = callback;
+	obj.term = term;
 	$.ajax({
 		type: "GET",
 		url: "cgi-bin/querygene.cgi?species=" + this.scientificName.split(" ").join("_") + "&term=" + term,
@@ -57,7 +58,10 @@ Eplant.Species.prototype.loadElement = function(term, callback) {
 				element.annotation = response.annotation;
 				chromosome.elements.push(element);
 			}
-			this.callback(element);
+			this.callback(element, this.term);
+		}
+		else {
+			this.callback(null, this.term);
 		}
 	}, obj));
 };

@@ -12,7 +12,6 @@ Eplant.speciesOfFocus = null;		// The SpeciesOfInterest object in focus
 Eplant.speciesView = null;			// SpeciesView object
 Eplant.tooltipSwitch = true;		// Tooltip toggle switch
 Eplant.elementDialogs = [];			// Element dialogs
-Eplant.interactionDialogs = [];		// Interaction dialogs
 Eplant.viewHistory = [];			// View history stack
 Eplant.viewHistorySelected = null;		// Selected index of view history
 Eplant.animateViewChange = true;		// Toggle view change animation
@@ -27,6 +26,7 @@ Eplant.initialize = function() {
 	});
 	ZUI.update = Eplant.update;
 	MoleculeView.initJMol();
+	WorldView.initGoogleMaps();
 	Eplant.speciesView = new SpeciesView();
 	ZUI.changeActiveView(Eplant.speciesView);
 
@@ -250,16 +250,6 @@ Eplant.getElementDialog = function(element) {
 	return null;
 };
 
-/* Get the InteractionDialog object associated with the given interaction */
-Eplant.getInteractionDialog = function(interaction) {
-	for (var n = 0; n < Eplant.interactionDialogs.length; n++) {
-		if (Eplant.interactionDialogs[n].interaction == interaction) {
-			return Eplant.interactionDialogs[n];
-		}
-	}
-	return null;
-};
-
 Eplant.setView = function(view) {
 	var activeView = ZUI.activeView;
 	ZUI.activeView = null;
@@ -278,20 +268,36 @@ Eplant.setView = function(view) {
 		ZUI.activeView = activeView;
 		Eplant.toInteractionView();
 	}
+	else if (view instanceof PlantView) {
+		Eplant.setSpeciesOfFocus(Eplant.getSpeciesOfInterest(view.element.chromosome.species));
+		Eplant.speciesOfFocus.setElementOfFocus(Eplant.speciesOfFocus.getElementOfInterest(view.element));
+		ZUI.activeView = activeView;
+		Eplant.toPlantView();
+	}
+	else if (view instanceof WorldView) {
+		Eplant.setSpeciesOfFocus(Eplant.getSpeciesOfInterest(view.element.chromosome.species));
+		Eplant.speciesOfFocus.setElementOfFocus(Eplant.speciesOfFocus.getElementOfInterest(view.element));
+		ZUI.activeView = activeView;
+		Eplant.toWorldView();
+	}
 	//TODO other views
 };
 
 Eplant.getElement = function() {
-	var term = document.getElementById("enterIdentifier").value;
-	Eplant.speciesOfFocus.species.loadElement(term, $.proxy(function(element) {
-		/* Add ElementOfInterest */
-		var elementOfInterest = Eplant.speciesOfFocus.addElementOfInterest(element, {
-			size: 1,
-			color: Eplant.Color.LightGrey,
-			tags: []
-		});
-		Eplant.speciesOfFocus.setElementOfFocus(elementOfInterest);
-	}, this));
+	var terms = document.getElementById("enterIdentifier").value.split(",");
+	for (var n = 0; n < terms.length; n++) {
+		var term = terms[n].trim();
+		Eplant.speciesOfFocus.species.loadElement(term, $.proxy(function(element, term) {
+			if (element) {
+				/* Add ElementOfInterest */
+				var elementOfInterest = Eplant.speciesOfFocus.addElementOfInterest(element, {});
+				Eplant.speciesOfFocus.setElementOfFocus(elementOfInterest);
+			}
+			else {
+				alert("Sorry, we could not find " + term + ".");
+			}
+		}, this));
+	}
 };
 
 Eplant.backViewHistory = function() {
@@ -409,6 +415,29 @@ Eplant.popViewHistory = function() {
 	return view;
 };
 
+Eplant.collapseElementDialogs = function() {
+	for (var n = 0; n < Eplant.elementDialogs.length; n++) {
+		var elementDialog = Eplant.elementDialogs[n];
+		if (!elementDialog.minimized) {
+			$(elementDialog.minimizeButtonElement).button({
+				icons: {
+					primary: "ui-icon-plus"
+				},
+				text: false
+			});
+			elementDialog.minimized = true;
+			elementDialog._height = $(elementDialog.containerElement).height();
+			$(elementDialog.containerElement).height(elementDialog._height);
+			$(elementDialog.containerElement).hide().show(0);		// Hack to force redraw
+			$(elementDialog.containerElement).addClass("minimized");
+			$(elementDialog.containerElement).height(0);
+		}
+		$(elementDialog.containerElement.parentNode).animate({
+			top: $(window).height() - 50
+		}, 200);
+	}
+};
+
 Eplant.changeActiveView = function(view, exitAnimationSettings, entryAnimationSettings) {
 	if (!exitAnimationSettings) exitAnimationSettings = {};
 	if (!entryAnimationSettings) entryAnimationSettings = {};
@@ -431,64 +460,205 @@ Eplant.changeActiveView = function(view, exitAnimationSettings, entryAnimationSe
 
 /* Change to SpeciesView */
 Eplant.toSpeciesView = function() {
+	if (!Eplant.speciesView) return;
+	var view = Eplant.speciesView;
 	if (ZUI.activeView instanceof ChromosomeView) {
-		Eplant.changeActiveView(Eplant.speciesView, ZUI.activeView.getZoomOutExitAnimationSettings(), Eplant.speciesView.getZoomOutEntryAnimationSettings());
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
 	}
 	else if (ZUI.activeView instanceof InteractionView) {
-		Eplant.changeActiveView(Eplant.speciesView, ZUI.activeView.getZoomOutExitAnimationSettings(), Eplant.speciesView.getZoomOutEntryAnimationSettings());
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof PathwayView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
 	}
 	else if (ZUI.activeView instanceof MoleculeView) {
-		Eplant.changeActiveView(Eplant.speciesView, null, null);
+		Eplant.changeActiveView(view, null, null);
+	}
+	else if (ZUI.activeView instanceof CellView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof PlantView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof WorldView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
 	}
 };
 
 /* Change to ChromosomeView */
 Eplant.toChromosomeView = function() {
+	if (!Eplant.speciesOfFocus || !Eplant.speciesOfFocus.chromosomeView) return;
+	var view = Eplant.speciesOfFocus.chromosomeView;
 	if (ZUI.activeView instanceof ChromosomeView) {
-		Eplant.changeActiveView(Eplant.speciesOfFocus.chromosomeView, null, null);
+		Eplant.changeActiveView(view, null, null);
+	}
+	else if (ZUI.activeView instanceof SpeciesView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
 	}
 	else if (ZUI.activeView instanceof InteractionView) {
-		Eplant.changeActiveView(Eplant.speciesOfFocus.chromosomeView, ZUI.activeView.getZoomOutExitAnimationSettings(), Eplant.speciesOfFocus.chromosomeView.getZoomOutEntryAnimationSettings());
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof PathwayView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
 	}
 	else if (ZUI.activeView instanceof MoleculeView) {
-		Eplant.changeActiveView(Eplant.speciesOfFocus.chromosomeView, null, Eplant.speciesOfFocus.chromosomeView.getZoomOutEntryAnimationSettings());
+		Eplant.changeActiveView(view, null, view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof CellView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof PlantView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof WorldView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
 	}
 };
 
 /* Change to InteractionView */
 Eplant.toInteractionView = function() {
+	if (!Eplant.speciesOfFocus || !Eplant.speciesOfFocus.elementOfFocus || !Eplant.speciesOfFocus.elementOfFocus.interactionView) return;
+	var view = Eplant.speciesOfFocus.elementOfFocus.interactionView;
 	if (ZUI.activeView instanceof ChromosomeView) {
-		Eplant.changeActiveView(Eplant.speciesOfFocus.elementOfFocus.interactionView, ZUI.activeView.getZoomInExitAnimationSettings(), Eplant.speciesOfFocus.elementOfFocus.interactionView.getZoomInEntryAnimationSettings());
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
 	}
 	else if (ZUI.activeView instanceof InteractionView) {
-		if (ZUI.activeView != Eplant.speciesOfFocus.elementOfFocus.interactionView) {
-			Eplant.changeActiveView(Eplant.speciesOfFocus.elementOfFocus.interactionView, null, null);
-		}
+		Eplant.changeActiveView(view, null, null);
+	}
+	else if (ZUI.activeView instanceof PathwayView) {
+		Eplant.changeActiveView(view, null, null);
 	}
 	else if (ZUI.activeView instanceof MoleculeView) {
-		Eplant.changeActiveView(Eplant.speciesOfFocus.elementOfFocus.interactionView, null, null);
+		Eplant.changeActiveView(view, null, null);
+	}
+	else if (ZUI.activeView instanceof CellView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof PlantView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof WorldView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
 	}
 };
 
 /* Change to MoleculeView */
 Eplant.toMoleculeView = function() {
+	if (!Eplant.speciesOfFocus || !Eplant.speciesOfFocus.elementOfFocus || !Eplant.speciesOfFocus.elementOfFocus.moleculeView) return;
 	if (ZUI.activeView instanceof ChromosomeView) {
 		Eplant.changeActiveView(new MoleculeView("At2g41460"), null, null);
 	}
 	else if (ZUI.activeView instanceof InteractionView) {
-		Eplant.changeActiveView(new MoleculeView("At2g41460"), null, null);
+	}
+	else if (ZUI.activeView instanceof WorldView) {
 	}
 };
 
 /* Change to PathwayView */
 Eplant.toPathwayView = function() {
+	if (!Eplant.speciesOfFocus || !Eplant.speciesOfFocus.elementOfFocus || !Eplant.speciesOfFocus.elementOfFocus.pathwayView) return;
+	var view = Eplant.speciesOfFocus.elementOfFocus.pathwayView;
 	if (ZUI.activeView instanceof ChromosomeView) {
-		Eplant.changeActiveView(new PathwayView({identifier:"At2g41460"}), null, null);
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof InteractionView) {
+		Eplant.changeActiveView(view, null, null);
+	}
+	else if (ZUI.activeView instanceof PathwayView) {
+		Eplant.changeActiveView(view, null, null);
+	}
+	else if (ZUI.activeView instanceof MoleculeView) {
+		Eplant.changeActiveView(view, null, null);
+	}
+	else if (ZUI.activeView instanceof CellView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof PlantView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof WorldView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
 	}
 };
 
 /* Change to PlantView */
 Eplant.toPlantView = function() {
-	//TODO
-	Eplant.changeActiveView(testEFPView, null, null);
-}
+	if (!Eplant.speciesOfFocus || !Eplant.speciesOfFocus.elementOfFocus || !Eplant.speciesOfFocus.elementOfFocus.plantView) return;
+	var view = Eplant.speciesOfFocus.elementOfFocus.plantView;
+	if (ZUI.activeView instanceof ChromosomeView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof InteractionView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof PathwayView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof WorldView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof CellView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof PlantView) {
+		Eplant.changeActiveView(view, null, null);
+	}
+};
+
+/* Change to CellView */
+Eplant.toCellView = function() {
+	if (!Eplant.speciesOfFocus || !Eplant.speciesOfFocus.elementOfFocus || !Eplant.speciesOfFocus.elementOfFocus.cellView) return;
+	var view = Eplant.speciesOfFocus.elementOfFocus.cellView;
+	if (ZUI.activeView instanceof ChromosomeView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof InteractionView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof PathwayView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof WorldView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof PlantView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomInExitAnimationSettings(), view.getZoomInEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof CellView) {
+		Eplant.changeActiveView(view, null, null);
+	}
+};
+
+Eplant.toWorldView = function() {
+	if (!Eplant.speciesOfFocus || !Eplant.speciesOfFocus.elementOfFocus || !Eplant.speciesOfFocus.elementOfFocus.worldView) return;
+	var view = Eplant.speciesOfFocus.elementOfFocus.worldView;
+	if (ZUI.activeView instanceof ChromosomeView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof InteractionView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof PathwayView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof CellView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof PlantView) {
+		Eplant.changeActiveView(view, ZUI.activeView.getZoomOutExitAnimationSettings(), view.getZoomOutEntryAnimationSettings());
+	}
+	else if (ZUI.activeView instanceof WorldView) {
+		Eplant.changeActiveView(view, null, null);
+	}
+};
+
+Eplant.preventBubbling = function(element) {
+	element.addEventListener("mousedown", ZUI.Util.stopBubble, false);
+	element.addEventListener("mouseup", ZUI.Util.stopBubble, false);
+	element.addEventListener("mousemove", ZUI.Util.stopBubble, false);
+	element.addEventListener("click", ZUI.Util.stopBubble, false);
+	element.addEventListener("dblclick", ZUI.Util.stopBubble, false);
+	element.addEventListener("mousewheel", ZUI.Util.stopBubble, false);
+	element.addEventListener("DOMMouseScroll", ZUI.Util.stopBubble, false);
+	element.addEventListener("contextmenu", ZUI.Util.stopBubble, false);
+};

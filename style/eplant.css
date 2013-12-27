@@ -2,11 +2,19 @@ body {
 	background-image: url("../img/background.png");
 	color: #666;
 	line-height: normal;
-	font-family: Lucida Grande, Lucida Sans, Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
-	font-size: 12px;
+	font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
+	font-size: 0.75em;
 	font-weight: normal;
 	text-decoration: none;
 	line-height: 1.5em;
+	overflow-x: hidden;
+}
+smallBodyText {
+	line-height: normal;
+	font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
+	font-size: 14px;
+	font-weight: normal;
+	text-decoration: none;
 }
 h1 {
 	font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
@@ -15,6 +23,14 @@ h1 {
 	margin-bottom: 0.5em;
 	font-size: 2.5em;
 }
+h2 {
+	font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
+	color:#333333;
+	width: 100%;
+	letter-spacing: 0em;
+	margin-bottom: 0.5em;
+	font-size: 1.5em;
+}
 h3 {
 	font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
 	width: 100%;
@@ -22,6 +38,26 @@ h3 {
 	margin-bottom: 0.5em;
 	margin-top: 0em;
 	font-size: 1.5em;
+	line-height: 1.1em;
+}
+h5 {
+	font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
+	width: 100%;
+	margin-top: 0em;
+	font-size: 1.25em;
+	font-weight: normal;
+	line-height: 1.25em;
+	text-align: center;
+	color:#333333;
+	}
+logoText {
+	font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
+	width: 100%;
+	margin-top: 0em;
+	font-size: 2.25em;
+	font-weight: normal;
+	text-align: center;
+	color:#99CC00;
 }
 label {
 	font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
@@ -34,7 +70,14 @@ label {
 	color: #999;
 	vertical-align: text-bottom;				
 }
+a:link {color:#000; text-decoration: none;}      /* unvisited link */
+a:visited {color:#000; text-decoration: none;}  /* visited link */
+a:hover {color:#99CC00; text-decoration: underline;}  /* mouse over link */
+a:active {color:#666; text-decoration: none}  /* selected link */ 
 
+greyText {
+	color:#BBBBBB;
+}
 /* Button class */
 .button {
 	background-color: #EEE;
@@ -199,6 +242,65 @@ label {
 	display: none;
 }
 
+/* tooltip */
+.tooltip {
+	font-size: 12px;
+	margin: 0;
+	padding: 5px;
+	filter:alpha(opacity=97); /* for IE4 - IE7 */
+	-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=97)"; /* IE8 */
+	-moz-opacity:0.97;
+	-khtml-opacity: 0.97;
+	opacity: 0.97;
+}
+.tooltip .ui-dialog-titlebar {
+	display: none;
+}
+.tooltip .ui-dialog-content:hover {
+	cursor: default;
+}
+.tooltip-left-arrow, .tooltip-right-arrow, .tooltip-left-arrow-inside, .tooltip-right-arrow-inside {
+	width: 0;
+	height: 0;
+	position: absolute;
+}
+.tooltip-left-arrow {
+	top: calc(50% - 10px);
+	left: -14px;
+	border-top: 10px solid transparent;
+	border-bottom: 10px solid transparent;
+	border-right: 14px solid #AAAAAA;
+}
+.tooltip-right-arrow {
+	top: calc(50% - 10px);
+	right: -14px;
+	border-top: 10px solid transparent;
+	border-bottom: 10px solid transparent;
+	border-left: 14px solid #AAAAAA;
+}
+.tooltip-left-arrow-inside {
+	left: 1px;
+	top: -9px;
+	border-top: 9px solid transparent;
+	border-bottom: 9px solid transparent;
+	border-right: 13px solid #FFFFFF;
+}
+.tooltip-right-arrow-inside {
+	right: 1px;
+	top: -9px;
+	border-top: 9px solid transparent;
+	border-bottom: 9px solid transparent;
+	border-left: 13px solid #FFFFFF;
+}
+
+.popupDialog {
+	filter:alpha(opacity=97); /* for IE4 - IE7 */
+	-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=97)"; /* IE8 */
+	-moz-opacity:0.97;
+	-khtml-opacity: 0.97;
+	opacity: 0.97;
+}
+
 .popupDialog .minimized {
 	height: 0;
 	padding-top: 0;
@@ -247,19 +349,114 @@ label {
 
 /* indent class */
 .indent {
-	margin-left: 70px;
+	display: block;
+	margin-left: 25px;
+	margin-right: 29px;
 }
+
+/* center pictures on the instruction page */
+.instructionPicture {
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+
+}
+
+
 
 /* ePlant container */
 #ZUI_container {
+	width:900px;
+	height:600px;
+	margin:0 auto 0 50px;
+	position:relative;
+	left:-50px;
+	border-radius:20px;
+	background:#fff;
+	overflow:hidden;
+
+	-webkit-mask-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAA5JREFUeNpiYGBgAAgwAAAEAAGbA+oJAAAAAElFTkSuQmCC);
+
+	//subtle internal shading effect
+	-webkit-box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.05);
+	-moz-box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.05);
+	box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.05);
+	
+
 	transition: left .5s ease;
 	-webkit-transition: left .5s ease;
 	-moz-transition: left .5s ease;
 	-o-transition: left .5s ease;
 }
 
+
+/* Page Curl Drop Shadow */
+
+#pageCurlBoxShadow {
+	width:900px;
+	height:600px;
+	margin:0 auto 0 50px;
+	position:relative;
+	left:-50px;
+	border-radius:20px;
+	background:#fff;
+	background-color: #fff;
+	-webkit-box-shadow: 0 0 4px rgba(0, 0, 0, 0.2), inset 0 0 100px rgba(0, 0, 0, 0.05);
+	-moz-box-shadow: 0 0 4px rgba(0, 0, 0, 0.2), inset 0 0 100px rgba(0, 0, 0, 0.05);
+	box-shadow: 0 0 5px rgba(0, 0, 0, 0.2), inset 0 0 100px rgba(0, 0, 0, 0.05);
+
+
+}
+
+#pageCurlBoxShadow:before, #pageCurlBoxShadow:after
+{
+	position: absolute;
+	width: 40%;
+	height: 40px;
+	content: ' ';
+	left: 12px;
+	bottom: 14px;
+	border-radius: 20px;
+	background: transparent;
+	-webkit-transform: skew(-5deg) rotate(-5deg);
+	-moz-transform: skew(-5deg) rotate(-5deg);
+	-ms-transform: skew(-5deg) rotate(-5deg);
+	-o-transform: skew(-5deg) rotate(-5deg);
+	transform: skew(-5deg) rotate(-5deg);
+	-webkit-box-shadow: 0 10px 12px rgba(0, 0, 0, 0.3);
+	-moz-box-shadow: 0 10px 12px rgba(0, 0, 0, 0.3);
+	box-shadow: 0 10px 12px rgba(0, 0, 0, 0.3);
+	z-index: -1;
+} 
+
+#pageCurlBoxShadow:after
+{
+	left: auto;
+	right: 12px;
+	-webkit-transform: skew(5deg) rotate(5deg);
+	-moz-transform: skew(5deg) rotate(5deg);
+	-ms-transform: skew(5deg) rotate(5deg);
+	-o-transform: skew(5deg) rotate(5deg);
+	transform: skew(5deg) rotate(5deg);
+}
+
+
+
+
+#dialogBox_container {
+	width: 200px;
+}
+
 /* Navigation container */
 #navigation_container {
+	width: 200px;
+	font-size: 1.2em;
 	transition: opacity .5s ease;
 	-webkit-transition: opacity .5s ease;
 	-moz-transition: opacity .5s ease;
@@ -268,6 +465,7 @@ label {
 
 /* Settings container */
 #settings_container {
+	font-size: 1.2em;
 	transition: opacity .5s ease;
 	-webkit-transition: opacity .5s ease;
 	-moz-transition: opacity .5s ease;
@@ -296,7 +494,122 @@ label {
 #content {
 	margin: 5px auto 0px auto;
 	padding: 0px 5px 5px 5px;
-	width: 1200px;
+	width: 1557px;
 	min-width: 300px;
 	border: 0px solid #DDD;
+}
+
+/* gene input text box */
+#enterIdentifier {
+	width: 114px;
+	padding: 5px;
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
+
+
+/* Maximize & Minimize a div jquery stuff from: http://jsfiddle.net/miqdad/Qy6Sj/1/; */ 
+.maxMinWindow{
+    border:solid 1px;
+    border-color: #BBBBBB;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.maxMinTitle_bar{
+	border-radius: 10px;
+    background: #FAFAFA;
+    width: 100%;
+    font-size: 1.1em;
+    font-weight: normal;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    color:#333333;
+
+}
+.maxMinButton{
+    border:solid 1px;
+    border-radius: 9px;
+    width: 25px;
+    height: 21px;
+    float:right;
+    cursor:pointer;
+    margin-right: 10px;
+    margin-top: 7px;
+	padding-top: 1px;
+	text-align: center;
+	font-size: .75em;
+	border-color: #BBBBBB;
+	transition: background-color 0.25s ease;
+	-webkit-transition: background-color 0.25s ease;
+}
+.maxMinButton:hover{
+	color:#FFFFFF;
+	background-color: #99CC00;
+    }
+
+.maxMinBox{
+    background: #FFF;
+    border-radius:10px;
+    padding-bottom: 10px;
+    padding-top: 10px;
+}
+.maxMinIcon {
+	width: 40px;
+	height: 40px;
+	margin-left: 10px;
+	margin-right: 19px;
+	cursor: pointer;
+	vertical-align: middle;
+}
+.maxMinIcon img {
+	width: 30px;
+	height: 30px;
+
+	transition:transform .25s ease;
+	-webkit-transition:transform .25s ease;
+	-moz-transition:transform .25s ease;
+	-o-transition:transform .25s ease;
+}
+
+
+/* Green Bar at bottom of page */
+#greenBottom {
+	/*background-color: #99CC00;*/
+    background-image: url('http://bar.utoronto.ca/~eplant/img/soil-and-grass.jpg');
+	width: 100%;
+	height: 130px;
+	position:absolute;
+	left: 0;
+}
+
+#tabs {
+	font-size: 1.2em;
+}
+
+/* button that takes people back to the top */
+.back-top {
+    background-color: #99CC00;
+    background-image: url("http://bar.utoronto.ca/~eplant/img/arrow-up.png");
+    background-position: center center;
+    background-repeat: no-repeat;
+    display: block;
+    height: 50px;
+    outline: medium none;
+    position: fixed;
+    text-align: center;
+    text-indent: -9999px;
+    transition: background-color 0.3s ease;
+    width: 50px;
+    z-index: 40; 
+    float: right;
+    right: 30px;
+    bottom: 30px;
+    text-decoration: none;
+    border-radius: 30px;
+    display: none;
+}
+.back-top:hover{
+	background-color: #cbe57b;
 }

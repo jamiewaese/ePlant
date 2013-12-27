@@ -60,7 +60,17 @@ function ChromosomeView(species) {
 	this.toggleHeatmap.setAttribute("data-enabled", Eplant.tooltipSwitch.toString());
 	this.toggleHeatmap.style.padding = "5px";
 	this.toggleHeatmap.onclick = $.proxy(function() {
-		//TODO
+		var binSize = ZUI.camera.unprojectDistance(1) / 0.000015;
+		$.getJSON("http://bar.utoronto.ca/~eplant/cgi-bin/genedensity.cgi?species=" + this.species.scientificName.replace(" ", "_") + "&binSize=" + binSize, $.proxy(function(response) {
+			for (var n = 0; n < this.chromosomeViewObjects.length; n++) {
+				for (var m = 0; m < response.length; m++) {
+					if (this.chromosomeViewObjects[n].chromosome.name == response[m].name) {
+						this.chromosomeViewObjects[n].heatmap = response[n].density;
+						break;
+					}
+				}
+			}
+		}, this));
 	}, this);
 	/* Set icon */
 	img = document.createElement("img");

@@ -5,70 +5,597 @@
 
 /* Class constructor */
 ZUI.ViewObject = function(attributes) {
+	/* Append self to ZUI's global view objects array */
+	ZUI.viewObjects.push(this);
+
+	/* Get shape */
+	if (!attributes.shape) return null;
+	this.shape = attributes.shape;
+
 	/* Object for custom data */
 	this.data = {};
 
-	/* Set shape and its attributes */
-	if (!attributes.shape) return null;
-	this.shape = attributes.shape;
-	this.x = (attributes.x === undefined) ? 0 : attributes.x;
-	this.y = (attributes.y === undefined) ? 0 : attributes.y;
+	/* Redraw status */
+	this.redraw = true;
+
+	/* On screen status */
+	this.isOnScreen = false;
+
+	/* Autodraw status */
+	this.autoDraw = (attributes.autoDraw === undefined) ? false : attributes.autoDraw;
+
+	/* Cache canvas */
+	this.cache = document.createElement("canvas");
+	this.cache.width = ZUI.width;
+	this.cache.height = ZUI.height;
+	this.cacheContext = this.cache.getContext("2d");
+
+	/* Private attributes */
+	this.private = {};
+
+	/* General attributes */
+	/* Scale of position, can be "world" or "screen" */
+	this.private.positionScale = (attributes.positionScale === undefined) ? "world" : attributes.positionScale;
+	Object.defineProperty(this, "positionScale", {
+		get: function() {
+			return this.private.positionScale;
+		},
+		set: function(value) {
+			this.private.positionScale = value;
+			this.redraw = true;
+		}
+	});
+
+	/* Scale of size, can be "world" or "screen" */
+	this.private.sizeScale = (attributes.sizeScale === undefined) ? "world" : attributes.sizeScale;
+	Object.defineProperty(this, "sizeScale", {
+		get: function() {
+			return this.private.sizeScale;
+		},
+		set: function(value) {
+			this.private.sizeScale = value;
+			this.redraw = true;
+		}
+	});
+
+	/* x coordinate */
+	this.private.x = (attributes.x === undefined) ? 0 : attributes.x;
+	Object.defineProperty(this, "x", {
+		get: function() {
+			return this.private.x;
+		},
+		set: function(value) {
+			this.private.x = value;
+			this.redraw = true;
+		}
+	});
+
+	/* y coordinate */
+	this.private.y = (attributes.y === undefined) ? 0 : attributes.y;
+	Object.defineProperty(this, "y", {
+		get: function() {
+			return this.private.y;
+		},
+		set: function(value) {
+			this.private.y = value;
+			this.redraw = true;
+		}
+	});
+
+	/* x offset affected by sizeScale */
+	this.private.offsetX = (attributes.offsetX === undefined) ? 0 : attributes.offsetX;
+	Object.defineProperty(this, "offsetX", {
+		get: function() {
+			return this.private.offsetX;
+		},
+		set: function(value) {
+			this.private.offsetX = value;
+			this.redraw = true;
+		}
+	});
+
+	/* y offset affected by sizeScale */
+	this.private.offsetY = (attributes.offsetY === undefined) ? 0 : attributes.offsetY;
+	Object.defineProperty(this, "offsetY", {
+		get: function() {
+			return this.private.offsetY;
+		},
+		set: function(value) {
+			this.private.offsetY = value;
+			this.redraw = true;
+		}
+	});
+
+	/* Whether to stroke */
+	this.private.stroke = (attributes.stroke === undefined) ? true : attributes.stroke;
+	Object.defineProperty(this, "stroke", {
+		get: function() {
+			return this.private.stroke;
+		},
+		set: function(value) {
+			this.private.stroke = value;
+			this.redraw = true;
+		}
+	});
+
+	/* Color of stroke */
+	this.private.strokeColor = (attributes.strokeColor === undefined) ? "#000000" : attributes.strokeColor;
+	Object.defineProperty(this, "strokeColor", {
+		get: function() {
+			return this.private.strokeColor;
+		},
+		set: function(value) {
+			this.private.strokeColor = value;
+			this.redraw = true;
+		}
+	});
+
+	/* Width of stroke */
+	this.private.strokeWidth = (attributes.strokeWidth === undefined) ? 1 : attributes.strokeWidth;
+	Object.defineProperty(this, "strokeWidth", {
+		get: function() {
+			return this.private.strokeWidth;
+		},
+		set: function(value) {
+			this.private.strokeWidth = value;
+			this.redraw = true;
+		}
+	});
+
+	/* Whether to fill */
+	this.private.fill = (attributes.fill === undefined) ? true : attributes.fill;
+	Object.defineProperty(this, "fill", {
+		get: function() {
+			return this.private.fill;
+		},
+		set: function(value) {
+			this.private.fill = value;
+			this.redraw = true;
+		}
+	});
+
+	/* Color of fill */
+	this.private.fillColor = (attributes.fillColor === undefined) ? "#000000" : attributes.fillColor;
+	Object.defineProperty(this, "fillColor", {
+		get: function() {
+			return this.private.fillColor;
+		},
+		set: function(value) {
+			this.private.fillColor = value;
+			this.redraw = true;
+		}
+	});
+
+	/* Alpha value */
+	this.private.alpha = (attributes.alpha === undefined) ? 1 : attributes.alpha;
+	Object.defineProperty(this, "alpha", {
+		get: function() {
+			return this.private.alpha;
+		},
+		set: function(value) {
+			this.private.alpha = value;
+			this.redraw = true;
+		}
+	});
+
+	/* Center at position */
+	this.private.centerAt = (attributes.centerAt === undefined) ? "center center" : attributes.centerAt;
+	Object.defineProperty(this, "centerAt", {
+		get: function() {
+			return this.private.centerAt;
+		},
+		set: function(value) {
+			this.private.centerAt = value;
+			this.redraw = true;
+		}
+	});
+
 	if (this.shape == "rect") {
-		this.offsetX = (attributes.offsetX === undefined) ? 0 : attributes.offsetX;
-		this.offsetY = (attributes.offsetY === undefined) ? 0 : attributes.offsetY;
-		this.width = (attributes.width === undefined) ? 0 : attributes.width;
-		this.height = (attributes.height === undefined) ? 0 : attributes.height;
+		this.private.width = (attributes.width === undefined) ? 0 : attributes.width;
+		Object.defineProperty(this, "width", {
+			get: function() {
+				return this.private.width;
+			},
+			set: function(value) {
+				this.private.width = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.height = (attributes.height === undefined) ? 0 : attributes.height;
+		Object.defineProperty(this, "height", {
+			get: function() {
+				return this.private.height;
+			},
+			set: function(value) {
+				this.private.height = value;
+				this.redraw = true;
+			}
+		});
+
 		if (attributes.radius === undefined) {
-			this.ltradius = (attributes.ltradius === undefined) ? 0 : attributes.ltradius;
-			this.rtradius = (attributes.rtradius === undefined) ? 0 : attributes.rtradius;
-			this.lbradius = (attributes.lbradius === undefined) ? 0 : attributes.lbradius;
-			this.rbradius = (attributes.rbradius === undefined) ? 0 : attributes.rbradius;
+			this.private.ltradius = (attributes.ltradius === undefined) ? 0 : attributes.ltradius;
+			this.private.rtradius = (attributes.rtradius === undefined) ? 0 : attributes.rtradius;
+			this.private.lbradius = (attributes.lbradius === undefined) ? 0 : attributes.lbradius;
+			this.private.rbradius = (attributes.rbradius === undefined) ? 0 : attributes.rbradius;
 		}
 		else {
-			this.ltradius = attributes.radius;
-			this.rtradius = attributes.radius;
-			this.lbradius = attributes.radius;
-			this.rbradius = attributes.radius;
+			this.private.ltradius = attributes.radius;
+			this.private.rtradius = attributes.radius;
+			this.private.lbradius = attributes.radius;
+			this.private.rbradius = attributes.radius;
 		}
-		this.centerAt = (attributes.centerAt === undefined) ? "center center" : attributes.centerAt;
+		Object.defineProperty(this, "radius", {
+			get: function() {
+				return (this.private.ltradius + this.private.rtradius + this.private.lbradius + this.private.rbradius) / 4;
+			},
+			set: function(value) {
+				this.private.ltradius = value;
+				this.private.rtradius = value;
+				this.private.lbradius = value;
+				this.private.rbradius = value;
+				this.redraw = true;
+			}
+		});
+
+		Object.defineProperty(this, "ltradius", {
+			get: function() {
+				return this.private.ltradius;
+			},
+			set: function(value) {
+				this.private.ltradius = value;
+				this.redraw = true;
+			}
+		});
+
+		Object.defineProperty(this, "rtradius", {
+			get: function() {
+				return this.private.rtradius;
+			},
+			set: function(value) {
+				this.private.rtradius = value;
+				this.redraw = true;
+			}
+		});
+
+		Object.defineProperty(this, "lbradius", {
+			get: function() {
+				return this.private.lbradius;
+			},
+			set: function(value) {
+				this.private.lbradius = value;
+				this.redraw = true;
+			}
+		});
+
+		Object.defineProperty(this, "rbradius", {
+			get: function() {
+				return this.private.rbradius;
+			},
+			set: function(value) {
+				this.private.rbradius = value;
+				this.redraw = true;
+			}
+		});
 	}
 	else if (this.shape == "circle") {
-		this.offsetX = (attributes.offsetX === undefined) ? 0 : attributes.offsetX;
-		this.offsetY = (attributes.offsetY === undefined) ? 0 : attributes.offsetY;
 		if (attributes.radius === undefined) {
-			this.hradius = (attributes.hradius === undefined) ? 0 : attributes.hradius;
-			this.vradius = (attributes.vradius === undefined) ? 0 : attributes.vradius;
+			this.private.hradius = (attributes.hradius === undefined) ? 0 : attributes.hradius;
+			this.private.vradius = (attributes.vradius === undefined) ? 0 : attributes.vradius;
 		}
 		else {
-			this.hradius = attributes.radius;
-			this.vradius = attributes.radius;
+			this.private.hradius = attributes.radius;
+			this.private.vradius = attributes.radius;
 		}
-		this.centerAt = (attributes.centerAt === undefined) ? "center center" : attributes.centerAt;
+		Object.defineProperty(this, "radius", {
+			get: function() {
+				return (this.private.hradius + this.private.vradius) / 2;
+			},
+			set: function(value) {
+				this.private.hradius = value;
+				this.private.vradius = value;
+				this.redraw = true;
+			}
+		});
+
+		Object.defineProperty(this, "hradius", {
+			get: function() {
+				return this.private.hradius;
+			},
+			set: function(value) {
+				this.private.hradius = value;
+				this.redraw = true;
+			}
+		});
+
+		Object.defineProperty(this, "vradius", {
+			get: function() {
+				return this.private.vradius;
+			},
+			set: function(value) {
+				this.private.vradius = value;
+				this.redraw = true;
+			}
+		});
 	}
 	else if (this.shape == "polygon") {
-		this.vertices = (attributes.vertices === undefined) ? [] : attributes.vertices;
+		this.private.vertices = (attributes.vertices === undefined) ? [] : attributes.vertices;
+		Object.defineProperty(this, "vertices", {
+			get: function() {
+				return this.private.vertices;
+			},
+			set: function(value) {
+				this.private.vertices = value;
+				this.redraw = true;
+			}
+		});
 	}
 	else if (this.shape == "path") {
-		this.vertices = (attributes.vertices === undefined) ? "" : attributes.vertices;
+		this.private.vertices = (attributes.vertices === undefined) ? "" : attributes.vertices;
+		Object.defineProperty(this, "vertices", {
+			get: function() {
+				return this.private.vertices;
+			},
+			set: function(value) {
+				this.private.vertices = value;
+				this.redraw = true;
+			}
+		});
 	}
 	else if (this.shape == "text") {
-		this.offsetX = (attributes.offsetX === undefined) ? 0 : attributes.offsetX;
-		this.offsetY = (attributes.offsetY === undefined) ? 0 : attributes.offsetY;
-		this.size = (attributes.size === undefined) ? 12 : attributes.size;
-		this.font = (attributes.font === undefined) ? "Helvetica" : attributes.font;
-		this.bold = (attributes.bold === undefined) ? false : attributes.bold;
-		this.italic = (attributes.italic === undefined) ? false : attributes.italic;
-		this.underline = (attributes.underline === undefined) ? false : attributes.underline;
-		this.centerAt = (attributes.centerAt === undefined) ? "center center" : attributes.centerAt;
-		this.content = (attributes.content === undefined) ? "" : attributes.content;
+		this.private.size = (attributes.size === undefined) ? 12 : attributes.size;
+		Object.defineProperty(this, "size", {
+			get: function() {
+				return this.private.size;
+			},
+			set: function(value) {
+				this.private.size = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.font = (attributes.font === undefined) ? "Helvetica" : attributes.font;
+		Object.defineProperty(this, "font", {
+			get: function() {
+				return this.private.font;
+			},
+			set: function(value) {
+				this.private.font = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.bold = (attributes.bold === undefined) ? false : attributes.bold;
+		Object.defineProperty(this, "bold", {
+			get: function() {
+				return this.private.bold;
+			},
+			set: function(value) {
+				this.private.bold = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.italic = (attributes.italic === undefined) ? false : attributes.italic;
+		Object.defineProperty(this, "italic", {
+			get: function() {
+				return this.private.italic;
+			},
+			set: function(value) {
+				this.private.italic = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.underline = (attributes.underline === undefined) ? false : attributes.underline;
+		Object.defineProperty(this, "underline", {
+			get: function() {
+				return this.private.underline;
+			},
+			set: function(value) {
+				this.private.underline = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.content = (attributes.content === undefined) ? [""] : attributes.content;
+		Object.defineProperty(this, "content", {
+			get: function() {
+				return this.private.content;
+			},
+			set: function(value) {
+				this.private.content = value;
+				this.redraw = true;
+			}
+		});
+	}
+	else if (this.shape == "multilinetext") {
+		this.private.size = (attributes.size === undefined) ? 12 : attributes.size;
+		Object.defineProperty(this, "size", {
+			get: function() {
+				return this.private.size;
+			},
+			set: function(value) {
+				this.private.size = value;
+				for (var n = 0; n < this.private.texts.length; n++) {
+					this.private.texts[n].size = value;
+				}
+				this.redraw = true;
+			}
+		});
+
+		this.private.font = (attributes.font === undefined) ? "Helvetica" : attributes.font;
+		Object.defineProperty(this, "font", {
+			get: function() {
+				return this.private.font;
+			},
+			set: function(value) {
+				this.private.font = value;
+				for (var n = 0; n < this.private.texts.length; n++) {
+					this.private.texts[n].font = value;
+				}
+				this.redraw = true;
+			}
+		});
+
+		this.private.bold = (attributes.bold === undefined) ? false : attributes.bold;
+		Object.defineProperty(this, "bold", {
+			get: function() {
+				return this.private.bold;
+			},
+			set: function(value) {
+				this.private.bold = value;
+				for (var n = 0; n < this.private.texts.length; n++) {
+					this.private.texts[n].bold = value;
+				}
+				this.redraw = true;
+			}
+		});
+
+		this.private.italic = (attributes.italic === undefined) ? false : attributes.italic;
+		Object.defineProperty(this, "italic", {
+			get: function() {
+				return this.private.italic;
+			},
+			set: function(value) {
+				this.private.italic = value;
+				for (var n = 0; n < this.private.texts.length; n++) {
+					this.private.texts[n].bold = value;
+				}
+				this.redraw = true;
+			}
+		});
+
+		this.private.underline = (attributes.underline === undefined) ? false : attributes.underline;
+		Object.defineProperty(this, "underline", {
+			get: function() {
+				return this.private.underline;
+			},
+			set: function(value) {
+				this.private.underline = value;
+				for (var n = 0; n < this.private.texts.length; n++) {
+					this.private.texts[n].underline = value;
+				}
+				this.redraw = true;
+			}
+		});
+
+		this.private.content = (attributes.content === undefined) ? [""] : attributes.content.split("\n");
+		Object.defineProperty(this, "content", {
+			get: function() {
+				return this.private.content;
+			},
+			set: function(value) {
+				this.private.content = value.split("\n");
+				this.redraw = true;
+
+				/* Reset child text objects */
+				var attributes = {
+					shape: "text",
+					positionScale: this.positionScale,
+					sizeScale: this.sizeScale,
+					x: this.x,
+					y: this.y,
+					offsetX: this.offsetX,
+					offsetY: this.offsetY,
+					stroke: this.stroke,
+					strokeColor: this.strokeColor,
+					strokeWidth: this.strokeWidth,
+					fill: this.fill,
+					fillColor: this.fillColor,
+					alpha: this.alpha,
+					centerAt: this.centerAt,
+					size: this.size,
+					font: this.font,
+					bold: this.bold,
+					italic: this.italic,
+					underline: this.underline,
+				};
+				this.private.texts = [];
+				if (attributes.centerAt.split(" ")[1] == "center") attributes.y -= this.content.length * this.private.size / 2;
+				else if (attributes.centerAt.split(" ")[1] == "bottom") attributes.y -= this.content.length * this.private.size;
+				for (var n = 0; n < this.content.length; n++) {
+					attributes.content = this.content[n];
+					this.private.texts.push(new ZUI.ViewObject(attributes));
+					attributes.y += this.private.size;
+				}
+			}
+		});
+
+		/* Create child text objects */
+		this.private.texts = [];
+		attributes.shape = "text";
+		if (attributes.centerAt.split(" ")[1] == "center") attributes.y -= (this.content.length - 1) * this.private.size / 2;
+		else if (attributes.centerAt.split(" ")[1] == "bottom") attributes.y -= (this.content.length - 1) * this.private.size;
+		for (var n = 0; n < this.content.length; n++) {
+			attributes.content = this.content[n];
+			this.private.texts.push(new ZUI.ViewObject(attributes));
+			attributes.y += this.private.size;
+		}
 	}
 	else if (this.shape == "svg") {
-		this.offsetX = (attributes.offsetX === undefined) ? 0 : attributes.offsetX;
-		this.offsetY = (attributes.offsetY === undefined) ? 0 : attributes.offsetY;
-		this.hscale = (attributes.hscale === undefined) ? 1 : attributes.hscale;
-		this.vscale = (attributes.vscale === undefined) ? 1 : attributes.vscale;
-		this.centerAt = (attributes.centerAt === undefined) ? "center center" : attributes.centerAt;
-		this.url = (attributes.url === undefined) ? "" : attributes.url;
+		this.private.width = 0;
+		Object.defineProperty(this, "width", {
+			get: function() {
+				return this.private.width;
+			},
+			set: function(value) {
+				this.private.width = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.height = 0;
+		Object.defineProperty(this, "height", {
+			get: function() {
+				return this.private.height;
+			},
+			set: function(value) {
+				this.private.height = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.paths = [];
+		Object.defineProperty(this, "paths", {
+			get: function() {
+				return this.private.paths;
+			},
+			set: function(value) {
+				this.private.paths = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.hscale = (attributes.hscale === undefined) ? 1 : attributes.hscale;
+		Object.defineProperty(this, "hscale", {
+			get: function() {
+				return this.private.hscale;
+			},
+			set: function(value) {
+				this.private.hscale = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.vscale = (attributes.vscale === undefined) ? 1 : attributes.vscale;
+		Object.defineProperty(this, "vscale", {
+			get: function() {
+				return this.private.vscale;
+			},
+			set: function(value) {
+				this.private.vscale = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.url = (attributes.url === undefined) ? "" : attributes.url;
+		Object.defineProperty(this, "url", {
+			get: function() {
+				return this.private.url;
+			}
+		});
+
 		this.ready = false;
 		$.ajax({
 			type: "GET",
@@ -78,8 +605,8 @@ ZUI.ViewObject = function(attributes) {
 			var svg = response.getElementsByTagName("svg")[0];
 			this.width = svg.getAttribute("width");
 			this.height = svg.getAttribute("height");
-			if (this.width.indexOf("px") >= 0) this.width = this.width.substring(0, this.width.indexOf("px"));
-			if (this.height.indexOf("px") >= 0) this.height = this.height.substring(0, this.height.indexOf("px"));
+			if (this.width.indexOf("px") >= 0) this.width = Number(this.width.substring(0, this.width.indexOf("px")));
+			if (this.height.indexOf("px") >= 0) this.height = Number(this.height.substring(0, this.height.indexOf("px")));
 			var paths = svg.getElementsByTagName("path");
 			this.paths = [];
 			for (var n = 0; n < paths.length; n++) {
@@ -92,60 +619,26 @@ ZUI.ViewObject = function(attributes) {
 		}, this));
 	}
 	else if (this.shape == "advshape") {
-		this.offsetX = (attributes.offsetX === undefined) ? 0 : attributes.offsetX;
-		this.offsetY = (attributes.offsetY === undefined) ? 0 : attributes.offsetY;
-		this.rawPaths = (attributes.paths === undefined) ? [] : attributes.paths;
-		this.paths = [];
-		for (var n = 0; n < this.rawPaths.length; n++) {
-			var path = {};
-			path.instructions = ZUI.Parser.pathToObj(this.rawPaths[n]);
-			var start, end;
-			for (var m = 0; m < path.instructions.length; m++) {
-				if (path.instructions[m].args.length >= 2) {
-					start = {
-						x: path.instructions[m].args[path.instructions[m].args.length - 2],
-						y: path.instructions[m].args[path.instructions[m].args.length - 1]
-					};
-					break;
+		this.private.paths = [];
+		Object.defineProperty(this, "paths", {
+			get: function() {
+				return this.private.paths;
+			},
+			set: function(value) {
+				for (var n = 0; n < value.length; n++) {
+					var path = {};
+					path.instructions = ZUI.Parser.pathToObj(value[n]);
+					this.private.paths.push(path);
 				}
+				this.redraw = true;
 			}
-			for (var m = path.instructions.length - 1; m >= 0; m--) {
-				if (path.instructions[m].args.length >= 2) {
-					end = {
-						x: path.instructions[m].args[path.instructions[m].args.length - 2],
-						y: path.instructions[m].args[path.instructions[m].args.length - 1]
-					};
-					break;
-				}
-			}
-			if (start.x != end.x || start.y != end.y) {
-				path.closed = false;
-			}
-			else {
-				path.closed = true;
-			}
-			this.paths.push(path);
-		}
+		});
+		this.private.rawPaths = (attributes.paths === undefined) ? [] : attributes.paths;
+		this.paths = this.private.rawPaths;
 	}
-	else return null;
-
-	/* Set stroke and fill */
-	this.stroke = (attributes.stroke === undefined) ? true : attributes.stroke;
-	this.strokeColor = (attributes.strokeColor === undefined) ? "#000000" : attributes.strokeColor;
-	this.strokeWidth = (attributes.strokeWidth === undefined) ? 1 : attributes.strokeWidth;
-	this.fill = (attributes.fill === undefined) ? true : attributes.fill;
-	this.fillColor = (attributes.fillColor === undefined) ? "#000000" : attributes.fillColor;
-	this.alpha = (attributes.alpha === undefined) ? 1 : attributes.alpha;
-
-	/* Set scale */
-	this.positionScale = (attributes.positionScale === undefined) ? "world" : attributes.positionScale;
-	this.sizeScale = (attributes.sizeScale === undefined) ? "world" : attributes.sizeScale;
-
-	/* Set autoDraw option */
-	this.autoDraw = (attributes.autoDraw === undefined) ? false : attributes.autoDraw;
-
-	/* On screen status */
-	this.isOnScreen = false;
+	else {
+		return null;
+	}
 	
 	/* Define event handlers */
 	this.leftMouseDown = (attributes.leftMouseDown === undefined) ? function() {} : attributes.leftMouseDown;
@@ -167,7 +660,8 @@ ZUI.ViewObject = function(attributes) {
 };
 
 /* Draw */
-ZUI.ViewObject.prototype.draw = function() {
+ZUI.ViewObject.prototype.draw = function(canvasContext) {
+	var context = canvasContext || ZUI.context;
 	if (this.shape == "rect") {
 		ZUI.context.save();
 		ZUI.context.strokeStyle = this.strokeColor;
@@ -423,9 +917,6 @@ ZUI.ViewObject.prototype.draw = function() {
 	}
 	else if (this.shape == "text") {
 		ZUI.context.save();
-		ZUI.context.font = ((this.bold) ? "bold " : "") + ((this.italic) ? "italic " : "") + this.size + "px " + this.font;
-		this.width = ZUI.context.measureText(this.content).width;
-		this.height = this.size * 0.8;
 		ZUI.context.strokeStyle = this.strokeColor;
 		ZUI.context.lineWidth = this.strokeWidth;
 		ZUI.context.fillStyle = this.fillColor;
@@ -443,13 +934,19 @@ ZUI.ViewObject.prototype.draw = function() {
 			this.screenOffsetX = ZUI.camera.projectDistance(this.offsetX);
 			this.screenOffsetY = ZUI.camera.projectDistance(this.offsetY);
 			this.screenSize = ZUI.camera.projectDistance(this.size);
-			this.screenWidth = ZUI.camera.projectDistance(this.width);
+			ZUI.context.font = ((this.bold) ? "bold " : "") + ((this.italic) ? "italic " : "") + "24" + "px " + this.font;
+			this.screenWidth = ZUI.context.measureText(this.content).width / 24 * this.screenSize;
+			this.height = this.size * 0.8;
+			this.width = ZUI.camera.unprojectDistance(this.screenWidth);
 			this.screenHeight = ZUI.camera.projectDistance(this.height);
 		}
 		else if (this.sizeScale == "screen") {
 			this.screenOffsetX = this.offsetX;
 			this.screenOffsetY = this.offsetY;
 			this.screenSize = this.size;
+			ZUI.context.font = ((this.bold) ? "bold " : "") + ((this.italic) ? "italic " : "") + "24" + "px " + this.font;
+			this.width = ZUI.context.measureText(this.content).width / 24 * this.screenSize;
+			this.height = this.size * 0.8;
 			this.screenWidth = this.width;
 			this.screenHeight = this.height;
 		}
@@ -475,12 +972,16 @@ ZUI.ViewObject.prototype.draw = function() {
 			screenY = 0;
 		}
 		screenY += this.screenY + this.screenOffsetY;
+		ZUI.context.save();
+		ZUI.context.translate(screenX, screenY);
+		ZUI.context.scale(this.screenSize / 24, this.screenSize / 24);
 		if (this.fill) {
-			ZUI.context.fillText(this.content, screenX, screenY);
+			ZUI.context.fillText(this.content, 0, 0);
 		}
 		else if (this.stroke) {
-			ZUI.context.strokeText(this.content, screenX, screenY);
+			ZUI.context.strokeText(this.content, 0, 0);
 		}
+		ZUI.context.restore();
 		if (this.underline) {
 			ZUI.context.beginPath();
 			ZUI.context.moveTo(screenX, Math.round(screenY) + 1.5);
@@ -489,6 +990,12 @@ ZUI.ViewObject.prototype.draw = function() {
 		}
 		ZUI.context.restore();
 		this.isOnScreen = true;
+	}
+	else if (this.shape == "multilinetext") {
+		for (var n = 0; n < this.private.texts.length; n++) {
+			this.private.texts[n].draw();
+			this.isOnScreen = true;
+		}
 	}
 	else if (this.shape == "svg" && this.ready) {
 		ZUI.context.save();
@@ -547,7 +1054,7 @@ ZUI.ViewObject.prototype.draw = function() {
 		for (var n = 0; n < this.paths.length; n++) {
 			var instructions = this.paths[n].instructions;
 			for (var m = 0; m < instructions.length; m++) {
-				ZUI.context[instructions[m].instruction].apply(ZUI.context, instructions[m].args);
+				context[instructions[m].instruction].apply(context, instructions[m].args);
 			}
 		}
 		ZUI.context.restore();
@@ -558,123 +1065,119 @@ ZUI.ViewObject.prototype.draw = function() {
 		this.isOnScreen = true;
 	}
 	else if (this.shape == "advshape") {
-		ZUI.context.save();
-		ZUI.context.strokeStyle = this.strokeColor;
-		ZUI.context.fillStyle = this.fillColor;
-		ZUI.context.globalAlpha = this.alpha;
-		if (this.positionScale == "world") {
-			var position = ZUI.camera.projectPoint(this.x, this.y);
-			this.screenX = position.x;
-			this.screenY = position.y;
-		}
-		else if (this.positionScale == "screen") {
-			this.screenX = this.x;
-			this.screenY = this.y;
-		}
-		if (this.sizeScale == "world") {
+		if (this.redraw) {
+			this.cacheContext.clearRect(0, 0, ZUI.width, ZUI.height);
+			this.cacheContext.save();
+			this.cacheContext.strokeStyle = this.strokeColor;
+			this.cacheContext.fillStyle = this.fillColor;
+			this.cacheContext.globalAlpha = this.alpha;
+			if (this.positionScale == "world") {
+				var position = ZUI.camera.projectPoint(this.x, this.y);
+				this.screenX = position.x;
+				this.screenY = position.y;
+			}
+			else if (this.positionScale == "screen") {
+				this.screenX = this.x;
+				this.screenY = this.y;
+			}
+			if (this.sizeScale == "world") {
+				for (var n = 0; n < this.paths.length; n++) {
+					var path = this.paths[n];
+					for (var m = 0; m < path.instructions.length; m++) {
+						var _instruction = path.instructions[m];
+						var instruction = _instruction.instruction;
+						var args = _instruction.args;
+						_instruction.screenPoints = [];
+						if (instruction == "moveTo") {
+							_instruction.screenPoints.push(ZUI.camera.projectPoint(args[0] + this.x, args[1] + this.y));
+						}
+						else if (instruction == "lineTo") {
+							_instruction.screenPoints.push(ZUI.camera.projectPoint(args[0] + this.x, args[1] + this.y));
+						}
+						else if (instruction == "quadraticCurveTo") {
+							_instruction.screenPoints.push(ZUI.camera.projectPoint(args[0] + this.x, args[1] + this.y));
+							_instruction.screenPoints.push(ZUI.camera.projectPoint(args[2] + this.x, args[3] + this.y));
+						}
+						else if (instruction == "bezierCurveTo") {
+							_instruction.screenPoints.push(ZUI.camera.projectPoint(args[0] + this.x, args[1] + this.y));
+							_instruction.screenPoints.push(ZUI.camera.projectPoint(args[2] + this.x, args[3] + this.y));
+							_instruction.screenPoints.push(ZUI.camera.projectPoint(args[4] + this.x, args[5] + this.y));
+						}
+						else if (instruction == "arcTo") {
+							_instruction.screenPoints.push(ZUI.camera.projectPoint(args[0] + this.x, args[1] + this.y));
+							_instruction.screenPoints.push(ZUI.camera.projectPoint(args[2] + this.x, args[3] + this.y));
+						}
+						for (var o = 0; o + 1 < _instruction.screenPoints.length; o += 2) {
+							_instruction.screenPoints[o].x += this.offsetX;
+							_instruction.screenPoints[o].y += this.offsetY;
+						}
+					}
+				}
+				this.cacheContext.lineWidth = ZUI.camera.projectDistance(this.strokeWidth);
+			}
+			else if (this.sizeScale == "screen") {
+				for (var n = 0; n < this.paths.length; n++) {
+					var path = this.paths[n];
+					for (var m = 0; m < path.instructions.length; m++) {
+						var _instruction = path.instructions[m];
+						var instruction = _instruction.instruction;
+						var args = _instruction.args;
+						_instruction.screenPoints = [];
+						if (instruction == "moveTo") {
+							_instruction.screenPoints.push({x: args[0] + this.x, y: args[1] + this.y});
+						}
+						else if (instruction == "lineTo") {
+							_instruction.screenPoints.push({x: args[0] + this.x, y: args[1] + this.y});
+						}
+						else if (instruction == "quadraticCurveTo") {
+							_instruction.screenPoints.push({x: args[0] + this.x, y: args[1] + this.y});
+							_instruction.screenPoints.push({x: args[2] + this.x, y: args[3] + this.y});
+						}
+						else if (instruction == "bezierCurveTo") {
+							_instruction.screenPoints.push({x: args[0] + this.x, y: args[1] + this.y});
+							_instruction.screenPoints.push({x: args[2] + this.x, y: args[3] + this.y});
+							_instruction.screenPoints.push({x: args[4] + this.x, y: args[5] + this.y});
+						}
+						else if (instruction == "arcTo") {
+							_instruction.screenPoints.push({x: args[0] + this.x, y: args[1] + this.y});
+							_instruction.screenPoints.push({x: args[2] + this.x, y: args[3] + this.y});
+						}
+						for (var o = 0; o < _instruction.screenPoints.length; o++) {
+							_instruction.screenPoints[o].x += this.offsetX;
+							_instruction.screenPoints[o].y += this.offsetY;
+						}
+					}
+				}
+				this.cacheContext.lineWidth = this.strokeWidth;
+			}
+
+			this.cacheContext.save();
+			this.cacheContext.beginPath();
 			for (var n = 0; n < this.paths.length; n++) {
-				var path = this.paths[n];
-				for (var m = 0; m < path.instructions.length; m++) {
-					var _instruction = path.instructions[m];
-					var instruction = _instruction.instruction;
-					var args = _instruction.args;
-					_instruction.screenPoints = [];
-					if (instruction == "moveTo") {
-						_instruction.screenPoints.push(ZUI.camera.projectPoint(args[0] + this.x, args[1] + this.y));
+				var instructions = this.paths[n].instructions;
+				for (var m = 0; m < instructions.length; m++) {
+					var args = [];
+					for (var o = 0; o < instructions[m].screenPoints.length; o++) {
+						args.push(instructions[m].screenPoints[o].x);
+						args.push(instructions[m].screenPoints[o].y);
 					}
-					else if (instruction == "lineTo") {
-						_instruction.screenPoints.push(ZUI.camera.projectPoint(args[0] + this.x, args[1] + this.y));
+					if (instructions[m].instruction == "arcTo") {
+						args.push(ZUI.camera.projectDistance(instructions[m].args[4]));
 					}
-					else if (instruction == "quadraticCurveTo") {
-						_instruction.screenPoints.push(ZUI.camera.projectPoint(args[0] + this.x, args[1] + this.y));
-						_instruction.screenPoints.push(ZUI.camera.projectPoint(args[2] + this.x, args[3] + this.y));
-					}
-					else if (instruction == "bezierCurveTo") {
-						_instruction.screenPoints.push(ZUI.camera.projectPoint(args[0] + this.x, args[1] + this.y));
-						_instruction.screenPoints.push(ZUI.camera.projectPoint(args[2] + this.x, args[3] + this.y));
-						_instruction.screenPoints.push(ZUI.camera.projectPoint(args[4] + this.x, args[5] + this.y));
-					}
-					for (var o = 0; o + 1 < _instruction.screenPoints.length; o += 2) {
-						_instruction.screenPoints[o].x += this.offsetX;
-						_instruction.screenPoints[o].y += this.offsetY;
-					}
+					this.cacheContext[instructions[m].instruction].apply(this.cacheContext, args);
 				}
 			}
-			ZUI.context.lineWidth = ZUI.camera.projectDistance(this.strokeWidth);
-		}
-		else if (this.sizeScale == "screen") {
-			for (var n = 0; n < this.paths.length; n++) {
-				var path = this.paths[n];
-				for (var m = 0; m < path.instructions.length; m++) {
-					var _instruction = path.instructions[m];
-					var instruction = _instruction.instruction;
-					var args = _instruction.args;
-					_instruction.screenPoints = [];
-					if (instruction == "moveTo") {
-						_instruction.screenPoints.push({x: args[0] + this.x, y: args[1] + this.y});
-					}
-					else if (instruction == "lineTo") {
-						_instruction.screenPoints.push({x: args[0] + this.x, y: args[1] + this.y});
-					}
-					else if (instruction == "quadraticCurveTo") {
-						_instruction.screenPoints.push({x: args[0] + this.x, y: args[1] + this.y});
-						_instruction.screenPoints.push({x: args[2] + this.x, y: args[3] + this.y});
-					}
-					else if (instruction == "bezierCurveTo") {
-						_instruction.screenPoints.push({x: args[0] + this.x, y: args[1] + this.y});
-						_instruction.screenPoints.push({x: args[2] + this.x, y: args[3] + this.y});
-						_instruction.screenPoints.push({x: args[4] + this.x, y: args[5] + this.y});
-					}
-					for (var o = 0; o < _instruction.screenPoints.length; o++) {
-						_instruction.screenPoints[o].x += this.offsetX;
-						_instruction.screenPoints[o].y += this.offsetY;
-					}
-				}
+			this.cacheContext.restore();
+			if (this.stroke) {
+				this.cacheContext.stroke();
 			}
-			ZUI.context.lineWidth = this.strokeWidth;
-		}
-		ZUI.context.save();
-		ZUI.context.beginPath();
-		for (var n = 0; n < this.paths.length; n++) {
-			if (!this.paths[n].closed) continue;
-			var instructions = this.paths[n].instructions;
-			for (var m = 0; m < instructions.length; m++) {
-				var args = [];
-				for (var o = 0; o < instructions[m].screenPoints.length; o++) {
-					args.push(instructions[m].screenPoints[o].x);
-					args.push(instructions[m].screenPoints[o].y);
-				}
-				ZUI.context[instructions[m].instruction].apply(ZUI.context, args);
+			if (this.fill) {
+				this.cacheContext.fill();
 			}
+			this.cacheContext.restore();
 		}
-		if (ZUI.activeView.viewObjects && ZUI.activeView.viewObjects.indexOf(this) >= 0) {
-			this.mouseIntersect = ZUI.context.isPointInPath(ZUI.mouseStatus.x, ZUI.mouseStatus.y);
-		}
-		ZUI.context.restore();
-		if (this.stroke) {
-			ZUI.context.stroke();
-		}
-		if (this.fill) {
-			ZUI.context.fill();
-		}
-		ZUI.context.save();
-		ZUI.context.beginPath();
-		for (n = 0; n < this.paths.length; n++) {
-			if (this.paths[n].closed) continue;
-			var instructions = this.paths[n].instructions;
-			for (var m = 0; m < instructions.length; m++) {
-				var args = [];
-				for (var o = 0; o < instructions[m].screenPoints.length; o++) {
-					args.push(instructions[m].screenPoints[o].x);
-					args.push(instructions[m].screenPoints[o].y);
-				}
-				ZUI.context[instructions[m].instruction].apply(ZUI.context, args);
-			}
-		}
-		if (this.stroke) {
-			ZUI.context.stroke();
-		}
-		ZUI.context.restore();
+		ZUI.context.drawImage(this.cache, 0, 0);
+		this.redraw = false;
 		this.isOnScreen = true;
 	}
 };
@@ -720,6 +1223,14 @@ ZUI.ViewObject.prototype.isInBound = function(x, y) {
 		if (y > screenY + this.screenHeight) return false;
 		return true;
 	}
+	else if (this.shape == "multilinetext") {
+		for (var n = 0; n < this.private.texts.length; n++) {
+			if (this.private.texts[n].isInBound(x, y)) {
+				return true;
+			}
+		}
+		return false;
+	}
 	else if (this.shape == "svg") {
 		var screenX, screenY;
 		var centerAt = this.centerAt.split(" ");
@@ -750,7 +1261,22 @@ ZUI.ViewObject.prototype.isInBound = function(x, y) {
 		return true;
 	}
 	else if (this.shape == "advshape") {
-		return this.mouseIntersect;
+		this.cacheContext.beginPath();
+		for (var n = 0; n < this.paths.length; n++) {
+			var instructions = this.paths[n].instructions;
+			for (var m = 0; m < instructions.length; m++) {
+				var args = [];
+				for (var o = 0; o < instructions[m].screenPoints.length; o++) {
+					args.push(instructions[m].screenPoints[o].x);
+					args.push(instructions[m].screenPoints[o].y);
+				}
+				if (instructions[m].instruction == "arcTo") {
+					args.push(ZUI.camera.projectDistance(instructions[m].args[4]));
+				}
+				this.cacheContext[instructions[m].instruction].apply(this.cacheContext, args);
+			}
+		}
+		return(this.cacheContext.isPointInPath(ZUI.mouseStatus.x, ZUI.mouseStatus.y));
 	}
 	return false;
 };

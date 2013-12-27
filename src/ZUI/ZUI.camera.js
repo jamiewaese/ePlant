@@ -7,25 +7,123 @@
 ZUI.camera = {};
 
 /* Attributes */
-ZUI.camera.fov = Math.PI / 2;	// Field of view
-ZUI.camera._x = 0;			// True x position
-ZUI.camera._y = 0;			// True y position
-ZUI.camera._distance = (ZUI.width / 2) / Math.tan(ZUI.camera.fov / 2);	// True distance
-ZUI.camera.x = 0;			// Target x position
-ZUI.camera.y = 0;			// Target y position
-ZUI.camera.distance = ZUI.camera._distance;	// Target distance
-ZUI.camera.moveRate = 1;		// Rate at which the camera moves to its target
-ZUI.camera.autoUpdate = false;	// Whether camera is updated automatically at every frame
+ZUI.camera.private = {};
+
+ZUI.camera.private.fov = Math.PI / 2;	// Field of view
+Object.defineProperty(ZUI.camera, "fov", {
+	get: function() {
+		return ZUI.camera.private.fov;
+	},
+	set: function(value) {
+		ZUI.camera.private.fov = value;
+	}
+});
+
+ZUI.camera.private._x = 0;			// True x position
+Object.defineProperty(ZUI.camera, "_x", {
+	get: function() {
+		return ZUI.camera.private._x;
+	},
+	set: function(value) {
+		ZUI.camera.private._x = value;
+		for (var n = 0; n < ZUI.viewObjects.length; n++) {
+			ZUI.viewObjects[n].redraw = true;
+		}
+	}
+});
+
+ZUI.camera.private._y = 0;			// True y position
+Object.defineProperty(ZUI.camera, "_y", {
+	get: function() {
+		return ZUI.camera.private._y;
+	},
+	set: function(value) {
+		ZUI.camera.private._y = value;
+		for (var n = 0; n < ZUI.viewObjects.length; n++) {
+			ZUI.viewObjects[n].redraw = true;
+		}
+	}
+});
+
+ZUI.camera.private._distance = (ZUI.width / 2) / Math.tan(ZUI.camera.fov / 2);	// True distance
+Object.defineProperty(ZUI.camera, "_distance", {
+	get: function() {
+		return ZUI.camera.private._distance;
+	},
+	set: function(value) {
+		ZUI.camera.private._distance = value;
+		for (var n = 0; n < ZUI.viewObjects.length; n++) {
+			ZUI.viewObjects[n].redraw = true;
+		}
+	}
+});
+
+ZUI.camera.private.x = 0;			// Target x position
+Object.defineProperty(ZUI.camera, "x", {
+	get: function() {
+		return ZUI.camera.private.x;
+	},
+	set: function(value) {
+		ZUI.camera.private.x = value;
+	}
+});
+
+ZUI.camera.private.y = 0;			// Target y position
+Object.defineProperty(ZUI.camera, "y", {
+	get: function() {
+		return ZUI.camera.private.y;
+	},
+	set: function(value) {
+		ZUI.camera.private.y = value;
+	}
+});
+
+ZUI.camera.private.distance = ZUI.camera._distance;	// Target distance
+Object.defineProperty(ZUI.camera, "distance", {
+	get: function() {
+		return ZUI.camera.private.distance;
+	},
+	set: function(value) {
+		ZUI.camera.private.distance = value;
+	}
+});
+
+ZUI.camera.private.moveRate = 1;		// Rate at which the camera moves to its target
+Object.defineProperty(ZUI.camera, "moveRate", {
+	get: function() {
+		return ZUI.camera.private.moveRate;
+	},
+	set: function(value) {
+		ZUI.camera.private.moveRate = value;
+	}
+});
+
+ZUI.camera.private.autoUpdate = false;	// Whether camera is updated automatically at every frame
+Object.defineProperty(ZUI.camera, "autoUpdate", {
+	get: function() {
+		return ZUI.camera.private.autoUpdate;
+	},
+	set: function(value) {
+		ZUI.camera.private.autoUpdate = value;
+	}
+});
 
 /* Update camera */
 ZUI.camera.update = function() {
-	ZUI.camera._x += (ZUI.camera.x - ZUI.camera._x) * ZUI.camera.moveRate;
-	ZUI.camera._y += (ZUI.camera.y - ZUI.camera._y) * ZUI.camera.moveRate;
-	ZUI.camera._distance += (ZUI.camera.distance - ZUI.camera._distance) * ZUI.camera.moveRate;
+	if (ZUI.camera._x != ZUI.camera.x) {
+		ZUI.camera._x += (ZUI.camera.x - ZUI.camera._x) * ZUI.camera.moveRate;
+		if (Math.abs(ZUI.camera.x - ZUI.camera._x) < ZUI.camera._distance * 0.005) ZUI.camera._x = ZUI.camera.x;
+	}
 
-	if (Math.abs(ZUI.camera.x - ZUI.camera._x) < ZUI.camera._distance * 0.005) ZUI.camera._x = ZUI.camera.x;
-	if (Math.abs(ZUI.camera.y - ZUI.camera._y) < ZUI.camera._distance * 0.005) ZUI.camera._y = ZUI.camera.y;
-	if (Math.abs(ZUI.camera.distance - ZUI.camera._distance) < ZUI.camera._distance * 0.005) ZUI.camera._distance = ZUI.camera.distance;
+	if (ZUI.camera._y != ZUI.camera.y) {
+		ZUI.camera._y += (ZUI.camera.y - ZUI.camera._y) * ZUI.camera.moveRate;
+		if (Math.abs(ZUI.camera.y - ZUI.camera._y) < ZUI.camera._distance * 0.005) ZUI.camera._y = ZUI.camera.y;
+	}
+
+	if (ZUI.camera._distance != ZUI.camera.distance) {
+		ZUI.camera._distance += (ZUI.camera.distance - ZUI.camera._distance) * ZUI.camera.moveRate;
+		if (Math.abs(ZUI.camera.distance - ZUI.camera._distance) < ZUI.camera._distance * 0.005) ZUI.camera._distance = ZUI.camera.distance;
+	}
 };
 
 /* Set true x and y positions */

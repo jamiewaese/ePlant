@@ -50,3 +50,5 @@ Eplant.PopupDialog.prototype.close = function() {
 };
 
 Eplant.PopupDialog.prototype.onclose = function() {};
+
+

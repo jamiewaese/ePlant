@@ -45,3 +45,7 @@ ZUI.Util.regexIndexOf = function(string, regex, start) {
 ZUI.Util.getTime = function() {
 	return (new Date()).getTime();
 };
+
+ZUI.Util.stopBubble = function(event) {
+	event.stopPropagation();
+};

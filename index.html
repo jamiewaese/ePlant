@@ -28,12 +28,15 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 		<script type="text/javascript" src="lib/spectrum/spectrum.js"></script>
 		<link rel="stylesheet" href="lib/spectrum/spectrum.css"></link>
 		<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/smoothness/jquery-ui.min.css"></link>
-		<script type="text/javascript" src="lib/JSmol.min.nojq.js"></script>
-		<script type="text/javascript" src="lib/cytoscape.min.js"></script>
-		<script type="text/javascript" src="lib/arbor.js"></script>
+		<script type="text/javascript" src="lib/JSmol/JSmol.min.nojq.js"></script>
+		<script type="text/javascript" src="lib/cytoscape/cytoscape.min.js"></script>
+		<script type="text/javascript" src="lib/cytoscape/arbor.js"></script>
+		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDT2IJLsslEC94ECmcXlAvz9ukPRH0fbh0&sensor=false"></script>
+		<script type="text/javascript" src="lib/OverlappingMarkerSpiderfier/oms.min.js"></script>
+		<script type="text/javascript" src="lib/markerclusterer/markerclusterer_compiled.js"></script>
 
 		<!-- Tooltip Pop-Up Stylesheet. (From: https://github.com/chinchang/hint.css) -->
-		<link rel="stylesheet" href="style/hint.css"></link>
+		<link rel="stylesheet" href="lib/hint/hint.css"></link>
 
 
 		<!-- Google Analytics -->
@@ -73,8 +76,8 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 					</td>
 					<td>
 						<div style="float: right; padding: 17px 0px 0px 0px">
-							<div class="hint--left  hint--success  hint--rounded" data-hint="Save your work session." data-enabled="true"><input type="button" class="button" value="Save" onclick="saveFile();"/></div>
-							<div class="hint--left  hint--success  hint--rounded" data-hint="Load a previously saved session." data-enabled="true"><input type="button" class="button" id="fileinput" value="Load" onchange="readFile(this);"></div>
+							<div class="hint--left  hint--success  hint--rounded" data-hint="Save your work session" data-enabled="true"><input type="button" class="button" value="Save" onclick="saveFile();"/></div>
+							<div class="hint--left  hint--success  hint--rounded" data-hint="Load a previously saved session" data-enabled="true"><input type="button" class="button" id="fileinput" value="Load" onchange="readFile(this);"></div>
 						</div>
 					</td>
 				</tr>
@@ -88,10 +91,10 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 							<h3 id="speciesLabel">
 								<!-- Plant name should update when user changes species -->
 							</h3>							
-							Enter gene identifier or alias:<br>
-							<input type="text" name="GeneID" style="width:121px; padding:5px;">
-							<div class="hint--right hint--success hint--rounded" data-hint="Download all available data for this gene." data-enabled="true">
-									<input type="button" class="button" value="Get">
+							<smallBodyText>Enter gene identifier or alias:</smallBodyText><br>
+							<input id="enterIdentifier" type="text" name="GeneID">
+							<div class="hint--right hint--success hint--rounded" data-hint="Download all available data for this gene" data-enabled="true">
+									<input type="button" class="button" value="Get" onclick="Eplant.getElement();">
 								</div>
 							<br>
 							<br>
@@ -102,74 +105,97 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
  							</div>
 							<div style="text-align:center;position:relative;left:-20px;">
 							<br>
-							<div id="speciesViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Select your species of interest." data-enabled="true" onclick="Eplant.toSpeciesView();">
+							<div id="speciesViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Species selector" data-enabled="true" onclick="Eplant.toSpeciesView();">
 								<img src="img/unavailable/species.png"></img>
 							</div>
 							<br>
-							<div id="chromosomeViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View chromosomes and select genes." data-enabled="true" onclick="Eplant.toChromosomeView();">
-								<img src="img/unavailable/chromosome.png"></img>
-							</div>
-							<br>
-							<div id="worldViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View global distributions of your plant." data-enabled="true">
+							<div id="worldViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="World eFP" data-enabled="true" onclick="Eplant.toWorldView();">
 								<img src="img/unavailable/world.png"></img>
 							</div>
 							<br>
-							<div id="plantViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View tissues expression profile of your gene." data-enabled="true">
+							<div id="plantViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Plant eFP" data-enabled="true" onclick="Eplant.toPlantView();">
 								<img src="img/unavailable/plant.png"></img>
 							</div>
 							<br>
-							<div id="cellViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View subcellular expression profile of your gene." data-enabled="true">
+							<div id="cellViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Subcellular eFP" data-enabled="true" onclick="Eplant.toCellView();">
 								<img src="img/unavailable/cell.png"></img>
 							</div>
+							<div id="experimentViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Experimental eFP" data-enabled="true">
+								<img src="img/unavailable/experiment.png"></img>
+							</div>
 							<br>
-							<div id="interactionViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View protein-protein interactions of your gene product." data-enabled="true" onclick="Eplant.toInteractionView();">
+							<div id="chromosomeViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Chromosome viewer" data-enabled="true" onclick="Eplant.toChromosomeView();">
+								<img src="img/unavailable/chromosome.png"></img>
+							</div>
+							<br>
+							<div id="interactionViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Protein-protein interactions" data-enabled="true" onclick="Eplant.toInteractionView();">
 								<img src="img/unavailable/interaction.png"></img>
 							</div>
-							<div id="pathwayViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View metabolic pathways that your gene product participates in." data-enabled="true" onclick="Eplant.toPathwayView();">
+							<div id="pathwayViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Metabolic pathways" data-enabled="true" onclick="Eplant.toPathwayView();">
 								<img src="img/unavailable/pathway.png"></img>
 							</div>
 							<br>
-							<div id="moleculeViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View structure of the protein encoded by your gene." data-enabled="true" onclick="Eplant.toMoleculeView();">
+							<div id="moleculeViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Molecular structure" data-enabled="true" onclick="Eplant.toMoleculeView();">
 								<img src="img/unavailable/molecule.png"></img>
 							</div>
 							<br>
-							<div id="sequenceViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="View annotations for your gene sequence." data-enabled="true">
+							<div id="sequenceViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Sequence viewer" data-enabled="true">
 								<img src="img/unavailable/sequence.png"></img>
 							</div>
 							</div>
 						</div>
 					</td>
 					<td valign="top">
-						<div id="ZUI_container" style="width:900px;height:600px;margin:0 auto 0 50px;position:relative;left:-100px;border:3px solid #F0F0F0;border-radius:20px;background:#fff;">
-							<div id="Cytoscape_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;">
+						<div id="pageCurlBoxShadow">
+							<div id="ZUI_container">
+								<div id="Cytoscape_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;">
+								</div>
+								<div id="JSmol_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;">
+								</div>
+								<canvas id="ZUI_canvas" width="900px" height="600px" style="position:absolute;left:0;top:0;outline:none;">
+									Canvas is not supported by your browser, please upgrade.
+								</canvas>
+								<div id="map_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;visibility:hidden;">
+								</div>
 							</div>
-							<div id="JSmol_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;">
-							</div>
-							<canvas id="ZUI_canvas" width="900px" height="600px" style="position:absolute;left:0;top:0;outline:none;">
-								Canvas is not supported by your browser, please upgrade.
-							</canvas>
-						</div>
+						</div>	
 						<div id="settings_container" style="opacity:0;margin-top:15px;">
 							<table>
 								<tr>
-									<td id="viewSpecificUI" style="padding-left: 50px; width:550px;vertical-align:middle;">
+									<td id="viewSpecificUI" style="padding-left:50px;width:550px;vertical-align:middle;">
 									</td>
-									<td id="crossViewUI" style="width:300px;vertical-align:middle;">
-										<div id="changeViewAnimationIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Toggle zooming animation." data-enabled="true" style="padding:5px;" onclick="Eplant.toggleChangeViewAnimation();">
+									<td id="crossViewUI" style="width:450px;vertical-align:middle;">
+										<div id="historyBackIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Go back to the previous view" data-enabled="true" style="padding-right:0;width:20px;height:25px;" onclick="Eplant.backViewHistory();">
+											<img src="img/available/history-back.png" style="width:20px;height:20px;"></img>
+										</div>
+										<div id="historyIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="History panel" data-enabled="true" style="padding-left:0;padding-right:0;" onclick="Eplant.showViewHistory();">
+											<img src="img/history.png"></img>
+										</div>
+										<div id="historyForwardIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Go forward to the next view" data-enabled="true" style="padding-left:0;width:20px;height:25px;" onclick="Eplant.forwardViewHistory();">
+											<img src="img/available/history-forward.png" style="width:20px;height:20px;"></img>
+										</div>
+										<div id="changeViewAnimationIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Toggle zooming animation" data-enabled="true" onclick="Eplant.toggleChangeViewAnimation();">
 											<img src="img/on/zoom.png"></img>
 										</div>
-										<div id="tooltipIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Toggle tooltip." data-enabled="true" style="padding:5px;" onclick="Eplant.toggleTooltip();">
+										<div id="tooltipIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Toggle tooltip" data-enabled="true" onclick="Eplant.toggleTooltip();">
 											<img src="img/on/tooltip.png"></img>
 										</div>
-										<div id="getImageIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Save current screen as high resolution image." data-enabled="true" style="padding:5px;" onclick="ZUI.toImageInWindow();">
+										<div id="getImageIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Save current screen as high resolution image" data-enabled="true" onclick="ZUI.toImageInWindow();">
 											<img src="img/getimage.png"></img>
 										</div>
-										<div id="citationIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Get citation." data-enabled="true" style="padding:5px;" onclick="Eplant.getCitation();">
+										<div id="citationIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Get citation" data-enabled="true" onclick="Eplant.showCitation();">
 											<img src="img/citation.png"></img>
+										</div>
+										<div id="collapseDialogsIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Collapse all dialogs" data-enabled="true" onclick="Eplant.collapseElementDialogs();">
+											<img src="img/collapsedialogs.png"></img>
 										</div>
 									</td>
 								</tr>
 							</table>
+						</div>
+					</td>
+					<td valign="top">
+						<div id="dialogBox_container">
 						</div>
 					</td>
 				</tr>
@@ -180,6 +206,11 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 				<script type="text/javascript" src="src/ZUI/ZUI.ViewObject.js"></script>
 				<script type="text/javascript" src="src/ZUI/ZUI.Animation.js"></script>
 				<script type="text/javascript" src="src/ZUI/ZUI.Geometry.js"></script>
+				<script type="text/javascript" src="src/ZUI/ZUI.Statistics.js"></script>
+				<script type="text/javascript" src="src/ZUI/ZUI.Math.js"></script>
+				<script type="text/javascript" src="src/ZUI/ZUI.Parser.js"></script>
+				<script type="text/javascript" src="src/ZUI/ZUI.Util.js"></script>
+					<script type="text/javascript" src="src/ZUI/ZUI.Util.KeySpline.js"></script>
 			<script type="text/javascript" src="src/Eplant/Eplant.js"></script>
 				<script type="text/javascript" src="src/Eplant/Eplant.Color.js"></script>
 				<script type="text/javascript" src="src/Eplant/Eplant.Species.js"></script>
@@ -194,176 +225,113 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 					<script type="text/javascript" src="src/Eplant/Eplant.ElementDialog.Tag.js"></script>
 				<script type="text/javascript" src="src/Eplant/Eplant.InteractionDialog.js"></script>
 				<script type="text/javascript" src="src/Eplant/Eplant.AnnotationDialog.js"></script>
+				<script type="text/javascript" src="src/Eplant/Eplant.Tooltip.js"></script>
 					<script type="text/javascript" src="src/Eplant/Eplant.AnnotationDialog.Tag.js"></script>
+				<script type="text/javascript" src="src/Eplant/Eplant.ViewHistoryDialog.js"></script>
+					<script type="text/javascript" src="src/Eplant/Eplant.ViewHistoryDialog.Item.js"></script>
 				<script type="text/javascript" src="src/SpeciesView/SpeciesView.js"></script>
+					<script type="text/javascript" src="src/SpeciesView/SpeciesView.SpeciesList.js"></script>
+					<script type="text/javascript" src="src/SpeciesView/SpeciesView.SpeciesListItem.js"></script>
 				<script type="text/javascript" src="src/ChromosomeView/ChromosomeView.js"></script>
+					<script type="text/javascript" src="src/ChromosomeView/ChromosomeView.ChromosomeViewObject.js"></script>
+					<script type="text/javascript" src="src/ChromosomeView/ChromosomeView.Annotation.js"></script>
+					<script type="text/javascript" src="src/ChromosomeView/ChromosomeView.ElementListDialog.js"></script>
+					<script type="text/javascript" src="src/ChromosomeView/ChromosomeView.ElementListDialogItem.js"></script>
 				<script type="text/javascript" src="src/InteractionView/InteractionView.js"></script>
 				<script type="text/javascript" src="src/MoleculeView/MoleculeView.js"></script>
 				<script type="text/javascript" src="src/PathwayView/PathwayView.js"></script>
+				<script type="text/javascript" src="src/EFPView/EFPView.js"></script>
+				<script type="text/javascript" src="src/PlantView/PlantView.js"></script>
+				<script type="text/javascript" src="src/CellView/CellView.js"></script>
+				<script type="text/javascript" src="src/WorldView/WorldView.js"></script>
+				<script type="text/javascript" src="src/ExperimentView/ExperimentView.js"></script>
+				<script type="text/javascript" src="src/SequenceView/SequenceView.js"></script>
 			<script type="text/javascript">
-				ZUI.initialize({
-					canvas: document.getElementById("ZUI_canvas"),
-					background: "#ffffff",
-					backgroundAlpha: 0,
-					frameRate: 60
-				});
-				ZUI.update = Eplant.update;
-				MoleculeView.initJMol();
-				Eplant.speciesView = new SpeciesView();
-				ZUI.changeActiveView(Eplant.speciesView, null, null);
+				Eplant.initialize();
 			</script>
 		</div>
 
 		<!-- Tabs -->
 		<br>
-		<script src="lib/tabcontent.js" type="text/javascript"></script>
-		<link href="style/tabcontent-template2/tabcontent.css" rel="stylesheet" type="text/css"></link>
-		<ul class="tabs" data-persist="true">
-			<li><a href="#view1">WELCOME</a></li>
-			<li><a href="#view2">ABOUT</a></li>
-			<li><a href="#view3">DATA SOURCES</a></li>
-			<li><a href="#view4">EXAMPLE GALLERY</a></li>
-		</ul>
-		<div class="tabcontents" style="background:#fff;">
-			<div id="view1">
-				<p>Welcome to ePlant, a user friendly data visualization tool for exploring multiple levels of biological data -- micro, meso, macro -- and related experimental findings.</p>
-
-				<p>Developed by Jamie Waese, Hans Yu and Nicholas Provart at the University of Toronto, ePlant combines proprietary and familiar data visualization tools with an intuitive user interface to facilitate the easy exploration of multiple plant biology databases.</p>
-
-				<p>With a zoomable user interface that allows users to move quickly between multiple levels of biological processes, ePlant helps researchers and educators make connections between DNA sequences, protein-protein interactions, cell and tissue expression patterns, natural variation, and proteomic responses to various experimental conditions. Dynamic links to the underlying data and other information pertaining to each view is available on demand.</p>
-
-				<p>Originally developed for the <a href="http://www.arabidopsis.org/portals/masc/IAIC.jsp">Arabidopsis Information Portal</a>, ePlant is species agnostic and new plants can be added by following an established protocol. Please <a href="mailto:jamie.waese@mail.utoronto.ca">contact us</a> if there is a particular species you'd like to add. </p>
-
-				<p>Developed in Nicholas Provart's lab in the department of Cell & Systems Biology at the University of Toronto, ePlant was funded with grants from Genome Canada, XYZ and XYZ. This version of ePlant is a major update from the original ePlant by <a href="http://www.plosone.org/article/fetchObject.action?uri=info%3Adoi%2F10.1371%2Fjournal.pone.0015237&representation=PDF">Fucile et al. (2011)</a>.</p>
-
-				<p>ePlant uses the HTML5 canvas, JavaScript and JQuery. It was designed to work with the Firefox and Chrome internet browsers. Some features may not display properly with Internet Explorer or Safari at this time.</p>
+		<script src="lib/tabcontent/tabcontent.js" type="text/javascript"></script>
+		<link href="lib/tabcontent/tabcontent-template2/tabcontent.css" rel="stylesheet" type="text/css"></link>
+		<div id="tabs">
+			<ul class="tabs" data-persist="true">
+				<li><a href="#view1">Welcome</a></li>
+				<li><a href="#view2">Background</a></li>
+				<li><a href="#view3">Instructions</a></li>
+				<li><a href="#view4">Data Sources</a></li>
+				<li><a href="#view5">Example Gallery</a></li>
+				<li><a href="#view6">Contact</a></li>
+			</ul>
+			<div class="tabcontents" style="background:#fff;">
+				<div id="view1" style="margin-left:20%;margin-right:20%;">
+				</div>
+				<div id="view2" style="margin-left:20%;margin-right:20%;">
+				</div>
+				<div id="view3" style="margin-left:20%;margin-right:20%;">
+				</div>
+				<div id="view4" style="margin-left:20%;margin-right:20%;">
+				</div>
+				<div id="view5" style="margin-left:20%;margin-right:20%;">
+				</div>
+				<div id="view6" style="margin-left:20%;margin-right:20%;">
+				</div>
 			</div>
-			<div id="view2">
-				<p>ePlant is an effort to leverage current thinking about data visualization to help educators and researchers make sense of the ever growing volumes of data describing multiple levels of biological processes that are now available online. For each of the species currently installed, ePlant connects to several web services to download the latest data pertaining to a plant's genome, proteome, metabolome, biochemical pathways, and tissue expression patterns. It was designed to be easily updated and we plan to add additional data and visualization tools in the future.</p>
 
-				<p>We have organized our visualization tools with a conceptual hierarchy that progresses from big to small. We use a zoom metaphor to represent moving closer to- or further away from each level of analysis in the hopes that the temporal and spatial connection made from the juxtaposition improves the ability to make conceptual connections as well. We recognize that each level of analysis is unique and arguments can be made for organizing the hierarchy in a different order. Future versions of ePlant will allow users to order the icons according to their personal preferences.</p>
 
-				<p>Some of ePlant's visualization tools are implementations of excellent systems you may be familiar with: <a href="http://cytoscape.github.io/cytoscape.js/">Cytoscape.js</a> for the protein interactions and reactome charts, <a href="http://wiki.jmol.org/index.php/Jmol_JavaScript_Object">JSmol</a> for the 3D molecular view, and <a href="http://jbrowse.org/">JBrowse</a> for the genome browser. Other visualization tools are based on well known viewers developed at <a href="http://bar.utoronto.ca">bar.utoronto.ca</a>: the eFP browser for <a href="http://bar.utoronto.ca/cell_efp/cgi-bin/cell_efp.cgi">cells</a>, <a href="http://bar.utoronto.ca/efp/cgi-bin/efpWeb.cgi">tissues</a>, and <a href="http://bar.utoronto.ca/efp/cgi-bin/efpWeb.cgi?dataSource=Natural_Variation">natural variations</a>, as well as the <a href="http://bar.utoronto.ca/ntools/cgi-bin/ntools_expression_angler.cgi">Expression Angler</a> and other bits and pieces we have reproduced and updated. </p>
 
-				<p>Recognizing the forest from the trees is especially challenging when your information must be accessed from separate sources, each with its own interface and methods for identifying and visualizing the data you’re interested in. ePlant brings new and familiar data visualization tools together into common framework, minimizing the steps necessary to explore a cluster of genes across several levels of analysis. </p>
 
-				<p>We designed ePlant to be open source and open ended, with the goal of adding additional plants and visualization tools as they become available. ePlant is licensed under a Creative Commons Attribution-Share Alike 2.5 Canada License, and the source code for the framework and visualization tools are available for download from GitHub.</p>   
+			<!-- soil & grass footer -->
+			<div id="greenBottom">
+					<!-- back to top button: http://webdesign.tutsplus.com/tutorials/htmlcss-tutorials/quick-tip-implement-a-sticky-back-to-top-button/ -->
+					<a href="#" class="back-top">Go to top</a>
+					<script type="text/javascript">
+						$(document).ready(function() {
+							// Show or hide the back-top button
+							$(window).scroll(function() {
+								if ($(this).scrollTop() > 200) {
+									$('.back-top').fadeIn(800);
+								} else {
+									$('.back-top').fadeOut(800);
+								}
+							});
+							// animate the scroll to top
+							$('.back-top').click(function(event) {
+								event.preventDefault();
 
-				<h2>Visualization Tools</h2>
-				Each level of data can be explored with the following tools: </p>
-
-				<p><h3>Species Selector</h3>
-				<img src="http://bar.utoronto.ca/~eplant/img/available/species.png" align="left">
-				This is the top-level view for ePlant. The species selector allows you to choose which plant databases you wish to explore. We currently support Arabidopsis thaliana, Solanum tuberosum (potato), Solanum lycopersicum (tomato), and Populus trichocarpa (poplar). </p>
-
-				<p><h3>Chromosome Selector</h3>
-				<img src="http://bar.utoronto.ca/~eplant/img/active/chromosome.png" align="left">
-				The chromosome selector visualizes chromosomes as vertical bars. Enter a gene ID or alias in the text box and ePlant will automatically download the data associated with that gene for each of the installed views. You can enter several gene ID's at a time if they are separated, by, commas, and there is an auto-complete function to help you identify genes by name. You can also load data by hovering over the chromosomes, selecting a gene from the context sensitive menu popup listing all the genes at that position, then clicking the 'get data' button in the annotation popup of the selected gene. The gene of focus can be adjusted via the combo box in the upper left corner, or by clicking on the star icon in the title bar of any annotation popup.</p>
-				<p>This view appears at the top of our visualization hierarchy because it provides a pictographic overview of the entire genome. It also conveniently indicates the positions of all the genes that have been downloaded. The thermometer icon at the bottom of the canvas generates a heat map indicating the density of genes along the chromosome. The pencil icon opens an annotation tool that facilitates customization of label colors and sizes.</p>
-
-				<p><h3>Natural Variations</h3>
-				<img src="http://bar.utoronto.ca/~eplant/img/unavailable/world.png" align="left">
-				The natural variations view offers an eFP browser displaying the relative variations of any given gene's expression levels in various samples from around the world.</p>
-				<p>This view appears near the top of the hierarchy because it shows expression patterns on a macro level, still focused on a specific gene but not as it pertains to a single organism.</p>
-
-				<p><h3>Plant Expression</h3>
-				<img src="http://bar.utoronto.ca/~eplant/img/unavailable/plant.png" align="left">
-				The plant expression view is an eFP browser that displays the expression pattern of any given gene as a heat map painted directly onto the tissues of a plant. Brighter colors denote a higher level of expression. </p>
-
-				<p><h3>Experimental Conditions</h3>
-				<img src="http://bar.utoronto.ca/~eplant/img/unavailable/experimentalEFP.png" align="left">
-				The experimental conditions view displays the results of experiments such as exposure to stress or hormones using an eFP display.</p>
-
-				<p><h3>Interactions Viewer</h3>
-				<img src="http://bar.utoronto.ca/~eplant/img/unavailable/interaction.png" align="left">
-				The interactions viewer displays documented and predicted protein-protein interactions for the selected gene identifier. This is an implementation of Cytoscape.js.</p>
-
-				<p><h3>Reactome Viewer</h3>
-				<img src="http://bar.utoronto.ca/~eplant/img/unavailable/pathway.png" align="left">
-				This view displays reactome data, using Cytoscape.js to draw the nodes and edges./p>
-
-				<p><h3>3D Molecular Viewer</h3>
-				<img src="http://bar.utoronto.ca/~eplant/img/unavailable/molecule.png" align="left">
-				The molecular view displays a 3D structure of the selected gene's protein product, from the Protein Data Bank, PDB, or predicted by Phyre.</p>
-
-				<p><h2>Optional Controls</h2>
-				At the bottom of the canvas there are several icons for controlling application specific and cross application options.</p>
-
-				<p><h3>Auto Citation</h3>
-				<img src="http://bar.utoronto.ca/~eplant/img/citation.png" align="left">
-				The auto citation icon opens a popup window with dynamically updated citation text, according to whichever species and view is currently active. We appreciate citations!</p>
-
-				<p><h3>Screen Grab</h3>
-				<img src="http://bar.utoronto.ca/~eplant/img/getimage.png" align="left">
-				The screen grab function creates a high resolution PNG image of the current canvas. Screen grabs do not include the user interface so they can be used to create clean diagrams for publication.</p>
-
-				<p><h3>Tooltips</h3>
-				<img src="http://bar.utoronto.ca/~eplant/img/on/zoom.png" align="left">
-				This icon toggles the tooltip help function on and off. The default is on, however once you become familiar with the interface you may prefer to turn it off.</p>
-
-				<p><h3>Zoom Animations</h3>
-				<img src="http://bar.utoronto.ca/~eplant/img/on/zoom.png" align="left">
-				We like the zoom animations but some purists do not. This button toggles the animated transitions on and off.</p>
+								$('html, body').animate({scrollTop: 0}, 300)
+							});
+						});
+					</script>
 			</div>
-			<div id="view3">
-				<p><h2>Arabidopsis thaliana</h2>
-				<ul>
-				<li><em>Plant Expression</em>. Based on ATH1 gene expression data from Schmid et al. (2005), Nature Genetics 37:501-506 and other published data sets. </li>
-				<li><em>Tissue Expression</em>. Based on ATH1 gene expression data from Schmid et al. (2005), Nature Genetics 37:501-506 and other published data sets. </li>
-				<li><em>Subcellular Localization</em>. Based on data in the SUBA database by Heazelwood et al. (2007), Nucleic Acids Research 35:D213-218. </li>
-				<li><em>Pathways</em>. Based on...</li>
-				<li><em>Interactors View</em>. Based on data from the BAR's Arabidopsis Interactions database, described in Geisler-Lee et al. (2007), Plant Physiology 145: 317-329. </li>Example.    
-				<li><em>Protein Model</em>. Based on data from the Protein Data Bank, PDB, or predicted by Phyre.</li>
-				</ul>
-				</p>       
 
-				<p><h2>Solanum tuberosum</h2>
-				<ul>
-				<li><em>Plant Expression</em>. Based on...</li>
-				<li><em>Tissue Expression</em>. Based on...</li>
-				<li><em>Subcellular Localization</em>. Based on...</li>
-				<li><em>Pathways</em>. Based on...</li>
-				<li><em>Interactors View</em>. Based on...</li>Example.    
-				<li><em>Protein Model</em>. Based on data from the Protein Data Bank, PDB, or predicted by Phyre.</li>
-				</ul>
-				</p>       
+			<!-- open close max/min buttons -->
+			<script type="text/javascript">
+				function tabViewsOnLoad(response) {
+					tabViewLoadCounter--;
+					if (tabViewLoadCounter == 0) {
+						$(".maxMinButton").click(function(){
+							if($(this).html() == "-"){
+								$(this).html("+");
+							}
+							else{
+								$(this).html("-");
+							}
+							$(this).parent().parent().children(".maxMinBox").slideToggle();
+						});
+						$(".maxMinBox").slideToggle();
+					}
+				}
 
-				<p><h2>Solanum lycopersicum</h2>
-				<ul>
-				<li><em>Plant Expression</em>. Based on...</li>
-				<li><em>Tissue Expression</em>. Based on...</li>
-				<li><em>Subcellular Localization</em>. Based on...</li>
-				<li><em>Pathways</em>. Based on...</li>
-				<li><em>Interactors View</em>. Based on...</li>Example.    
-				<li><em>Protein Model</em>. Based on data from the Protein Data Bank, PDB, or predicted by Phyre.</li>
-				</ul>
-				</p>   
-   
-				<p><h2>Populus trichocarpa</h2>
-				<ul>
-				<li><em>Plant Expression</em>. Based on...</li>
-				<li><em>Tissue Expression</em>. Based on...</li>
-				<li><em>Subcellular Localization</em>. Based on...</li>
-				<li><em>Pathways</em>. Based on...</li>
-				<li><em>Interactors View</em>. Based on...</li>Example.    
-				<li><em>Protein Model</em>. Based on data from the Protein Data Bank, PDB, or predicted by Phyre.</li>
-				</ul>
-				</p>
-			</div>
-			<div id="view4">
-				<p>Here are some genes from Arabidopsis that tell interesting stories:</p>
-				<ul>
-				<li>At1g04170 (Eukaryotic Translation Initiation Factor 2 Subunit)</li>
-				<li>At5g20620 UBQ4 (ubiquitin 4) </li>
-				<li>At5g46240 KAT1 (inward rectifier potassium channel) </li>
-				<li>At4g30600 (signal recognition particle receptor alpha subunit family protein) </li>
-				<li>At2g41460 ARP (apurinic endonuclease-redox protein) </li>
-				<li>At2g02760 UBC2__ATUBC2 (UBIQUITING-CONJUGATING ENZYME 2)    </li>
-				<li>At3g13445 TFIID-1__TBP1 (TATA BINDING PROTEIN 1)</li>
-				</ul>
-
-				<p>We will be building this example gallery over the next several months. Please send us a note if you find anything worth sharing!</p>
-			</div>
+				var tabViewLoadCounter = 6;
+				$("#view1").load("welcome.html", tabViewsOnLoad);
+				$("#view2").load("background.html", tabViewsOnLoad);
+				$("#view3").load("instructions.html", tabViewsOnLoad);
+				$("#view4").load("data-sources.html", tabViewsOnLoad);
+				$("#view5").load("example-gallery.html", tabViewsOnLoad);
+				$("#view6").load("contact.html", tabViewsOnLoad);
+			</script>
 		</div>
 	</body>
 </html>

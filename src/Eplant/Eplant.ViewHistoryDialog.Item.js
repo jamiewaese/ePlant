@@ -18,7 +18,15 @@ Eplant.ViewHistoryDialog.Item = function(index, viewHistoryDialog) {
 		viewName = "interactions";
 		target = this.view.element.identifier;
 	}
-	//TODO ...
+	else if (this.view instanceof PlantView) {
+		viewName = "plant";
+		target = this.view.element.identifier;
+	}
+	else if (this.view instanceof WorldView) {
+		viewName = "world";
+		target = this.view.element.identifier;
+	}
+
 	this.spanElement.innerHTML = target + ": " + viewName + " viewer";
 	this.spanElement.onclick = $.proxy(function() {
 		this.viewHistoryDialog.close();
