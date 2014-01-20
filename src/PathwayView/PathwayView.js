@@ -4,9 +4,9 @@
  * Code by Hans Yu
  */
 
-function PathwayView(gene) {
+function PathwayView(element) {
 	/* Store gene object */
-	this.gene = gene;
+	this.element = element;
 
 	/* Get Cytoscape container */
 	this.cytoscapeElement = document.getElementById("Cytoscape_container");
@@ -92,7 +92,7 @@ function PathwayView(gene) {
 	/* Query data */
 	$.ajax({
 		type: "GET",
-		url: "http://bar.utoronto.ca/~eplant/cgi-bin/pathwaydiagram.cgi?agi=" + this.gene.identifier,
+		url: "http://bar.utoronto.ca/~eplant/cgi-bin/pathwaydiagram.cgi?agi=" + this.element.identifier,
 		dataType: "json"
 	}).done($.proxy(function(response) {
 		var nodes = this.cytoscapeConf.elements.nodes;
@@ -101,7 +101,7 @@ function PathwayView(gene) {
 		if (!response.data) {
 			nodes.push({
 				data: {
-					name: this.gene.identifier,
+					name: this.element.identifier,
 					shape: "circle",
 					width: 50,
 					height: 50
@@ -396,6 +396,8 @@ PathwayView.prototype = new ZUI.View();
 PathwayView.prototype.constructor = PathwayView;
 
 PathwayView.prototype.active = function() {
+	ZUI.container.style.cursor = "default";
+
 	/* Append to view history */
 	if (Eplant.viewHistory[Eplant.viewHistorySelected] != this) {
 		Eplant.pushViewHistory(this);
@@ -509,6 +511,70 @@ PathwayView.prototype.getZoomOutExitAnimationSettings = function() {
 		targetX: 0,
 		targetY: 0,
 		targetDistance: 10000,
+		draw: function(elapsedTime, remainingTime, view) {
+			view.draw();
+		}
+	};
+};
+
+PathwayView.prototype.getZoomOutEntryAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.75, 0, 0.55, 0.9],
+		sourceX: 0,
+		sourceY: 0,
+		sourceDistance: 0,
+		targetX: 0,
+		targetY: 0,
+		targetDistance: 500,
+		draw: function(elapsedTime, remainingTime, view) {
+			view.draw();
+		}
+	};
+};
+
+PathwayView.prototype.getZoomInExitAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.25, 0.1, 0.25, 1],
+		targetX: 0,
+		targetY: 0,
+		targetDistance: 0,
+		draw: function(elapsedTime, remainingTime, view) {
+			view.draw();
+		}
+	};
+};
+
+/* Returns the animation settings for pan left entry animation */
+PathwayView.prototype.getPanRightEntryAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.75, 0, 0.75, 0.9],
+		sourceX: -900,
+		sourceY: 0,
+		sourceDistance: 500,
+		targetX: 0,
+		draw: function(elapsedTime, remainingTime, view) {
+			view.draw();
+		}
+	};
+};
+
+/* Returns the animation settings for pan right exit animation */
+PathwayView.prototype.getPanLeftExitAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.75, 0, 0.75, 0.9],
+		targetX: ZUI.camera._x - 900,
 		draw: function(elapsedTime, remainingTime, view) {
 			view.draw();
 		}

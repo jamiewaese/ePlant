@@ -10,6 +10,8 @@ function WorldView(element) {
 	this.webService = null;
 	this.control = null;
 	this.groups = [];
+	this.compareGroups = null;
+	this.compareElement = null;
 
 	this.isDataReady = false;
 
@@ -17,21 +19,9 @@ function WorldView(element) {
 
 	this.maxLevel = 0;
 
-	/* Create view-specific UI elements */
-	this.modeContainerElement = document.createElement("div");
-	this.modeContainerElement.className = "iconSmall hint--top hint--success hint--rounded";
-	this.modeContainerElement.setAttribute("data-hint", "Toggle data mode.");
-	this.modeContainerElement.setAttribute("data-enabled", Eplant.tooltipSwitch.toString());
-	this.modeContainerElement.style.padding = "5px";
-	this.modeContainerElement.onclick = $.proxy(function() {
-		if (this.mode == "absolute") this.mode = "relative";
-		else if (this.mode == "relative") this.mode = "absolute";
-		this.updateEFP();
-	}, this);
-	/* Set icon */
-	var img = document.createElement("img");
-	img.src = "img/efpmode.png";
-	this.modeContainerElement.appendChild(img);
+	this.legend = new EFPView.Legend();
+
+	EFPView.prototype.initIcons.call(this);
 
 	/* Retrieve eFP JSON */
 	$.getJSON("data/world/" + element.chromosome.species.scientificName.replace(" ", "_") + ".json", $.proxy(function(response) {
@@ -61,6 +51,7 @@ function WorldView(element) {
 		for (n = 0; n < response.groups.length; n++) {
 			var group = response.groups[n];
 			var _group = {};
+			_group.view = this;
 			_group.id = group.id;
 			_group.source = group.source;
 			_group.position = {
@@ -87,13 +78,40 @@ function WorldView(element) {
 
 			/* Create info window */
 			_group.infoWindow = new google.maps.InfoWindow({
-				content: _group.id
+				content: _group.id,
+				disableAutoPan: true,
+				closeBoxURL: ""
 			});
 			google.maps.event.addListener(_group.marker, "mouseover", $.proxy(function() {
-				this.infoWindow.open(WorldView.googleMap, this.marker);
+				var x = ZUI.mouseStatus.x;
+				var y = ZUI.mouseStatus.y;
+				var overlay = new google.maps.OverlayView();
+				overlay.draw = function() {};
+				overlay.setMap(WorldView.googleMap);
+				var point = overlay.getProjection().fromLatLngToContainerPixel(this.marker.getPosition());
+				ZUI.mouseStatus.x = point.x;
+				ZUI.mouseStatus.y = point.y - 15;
+				var tooltipContent = "";
+				if (this.view.mode == "absolute") {
+					tooltipContent = this.id + "<br>Mean: " + (+parseFloat(this.meanLevel).toFixed(2)) + "<br>Standard error: " + (+parseFloat(this.stdevLevel).toFixed(2)) + "<br>Sample size: " + this.nLevel;
+				}
+				else if (this.view.mode == "relative") {
+					tooltipContent = this.id + "<br>Log2 value: " + (+parseFloat(ZUI.Math.log(this.meanLevel / this.view.control.meanLevel, 2)).toFixed(2)) + "<br>Fold difference: " + (+parseFloat(this.meanLevel / this.view.control.meanLevel).toFixed(2));
+				}
+				else if (this.view.mode == "compare") {
+					var index = this.view.groups.indexOf(this);
+					var compareGroup = (index >= 0) ? this.view.compareGroups[index] : {};
+					tooltipContent = this.id + "<br>Log2 value: " + (+parseFloat(ZUI.Math.log(this.meanLevel / compareGroup.meanLevel, 2)).toFixed(2)) + "<br>Fold difference: " + (+parseFloat(this.meanLevel / compareGroup.meanLevel).toFixed(2));
+				}
+				this.tooltip = new Eplant.Tooltip({
+					content: tooltipContent
+				});
+				ZUI.mouseStatus.x = x;
+				ZUI.mouseStatus.y = y;
 			}, _group));
 			google.maps.event.addListener(_group.marker, "mouseout", $.proxy(function() {
-				this.infoWindow.close();
+				this.tooltip.remove();
+				this.tooltip = null;
 			}, _group));
 			this.groups.push(_group);
 
@@ -136,7 +154,7 @@ WorldView.initGoogleMaps = function() {
 
 	WorldView.container = document.getElementById("map_container");
 	WorldView.googleMap = new google.maps.Map(WorldView.container, {
-		center: new google.maps.LatLng(0, 0),
+		center: new google.maps.LatLng(25, 0),
 		zoom: 21,
 		streetViewControl: false
 	});
@@ -144,12 +162,6 @@ WorldView.initGoogleMaps = function() {
 	WorldView.oms = new OverlappingMarkerSpiderfier(WorldView.googleMap, {
 		markersWontMove: true,
 		markersWontHide: true
-	});
-
-	WorldView.markerCluster = new MarkerClusterer(WorldView.googleMap, undefined, {
-		zoomOnClick: false,
-		maxZoom: 6,
-		gridSize: 20
 	});
 };
 
@@ -182,6 +194,8 @@ WorldView.prototype.getMarkerIcon = function(color) {
 };
 
 WorldView.prototype.active = function() {
+	ZUI.container.style.cursor = "default";
+
 	/* Append to view history */
 	if (Eplant.viewHistory[Eplant.viewHistorySelected] != this) {
 		Eplant.pushViewHistory(this);
@@ -190,6 +204,8 @@ WorldView.prototype.active = function() {
 	/* Append view-specific UI */
 	var viewSpecificUI = document.getElementById("viewSpecificUI");
 	viewSpecificUI.appendChild(this.modeContainerElement);
+	viewSpecificUI.appendChild(this.compareContainerElement);
+	viewSpecificUI.appendChild(this.legendContainerElement);
 
 	WorldView.container.style.visibility = "visible";
 
@@ -199,7 +215,11 @@ WorldView.prototype.active = function() {
 		var marker = group.marker;
 		marker.setMap(WorldView.googleMap);
 		WorldView.oms.addMarker(marker);
-//		WorldView.markerCluster.addMarker(marker);
+	}
+
+	/* Show legend */
+	if (!this.legend.visible) {
+		this.legend.show();
 	}
 };
 
@@ -216,6 +236,20 @@ WorldView.prototype.inactive = function() {
 		group.marker.setMap(null);
 		WorldView.oms.clearMarkers();
 		WorldView.markerCluster.clearMarkers();
+	}
+
+	/* Remove tooltips */
+	for (n = 0; n < this.groups.length; n++) {
+		var group = this.groups[n];
+		if (group.tooltip) {
+			group.tooltip.remove();
+			group.tooltip = null;
+		}
+	}
+
+	/* Hide legend */
+	if (this.legend.visible) {
+		this.legend.hide();
 	}
 };
 
@@ -261,51 +295,149 @@ WorldView.prototype.updateEFP = function() {
 
 	/* Update eFP */
 	if (this.mode == "absolute") {
+		/* Calculate max */
+		var max = Number.NaN;
+		for (var n = 0; n < this.groups.length; n++) {
+			var group = this.groups[n];
+			if (isNaN(group.meanLevel) || !isFinite(group.meanLevel)) {
+				continue;
+			}
+			if (group.meanLevel > max || isNaN(max)) {
+				max = group.meanLevel;
+			}
+		}
+
+		/* Color groups */
+		var minColor = ZUI.Util.getColorComponents("#FFFF00");
+		var maxColor = ZUI.Util.getColorComponents("#FF0000");
+		var errorColor = "#FFFFFF";
 		for (n = 0; n < this.groups.length; n++) {
 			var group = this.groups[n];
-			var levelRatio = group.meanLevel / this.maxLevel;
-			if (isNaN(levelRatio)) {
-				group.color = "#000000";
+			var levelRatio = group.meanLevel / max;
+			if (isNaN(levelRatio) || !isFinite(levelRatio)) {
+				group.color = errorColor;
 			}
 			else {
-				var green = Math.round((1 - levelRatio) * 255).toString(16).toUpperCase();
-				if (green.length < 2) green = "0" + green;
-				group.color = "#FF" + green + "00";
+				var red = minColor.red + Math.round((maxColor.red - minColor.red) * levelRatio);
+				var green = minColor.green + Math.round((maxColor.green - minColor.green) * levelRatio);
+				var blue = minColor.blue + Math.round((maxColor.blue - minColor.blue) * levelRatio);
+				group.color = ZUI.Util.makeColorString(red, green, blue);
 			}
 			group.marker.setIcon(this.getMarkerIcon(group.color));
-			group.infoWindow.setContent(group.id + "<br>Mean: " + (+parseFloat(group.meanLevel).toFixed(2)) + "<br>Standard error: " + (+parseFloat(group.stdevLevel).toFixed(2)) + "<br>Sample size: " + group.nLevel);
 		}
+
+		/* Update legend */
+		var midColor = {
+			red: Math.round((maxColor.red + minColor.red) / 2),
+			green: Math.round((maxColor.green + minColor.green) / 2),
+			blue: Math.round((maxColor.blue + minColor.blue) / 2)
+		};
+		this.legend.update(0, max / 2, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), "Linear", "Absolute");
 	}
 	else if (this.mode == "relative") {
-		var max = ZUI.Math.log(this.maxLevel / this.control.meanLevel, 2);
-		var min = ZUI.Math.log(this.minLevel / this.control.meanLevel, 2);
-		var cap = (Math.abs(max) > Math.abs(min)) ? Math.abs(max) : Math.abs(min);
+		/* Calculate max */
+		var max = Number.NaN;
+		for (var n = 0; n < this.groups.length; n++) {
+			var group = this.groups[n];
+			var absLog2Level = Math.abs(ZUI.Math.log(group.meanLevel / this.control.meanLevel, 2));
+			if (isNaN(absLog2Level) || !isFinite(absLog2Level)) {
+				continue;
+			}
+			if (absLog2Level > max || isNaN(max)) {
+				max = absLog2Level;
+			}
+		}
+
+		/* Color groups */
+		var minColor = ZUI.Util.getColorComponents("#0000FF");
+		var midColor = ZUI.Util.getColorComponents("#FFFF00");
+		var maxColor = ZUI.Util.getColorComponents("#FF0000");
+		var errorColor = "#FFFFFF";
 		for (n = 0; n < this.groups.length; n++) {
 			var group = this.groups[n];
 			var log2Level = ZUI.Math.log(group.meanLevel / this.control.meanLevel, 2);
-			var levelRatio = log2Level / cap;
-			if (isNaN(levelRatio)) {
-				group.color = "#000000";
+			var levelRatio = log2Level / max;
+			if (isNaN(levelRatio) || !isFinite(levelRatio)) {
+				group.color = errorColor;
 			}
 			else {
-				if (levelRatio > 0) {
-					var green = Math.round((1 - levelRatio) * 255).toString(16).toUpperCase();
-					if (green.length < 2) green = "0" + green;
-					group.color = "#FF" + green + "00";
+				var color1, color2;
+				if (levelRatio < 0) {
+					color1 = midColor;
+					color2 = minColor;
+					levelRatio *= -1;
 				}
 				else {
-					var redgreen = Math.round((1 + levelRatio) * 255).toString(16).toUpperCase();
-					if (redgreen.length < 2) redgreen = "0" + redgreen;
-					var blue = Math.round(-levelRatio * 255).toString(16).toUpperCase();
-					if (blue.length < 2) blue = "0" + blue;
-					group.color = "#" + redgreen + redgreen + blue;
+					color1 = midColor;
+					color2 = maxColor;
 				}
-
+				var red = color1.red + Math.round((color2.red - color1.red) * levelRatio);
+				var green = color1.green + Math.round((color2.green - color1.green) * levelRatio);
+				var blue = color1.blue + Math.round((color2.blue - color1.blue) * levelRatio);
+				group.color = ZUI.Util.makeColorString(red, green, blue);
 			}
 			group.marker.setIcon(this.getMarkerIcon(group.color));
-			group.infoWindow.setContent(group.id + "<br>Log2 value: " + (+parseFloat(ZUI.Math.log(group.meanLevel / this.control.meanLevel, 2)).toFixed(2)) + "<br>Fold difference: " + (+parseFloat(group.meanLevel / this.control.meanLevel).toFixed(2)));
 		}
+
+		/* Update legend */
+		this.legend.update(-max, 0, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), "Log2 Ratio", "Relative to control: " + (+parseFloat(this.control.meanLevel).toFixed(2)));
 	}
+	else if (this.mode == "compare") {
+		/* Calculate ratios and max */
+		var ratios = [];
+		var max = Number.NaN;
+		for (var n = 0; n < this.groups.length; n++) {
+			var group = this.groups[n];
+			var compareGroup = this.compareGroups[n];
+			var ratio = group.meanLevel / compareGroup.meanLevel;
+			ratios.push(ratio);
+			var absLog2Level = Math.abs(ZUI.Math.log(ratio, 2));
+			if (isNaN(absLog2Level) || !isFinite(absLog2Level)) {
+				continue;
+			}
+			if (absLog2Level > max || isNaN(max)) {
+				max = absLog2Level;
+			}
+		}
+
+		/* Color groups */
+		var minColor = ZUI.Util.getColorComponents("#0000FF");
+		var midColor = ZUI.Util.getColorComponents("#FFFF00");
+		var maxColor = ZUI.Util.getColorComponents("#FF0000");
+		var errorColor = "#FFFFFF";
+		for (n = 0; n < this.groups.length; n++) {
+			var group = this.groups[n];
+			var log2Level = ZUI.Math.log(ratios[n], 2);
+			var levelRatio = log2Level / max;
+			if (isNaN(levelRatio) || !isFinite(levelRatio)) {
+				group.color = errorColor;
+			}
+			else {
+				var color1, color2;
+				if (levelRatio < 0) {
+					color1 = midColor;
+					color2 = minColor;
+					levelRatio *= -1;
+				}
+				else {
+					color1 = midColor;
+					color2 = maxColor;
+				}
+				var red = color1.red + Math.round((color2.red - color1.red) * levelRatio);
+				var green = color1.green + Math.round((color2.green - color1.green) * levelRatio);
+				var blue = color1.blue + Math.round((color2.blue - color1.blue) * levelRatio);
+				group.color = ZUI.Util.makeColorString(red, green, blue);
+			}
+			group.marker.setIcon(this.getMarkerIcon(group.color));
+		}
+
+		/* Update legend */
+		this.legend.update(-max, 0, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), "Log2 Ratio", "Relative to " + this.compareElement.identifier);
+	}
+};
+
+WorldView.prototype.toCompareMode = function(elementOfInterest) {
+	EFPView.prototype.toCompareMode.call(this, elementOfInterest);
 };
 
 WorldView.prototype.getLoadProgress = function() {
@@ -318,7 +450,7 @@ WorldView.prototype.getZoomOutEntryAnimationSettings = function() {
 		view: this,
 		duration: 1000,
 		begin: function() {
-			WorldView.googleMap.setCenter(new google.maps.LatLng(0, 0));
+			WorldView.googleMap.setCenter(new google.maps.LatLng(25, 0));
 			WorldView.googleMap.setZoom(21);
 		},
 		draw: function(elapsedTime, remainingTime, view, data) {

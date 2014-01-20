@@ -5,8 +5,10 @@
  * Uses JSmol http://sourceforge.net/projects/jsmol/
  */
 
-function MoleculeView(geneId) {
-	this.geneId = geneId;
+function MoleculeView(element) {
+	this.element = element;
+
+	this.isDataReady = true;
 }
 
 /* Inherit from View superclass */
@@ -18,6 +20,13 @@ MoleculeView.container = null;
 MoleculeView.canvas = null;
 
 MoleculeView.prototype.active = function() {
+	ZUI.container.style.cursor = "default";
+
+	/* Append to view history */
+	if (Eplant.viewHistory[Eplant.viewHistorySelected] != this) {
+		Eplant.pushViewHistory(this);
+	}
+
 	MoleculeView.canvas.style.visibility = "visible";
 	ZUI.passInputEvent = $.proxy(function(event) {
 		var e = new Event(event.type);
@@ -91,3 +100,46 @@ MoleculeView.initJMol = function() {
 	element.parentNode.removeChild(element);
 };
 
+/* Returns the animation settings for zoom in entry animation */
+MoleculeView.prototype.getZoomInEntryAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.25, 0.1, 0.25, 1],
+		sourceX: 0,
+		sourceY: 0,
+		sourceDistance: 10000,
+		targetX: 0,
+		targetY: 0,
+		targetDistance: 500,
+		begin: function() {
+			MoleculeView.executeJmolScript("zoom " + (400 / 10000 * 100));
+		},
+		draw: function(elapsedTime, remainingTime, view) {
+			MoleculeView.executeJmolScript("zoom " + (400 / ZUI.camera._distance * 100));
+		}
+	};
+};
+
+/* Returns the animation settings for zoom out exit animation */
+MoleculeView.prototype.getZoomOutExitAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.75, 0, 0.75, 0.9],
+		sourceDistance: 400 / MoleculeView.getOrientationInfo().zoom * 100,
+		targetX: 0,
+		targetY: 0,
+		targetDistance: 10000,
+		draw: function(elapsedTime, remainingTime, view) {
+			MoleculeView.executeJmolScript("zoom " + (400 / ZUI.camera._distance * 100));
+		}
+	};
+};
+
+MoleculeView.prototype.getLoadProgress = function() {
+	if (this.isDataReady) return 1;
+	else return 0;
+};

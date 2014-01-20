@@ -44,11 +44,8 @@ Eplant.SpeciesOfInterest.prototype.addElementOfInterest = function(element, attr
 			}
 		}
 
-		/* Sync with drop down list */
-		var option = document.createElement("option");
-		option.value = elementOfInterest.element.identifier;
-		option.innerHTML = elementOfInterest.element.identifier;
-		document.getElementById("elementsOfInterest").appendChild(option);
+		/* Update elementsOfInterest panel */
+		Eplant.updateElementsOfInterestPanel();
 
 		/* Sync with view-specific annotations */
 		this.chromosomeView.addAnnotation(new ChromosomeView.Annotation(elementOfInterest, this.chromosomeView));
@@ -61,14 +58,6 @@ Eplant.SpeciesOfInterest.prototype.addElementOfInterest = function(element, attr
 Eplant.SpeciesOfInterest.prototype.removeElementOfInterest = function(elementOfInterest) {
 	var index = this.elementsOfInterest.indexOf(elementOfInterest);
 	if (index >= 0) {
-		/* Sync with drop list list */
-		var options = document.getElementById("elementsOfInterest").getElementsByTagName("option");
-		for (var n = 0; n < options.length; n++) {
-			if (options[n].value == elementOfInterest.element.identifier) {
-				document.getElementById("elementsOfInterest").removeChild(options[n]);
-				break;
-			}
-		}
 		this.elementsOfInterest.splice(index, 1);
 		if (this.elementOfFocus == elementOfInterest) {
 			if (this.elementsOfInterest.length > 0) {
@@ -80,9 +69,8 @@ Eplant.SpeciesOfInterest.prototype.removeElementOfInterest = function(elementOfI
 			this.elementOfFocus = (this.elementsOfInterest.length > 0) ? this.elementsOfInterest[0] : null;
 		}
 
-		/* Sync with view-specific annotations */
-		var annotation = this.chromosomeView.getAnnotation(elementOfInterest);
-		if (annotation) annotation.remove();
+		/* Sync with drop list list */
+		Eplant.updateElementsOfInterestPanel();
 
 		/* Sync with view history */
 		for (n = 0; n < Eplant.viewHistory.length; n++) {
@@ -121,16 +109,21 @@ Eplant.SpeciesOfInterest.prototype.setElementOfFocus = function(elementOfFocus) 
 		var annotation = Eplant.speciesOfFocus.chromosomeView.getAnnotation(this.elementOfFocus);
 		if (annotation) {
 			annotation.label.size = 12;
-			annotation.label.underline = false;
+//			annotation.label.underline = false;
+			annotation.label.stroke = false;
 		}
 		annotation = Eplant.speciesOfFocus.chromosomeView.getAnnotation(elementOfFocus);
 		if (annotation) {
 			annotation.label.size = 14;
-			annotation.label.underline = true;
+//			annotation.label.underline = true;
+			annotation.label.stroke = true;
 		}
 
 		/* Change elementOfFocus */
 		this.elementOfFocus = elementOfFocus;
+
+		/* Update elementsOfInterest panel */
+		Eplant.updateElementsOfInterestPanel();
 
 		if (Eplant.speciesOfFocus == this) {
 			/* Select corresponding ElementDialog */
@@ -139,19 +132,6 @@ Eplant.SpeciesOfInterest.prototype.setElementOfFocus = function(elementOfFocus) 
 			}
 			var elementDialog = Eplant.getElementDialog(elementOfFocus.element);
 			if (elementDialog) elementDialog.select();
-
-			/* Sync with drop down menu */
-			if (elementOfFocus != null) {
-				var elementsOfInterest = document.getElementById("elementsOfInterest");
-				if (elementsOfInterest.options[elementsOfInterest.selectedIndex].value != elementOfFocus.element.identifier) {
-					for (var n = 1; n < elementsOfInterest.options.length; n++) {
-						if (elementsOfInterest.options[n].value == elementOfFocus.element.identifier) {
-							elementsOfInterest.selectedIndex = n;
-							break;
-						}
-					}
-				}
-			}
 
 			/* Update current view */
 			if (ZUI.activeView instanceof InteractionView) {

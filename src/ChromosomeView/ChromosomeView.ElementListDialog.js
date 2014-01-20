@@ -1,4 +1,12 @@
-/* Class for dialog listing chromosomal elements */
+/**
+ * ElementListDialog class
+ * Describes the dialog listing chromosomal elements
+ *
+ * UI design by Jamie Waese
+ * Code by Hans Yu
+ */
+
+/* Constructor */
 ChromosomeView.ElementListDialog = function(chromosome, start, end, x, y, orientation, view) {
 	/* Store parameters as attributes */
 	this.chromosome = chromosome;
@@ -186,18 +194,22 @@ ChromosomeView.ElementListDialog = function(chromosome, start, end, x, y, orient
 	});
 };
 
+	/* Closes dialog */
 	ChromosomeView.ElementListDialog.prototype.close = function() {
 		this.pinned = false;
 		$(this.containerElement).dialog("close");
 	};
 
+	/* Draws dialog decorations */
 	ChromosomeView.ElementListDialog.prototype.draw = function() {
+		this.whisker.strokeWidth = ZUI.camera.unprojectDistance(1);
 		this.whisker.draw();
 		this.connector.draw();
 		this.lowRangeIndicator.draw();
 		this.highRangeIndicator.draw();
 	};
 
+	/* Checks whether a point is within bounds of the dialog */
 	ChromosomeView.ElementListDialog.prototype.isInBound = function(x, y) {
 		var inBound = true;
 		if (this.orientation == "left") {

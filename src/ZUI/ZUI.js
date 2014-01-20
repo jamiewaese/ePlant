@@ -34,14 +34,22 @@ ZUI.width = 900;			// Canvas width
 ZUI.height = 600;			// Canvas height
 ZUI.activeView = null;		// Active view
 ZUI.viewObjects = [];		// All view objects
+ZUI.customContextMenu = null;	// Custom context menu
 ZUI.mouseStatus = {			// Mouse status
-	x : 0,
-	y : 0,
-	xLast : 0,
-	yLast : 0,
-	leftDown : false,
-	middleDown : false,
-	rightDown : false,
+	x: 0,
+	y: 0,
+	xLast: 0,
+	yLast: 0,
+	leftDown: false,
+	middleDown: false,
+	rightDown: false,
+};
+ZUI.touchStatus = {			// Touch status
+	pointers: [],			// Touch pointers
+	isPinch: false,		// Whether screen is being pinched with two pointers
+	isRotate: false,		// Whether screen is being rotated with two fingers
+	lastZoom: 0,			// Zoom at start of pinch
+	lastRotation: 0		// Rotation at start of rotate
 };
 ZUI.appStatus = {			// Application status
 	start: 0,
@@ -72,9 +80,16 @@ ZUI.initialize = function(settings) {
 	}
 
 	/* Disable default context menu */
-	ZUI.container.oncontextmenu = function() {
+	ZUI.canvas.oncontextmenu = function(event) {
+		ZUI.contextMenu(event);
 		return false;
 	};
+
+	/* Define custom context menu */
+	ZUI.customContextMenu = new ZUI.ContextMenu();
+
+	/* Set cursor to default */
+	ZUI.container.style.cursor = "default";
 
 	/* Set width and height */
 	if (settings.width && settings.height) {
@@ -106,7 +121,9 @@ ZUI.initialize = function(settings) {
 	ZUI.canvas.addEventListener("dblclick", ZUI.doubleClick, false);
 	ZUI.canvas.addEventListener("mousewheel", ZUI.mouseWheel, false);
 	ZUI.canvas.addEventListener("DOMMouseScroll", ZUI.mouseWheel, false);
-	ZUI.canvas.addEventListener("contextmenu", ZUI.contextMenu, false);
+	ZUI.canvas.addEventListener("gesturestart", ZUI.gestureStart, false);
+	ZUI.canvas.addEventListener("gesturechange", ZUI.gestureChange, false);
+	ZUI.canvas.addEventListener("gestureend", ZUI.gestureEnd, false);
 
 	/* Set first view */
 	ZUI.activeView = new ZUI.View();
@@ -320,6 +337,9 @@ ZUI.click = function(event) {
 	}
 	
 	if (event.button == 0) {
+		if (ZUI.customContextMenu.active) {
+			ZUI.customContextMenu.close();
+		}
 		ZUI.activeView.leftClick();
 		if (viewObject) viewObject.leftClick();
 	}
@@ -406,8 +426,44 @@ ZUI.contextMenu = function(event) {
 	}
 };
 
+/* Gesture (multitouch) start event callback */
+ZUI.gestureStart = function(event) {
+	/* Initialize gesture status */
+	ZUI.touchStatus.lastPinch = 1;
+	ZUI.touchStatus.lastRotation = 0;
+};
+
+/* Gesture (multitouch) change event callback */
+ZUI.gestureChange = function(event) {
+	/* Update pinch */
+	if (!ZUI.touchStatus.isPinch && event.scale != 1) {
+		ZUI.touchStatus.isPinch = true;
+		ZUI.activeView.pinch(event.scale / ZUI.touchStatus.lastPinch);
+		ZUI.touchStatus.lastPinch = event.scale;
+	}
+	else if (ZUI.touchStatus.lastPinch != event.scale) {
+		ZUI.activeView.pinch(event.scale / ZUI.touchStatus.lastPinch);
+		ZUI.touchStatus.lastPinch = event.scale;
+	}
+
+	/* Update rotate */
+	if (!ZUI.touchStatus.isRotate && event.rotation != 0) {
+		ZUI.touchStatus.isRotate = true;
+		ZUI.activeView.rotate(event.rotation - ZUI.touchStatus.lastRotate);
+		ZUI.touchStatus.lastRotate = event.rotation;
+	}
+	else if (ZUI.touchStatus.lastRotate != event.rotation) {
+		ZUI.activeView.rotate(event.rotation - ZUI.touchStatus.lastRotate);
+		ZUI.touchStatus.lastRotate = event.rotation;
+	}
+};
+
+/* Gesture (multitouch) end event callback */
+ZUI.gestureEnd = function(event) {
+	/* Reset gesture status */
+	ZUI.touchStatus.isPinch = false;
+	ZUI.touchStatus.isRotate = false;
+};
+
 /* Function for passing input events to another element, override with custom function if needed */
 ZUI.passInputEvent = null;
-
-
-

@@ -107,7 +107,7 @@ ZUI.ViewObject = function(attributes) {
 	});
 
 	/* Whether to stroke */
-	this.private.stroke = (attributes.stroke === undefined) ? true : attributes.stroke;
+	this.private.stroke = (attributes.stroke === undefined) ? ((this.shape == "text" || this.shape == "multilinetext") ? false : true) : attributes.stroke;
 	Object.defineProperty(this, "stroke", {
 		get: function() {
 			return this.private.stroke;
@@ -509,7 +509,7 @@ ZUI.ViewObject = function(attributes) {
 					font: this.font,
 					bold: this.bold,
 					italic: this.italic,
-					underline: this.underline,
+					underline: this.underline
 				};
 				this.private.texts = [];
 				if (attributes.centerAt.split(" ")[1] == "center") attributes.y -= this.content.length * this.private.size / 2;
@@ -766,7 +766,7 @@ ZUI.ViewObject.prototype.draw = function(canvasContext) {
 			this.screenOffsetY = ZUI.camera.projectDistance(this.offsetY);
 			this.screenHradius = ZUI.camera.projectDistance(this.hradius);
 			this.screenVradius = ZUI.camera.projectDistance(this.vradius);
-			ZUI.contex.lineWidth = ZUI.camera.projectDistance(this.strokeWidth);
+			ZUI.context.lineWidth = ZUI.camera.projectDistance(this.strokeWidth);
 		}
 		else if (this.sizeScale == "screen") {
 			this.screenOffsetX = this.offsetX;
@@ -918,7 +918,6 @@ ZUI.ViewObject.prototype.draw = function(canvasContext) {
 	else if (this.shape == "text") {
 		ZUI.context.save();
 		ZUI.context.strokeStyle = this.strokeColor;
-		ZUI.context.lineWidth = this.strokeWidth;
 		ZUI.context.fillStyle = this.fillColor;
 		ZUI.context.globalAlpha = this.alpha;
 		if (this.positionScale == "world") {
@@ -939,6 +938,7 @@ ZUI.ViewObject.prototype.draw = function(canvasContext) {
 			this.height = this.size * 0.8;
 			this.width = ZUI.camera.unprojectDistance(this.screenWidth);
 			this.screenHeight = ZUI.camera.projectDistance(this.height);
+			ZUI.context.lineWidth = ZUI.camera.projectDistance(this.strokeWidth);
 		}
 		else if (this.sizeScale == "screen") {
 			this.screenOffsetX = this.offsetX;
@@ -949,6 +949,7 @@ ZUI.ViewObject.prototype.draw = function(canvasContext) {
 			this.height = this.size * 0.8;
 			this.screenWidth = this.width;
 			this.screenHeight = this.height;
+			ZUI.context.lineWidth = this.strokeWidth;
 		}
 		var screenX, screenY;
 		var centerAt = this.centerAt.split(" ");
@@ -975,18 +976,33 @@ ZUI.ViewObject.prototype.draw = function(canvasContext) {
 		ZUI.context.save();
 		ZUI.context.translate(screenX, screenY);
 		ZUI.context.scale(this.screenSize / 24, this.screenSize / 24);
+		if (this.stroke) {
+			ZUI.context.lineJoin = "round";
+			ZUI.context.strokeText(this.content, 0, 0);
+		}
 		if (this.fill) {
 			ZUI.context.fillText(this.content, 0, 0);
 		}
-		else if (this.stroke) {
-			ZUI.context.strokeText(this.content, 0, 0);
-		}
 		ZUI.context.restore();
 		if (this.underline) {
-			ZUI.context.beginPath();
-			ZUI.context.moveTo(screenX, Math.round(screenY) + 1.5);
-			ZUI.context.lineTo(screenX + this.screenWidth, Math.round(screenY) + 1.5);
-			ZUI.context.stroke();
+			if (this.stroke) {
+				ZUI.context.beginPath();
+				ZUI.context.moveTo(screenX - ZUI.context.lineWidth / 2, Math.round(screenY) + 1.5);
+				ZUI.context.lineTo(screenX + this.screenWidth + ZUI.context.lineWidth / 2, Math.round(screenY) + 1.5);
+				ZUI.context.stroke();
+			}
+			if (this.fill) {
+				if (this.sizeScale == "world") {
+					ZUI.context.lineWidth = ZUI.camera.projectDistance(1);
+				}
+				else if (this.sizeScale == "screen") {
+					ZUI.context.lineWidth = 1;
+				}
+				ZUI.context.beginPath();
+				ZUI.context.moveTo(screenX, Math.round(screenY) + 1.5);
+				ZUI.context.lineTo(screenX + this.screenWidth, Math.round(screenY) + 1.5);
+				ZUI.context.stroke();
+			}
 		}
 		ZUI.context.restore();
 		this.isOnScreen = true;

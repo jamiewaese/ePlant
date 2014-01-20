@@ -5,24 +5,23 @@
  * Uses Cytoscape.js http://cytoscape.github.io/cytoscape.js/
  */
 
+/* Constructor */
 function InteractionView(element) {
-	/* Store element identifier */
-	this.element = element;
-
-	/* Create Cytoscape container element */
-	this.cytoscapeElement = document.getElementById("Cytoscape_container");
-
-	/* Cytoscape object */
-	this.cy = null;
-
-	/* Annotation popup */
-	this.interactionTooltips = [];
-
-	/* Data status */
-	this.isDataReady = false;
-
-	this.elementDialogCountdown = null;
-	this.interactionTooltipCountdown = null;
+	/* Properties */
+	this.element = element;		// Element object
+	this.species = element.chromosome.species;
+	this.cytoscapeElement = document.getElementById("Cytoscape_container");	// Cytoscape container
+	this.cy = null;			// Cytoscape object
+	this.cytoscapeConf = {};		// Cytoscape configuration object
+	this.interactionTooltips = [];	// Interaction tooltips array
+	this.annotations = [];		// User annotations
+	this.isDataReady = false;		// Whether data is ready
+	this.elementDialogCountdown = null;	// Countdown object for invoking ElementDialog
+	this.interactionTooltipCountdown = null;	// Countdown object for invoking interaction tooltip
+	this.filterContainerElement = null;	// Filter UI
+	this.linkContainerElement = null;		// Link UI
+	this.legendContainerElement = null;	// Legend UI
+	this.legend = null;			// Legend
 
 	/* Create view-specific UI elements */
 	/* Filter */
@@ -60,34 +59,53 @@ function InteractionView(element) {
 	this.legendContainerElement.setAttribute("data-enabled", Eplant.tooltipSwitch.toString());
 	this.legendContainerElement.style.padding = "5px";
 	this.legendContainerElement.onclick = $.proxy(function() {
+		if (this.legend) {
+			this.legend.remove();
+			this.legend = null;
+		}
+		else {
+			if (this.isDataReady) {
+				this.legend = new InteractionView.Legend({
+					view: this
+				});
+				this.legend.add();
+			}
+		}
 	}, this);
 	/* Set icon */
 	var img = document.createElement("img");
 	img.src = "img/legend.png";
 	this.legendContainerElement.appendChild(img);
 
-	/* Configure Cytoscape */
-	this.cytoscapeConf = {};
+	/* Cytoscape layout configuration */
 	this.cytoscapeConf.layout = {
 		name: "grid",
 		fit: false,
 		nodeMass: function(data) {
-			return data.size * data.size / 500;
+			return data.mass;
 		}
 	};
+
+	/* Cytoscape stylesheet configuration */
 	this.cytoscapeConf.style = cytoscape.stylesheet()
 		.selector("node")
 			.css({
 				"shape": "circle",
-				"width": "data(size)",
-				"height": "data(size)",
+				"width": "30",
+				"height": "30",
 				"content": "data(id)",
 				"color": Eplant.Color.Black,
 				"text-outline-width": "data(labelOutlineWidth)",
 				"text-outline-color": "#E6F9AF",
-				"background-color": "data(color)",
-				"border-width": "3",
-				"border-color": Eplant.Color.DarkGrey
+				"background-color": "data(innerColor)",
+				"border-width": "5",
+				"border-color": "data(outerColor)"
+			})
+		.selector("node.query")
+			.css({
+				"width": "50",
+				"height": "50",
+				"border-width": "8"
 			})
 		.selector("edge")
 			.css({
@@ -97,27 +115,25 @@ function InteractionView(element) {
 			})
 		.selector("node:selected")
 			.css({
-				"border-width": "3",
-				"border-color": Eplant.Color.Green
 			})
 		.selector("edge:selected")
 			.css({
-				"line-color": Eplant.Color.Green
 			})
 		.selector("node.highlight")
 			.css({
-				"border-width": "3",
-				"border-color": Eplant.Color.Green
 			})
 		.selector("edge.highlight")
 			.css({
-				"line-color": Eplant.Color.Green
 			})
 	;
+
+	/* Initialize elements arrays */
 	this.cytoscapeConf.elements = {
 		nodes: [],
 		edges: []
 	};
+
+	/* Event handler for when Cytoscape is ready */
 	this.cytoscapeConf.ready = $.proxy(function() {
 		/* Save Cytoscape handle */
 		this.cy = $(this.cytoscapeElement).cytoscape("get");
@@ -234,7 +250,15 @@ function InteractionView(element) {
 					}
 				}, this));
 			}
-
+		}, this));
+		this.cy.on("position", "node", $.proxy(function(event) {
+			var node = event.cyTarget;
+			var position = node.position();
+			var annotation = node._private.data.annotation;
+			if (annotation) {
+				annotation.x = position.x - ZUI.width / 2;
+				annotation.y = position.y - ZUI.height / 2 - ZUI.camera.projectDistance(node.width() / 2 + 27);
+			}
 		}, this));
 		this.cy.on("mouseover", "edge", $.proxy(function(event){
 			ZUI.container.style.cursor = "pointer";
@@ -293,12 +317,7 @@ function InteractionView(element) {
 	}, this);
 
 	/* Retrieve interactions data */
-	$.ajax({
-		type: "GET",
-//		url: "http://bar.utoronto.ca/webservices/aiv/get_interactions.php?request=[{\"agi\":\"" + this.element.identifier + "\"}]",
-		url: "http://bar.utoronto.ca/~mierullo/get_interactions.php?request=[{\"agi\":\"" + this.element.identifier + "\"}]",
-		dataType: "json"
-	}).done($.proxy(function(response) {
+	$.getJSON("http://bar.utoronto.ca/~mierullo/get_interactions.php?request=[{\"agi\":\"" + this.element.identifier + "\"}]", $.proxy(function(response) {
 		var nodes = this.cytoscapeConf.elements.nodes;
 		var edges = this.cytoscapeConf.elements.edges;
 		for (var query in response) {
@@ -310,16 +329,7 @@ function InteractionView(element) {
 				}
 			}
 			if (!exists) {
-				var node = {
-					data: {
-						id: query.toUpperCase(),
-						color: Eplant.Color.White,
-						labelOutlineWidth: (query.toUpperCase() == this.element.identifier.toUpperCase()) ? 2 : 0,
-						size: (query.toUpperCase() == this.element.identifier.toUpperCase()) ? 50 : 30
-					}
-				};
-				InteractionView.getNodeLocalisation(node, this);
-				nodes.push(node);
+				nodes.push(this.makeNodeObject(query));
 			}
 			for (var n = 0; n < interactions.length; n++) {
 				var sourceExists = false;
@@ -333,28 +343,10 @@ function InteractionView(element) {
 					}
 				}
 				if (!sourceExists) {
-					var node = {
-						data: {
-							id: interactions[n].source.toUpperCase(),
-							color: Eplant.Color.White,
-							labelOutlineWidth: (interactions[n].source.toUpperCase() == this.element.identifier.toUpperCase()) ? 2 : 0,
-							size: (interactions[n].source.toUpperCase() == this.element.identifier.toUpperCase()) ? 50 : 30
-						}
-					};
-					InteractionView.getNodeLocalisation(node, this);
-					nodes.push(node);
+					nodes.push(this.makeNodeObject(interactions[n].source));
 				}
 				if (!targetExists) {
-					var node = {
-						data: {
-							id: interactions[n].target.toUpperCase(),
-							color: Eplant.Color.White,
-							labelOutlineWidth: (interactions[n].target.toUpperCase() == this.element.identifier.toUpperCase()) ? 2 : 0,
-							size: (interactions[n].target.toUpperCase() == this.element.identifier.toUpperCase()) ? 50 : 30
-						}
-					};
-					InteractionView.getNodeLocalisation(node, this);
-					nodes.push(node);
+					nodes.push(this.makeNodeObject(interactions[n].target));
 				}
 				var lineStyle = "solid";
 				var width = 1;
@@ -394,7 +386,10 @@ function InteractionView(element) {
 InteractionView.prototype = new ZUI.View();
 InteractionView.prototype.constructor = InteractionView;
 
+/* active event handler */
 InteractionView.prototype.active = function() {
+	ZUI.container.style.cursor = "default";
+
 	/* Append to view history */
 	if (Eplant.viewHistory[Eplant.viewHistorySelected] != this) {
 		Eplant.pushViewHistory(this);
@@ -414,6 +409,11 @@ InteractionView.prototype.active = function() {
 		this.cytoscapeElement.dispatchEvent(e);
 	}, this);
 
+	/* Show legend */
+	if (this.legend) {
+		this.legend.show();
+	}
+
 	/* Append view-specific UI */
 	var viewSpecificUI = document.getElementById("viewSpecificUI");
 	viewSpecificUI.appendChild(this.filterContainerElement);
@@ -421,19 +421,22 @@ InteractionView.prototype.active = function() {
 	viewSpecificUI.appendChild(this.legendContainerElement);
 };
 
+/* inactive event handler */
 InteractionView.prototype.inactive = function() {
 	this.cytoscapeElement.innerHTML = "";
 	ZUI.passInputEvent = null;
 
 	/* Save layout */
-	this.cytoscapeConf.layout.name = "preset";
-	var nodes = this.cytoscapeConf.elements.nodes;
-	for (var n = 0; n < nodes.length; n++) {
-		var position = this.cy.$("#" + nodes[n].data.id).position();
-		nodes[n].position = {
-			x: position.x,
-			y: position.y
-		};
+	if (this.cy) {
+		this.cytoscapeConf.layout.name = "preset";
+		var nodes = this.cytoscapeConf.elements.nodes;
+		for (var n = 0; n < nodes.length; n++) {
+			var position = this.cy.$("#" + nodes[n].data.id).position();
+			nodes[n].position = {
+				x: position.x,
+				y: position.y
+			};
+		}
 	}
 
 	/* Clear elements */
@@ -445,10 +448,16 @@ InteractionView.prototype.inactive = function() {
 	}
 	this.interactionTooltips = [];
 
+	/* Hide legend */
+	if (this.legend) {
+		this.legend.hide();
+	}
+
 	/* Remove application specific UI */
 	document.getElementById("viewSpecificUI").innerHTML = "";
 };
 
+/* mouseMove event handler */
 InteractionView.prototype.mouseMove = function() {
 	/* Get mouse status */
 	var x = ZUI.mouseStatus.x;
@@ -457,8 +466,9 @@ InteractionView.prototype.mouseMove = function() {
 	var yLast = ZUI.mouseStatus.yLast;
 };
 
+/* Takes a subcellular localisation compartment and outputs the associated colour */
 InteractionView.localisationToColor = function(localisation) {
-	var color = Eplant.MedGrey;
+	var color = Eplant.Color.MedGrey;
 	if (localisation == "cytoskeleton") color = "#FF2200";
 	else if (localisation == "cytosol") color = "#E04889";
 	else if (localisation == "endoplasmic reticulum") color = "#D0101A";
@@ -473,6 +483,7 @@ InteractionView.localisationToColor = function(localisation) {
 	return color;
 };
 
+/* Retrieves the subcellular localisation data for a node */
 InteractionView.getNodeLocalisation = function(node, interactionView) {
 	var obj = {
 		node: node,
@@ -493,22 +504,25 @@ InteractionView.getNodeLocalisation = function(node, interactionView) {
 		}
 		var color = InteractionView.localisationToColor(localisation)
 		if (this.interactionView.cy) {
-			this.interactionView.cy.elements("node#" + this.node.data.id).data("color", color);
+			this.interactionView.cy.elements("node#" + this.node.data.id).data("outerColor", color);
 		}
 		else {
-			this.node.data.color = color;
+			this.node.data.outerColor = color;
 		}
 	}, obj));
 };
 
+/* Converts Cytoscape camera zoom value to ZUI camera distance value */
 InteractionView.zoomCytoscapeToZUI = function(zoom) {
 	return ZUI.width / 2 / zoom;
 };
 
+/* Converts ZUI camera distance value to Cytoscape camera zoom value */
 InteractionView.zoomZUIToCytoscape = function(zoom) {
 	return ZUI.width / 2 / zoom;
 };
 
+/* Converts Cytoscape camera position to ZUI camera position */
 InteractionView.positionCytoscapeToZUI = function(position) {
 	return {
 		x: ZUI.camera.unprojectDistance(ZUI.width / 2) - ZUI.width / 2 - ZUI.camera.unprojectDistance(position.x),
@@ -516,6 +530,7 @@ InteractionView.positionCytoscapeToZUI = function(position) {
 	};
 };
 
+/* Converts ZUI camera position to Cytoscape camera position */
 InteractionView.positionZUIToCytoscape = function(position) {
 	return {
 		x: ZUI.camera.projectDistance(ZUI.camera.unprojectDistance(ZUI.width / 2) - ZUI.width / 2 - position.x),
@@ -523,6 +538,39 @@ InteractionView.positionZUIToCytoscape = function(position) {
 	};
 };
 
+/* Gets the annotation object corresponding to the elementOfInterest */
+InteractionView.prototype.getAnnotation = function(elementOfInterest) {
+	for (var n = 0; n < this.annotations.length; n++) {
+		if (this.annotations[n].elementOfInterest == elementOfInterest) {
+			return this.annotations[n];
+		}
+	}
+	return null;
+};
+
+/* Creates a node object for loading to Cytoscape */
+InteractionView.prototype.makeNodeObject = function(identifier) {
+	var speciesOfInterest = Eplant.getSpeciesOfInterest(this.element.chromosome.species);
+	var elementOfInterest = (speciesOfInterest) ? speciesOfInterest.getElementOfInterestByIdentifier(identifier) : undefined;
+	var isQuery = (identifier.toUpperCase() == this.element.identifier.toUpperCase()) ? true : false;
+	var annotation = (elementOfInterest) ? new InteractionView.Annotation(elementOfInterest, 0, 0, this) : null;
+	var obj = {};
+		obj.data = {};
+			obj.data.id = identifier.toUpperCase();
+			obj.data.outerColor = Eplant.Color.White;
+			obj.data.innerColor = (elementOfInterest) ? ((speciesOfInterest.elementOfFocus == elementOfInterest) ? Eplant.Color.Green : Eplant.Color.LightGrey) : Eplant.Color.DarkGrey;
+			obj.data.labelOutlineWidth = (isQuery) ? 2 : 0;
+			obj.data.mass = (isQuery) ? 25 : 9;
+			obj.data.elementOfInterest = elementOfInterest;
+			obj.data.annotation = annotation;
+		obj.classes = "";
+		if (isQuery) obj.classes += "query ";
+	InteractionView.getNodeLocalisation(obj, this);
+	if (annotation) this.annotations.push(annotation);
+	return obj;
+};
+
+/* draw event handler */
 InteractionView.prototype.draw = function() {
 	/* Update camera */
 	ZUI.camera.update();
@@ -559,8 +607,14 @@ InteractionView.prototype.draw = function() {
 		this.interactionTooltips.push(interactionTooltip);
 		this.interactionTooltipCountdown = null;
 	}
+
+	/* Draw annotations */
+	for (n = 0; n < this.annotations.length; n++) {
+		this.annotations[n].draw();
+	}
 };
 
+/* Returns the animation settings for zoom in entry animation */
 InteractionView.prototype.getZoomInEntryAnimationSettings = function() {
 	return {
 		type: "zoom",
@@ -579,6 +633,7 @@ InteractionView.prototype.getZoomInEntryAnimationSettings = function() {
 	};
 };
 
+/* Returns the animation settings for zoom out exit animation */
 InteractionView.prototype.getZoomOutExitAnimationSettings = function() {
 	return {
 		type: "zoom",
@@ -594,11 +649,77 @@ InteractionView.prototype.getZoomOutExitAnimationSettings = function() {
 	};
 };
 
+InteractionView.prototype.getZoomOutEntryAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.75, 0, 0.55, 0.9],
+		sourceX: 0,
+		sourceY: 0,
+		sourceDistance: 0,
+		targetX: 0,
+		targetY: 0,
+		targetDistance: 500,
+		draw: function(elapsedTime, remainingTime, view) {
+			view.draw();
+		}
+	};
+};
+
+InteractionView.prototype.getZoomInExitAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.25, 0.1, 0.25, 1],
+		targetX: 0,
+		targetY: 0,
+		targetDistance: 0,
+		draw: function(elapsedTime, remainingTime, view) {
+			view.draw();
+		}
+	};
+};
+
+/* Returns the animation settings for pan left entry animation */
+InteractionView.prototype.getPanLeftEntryAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.75, 0, 0.75, 0.9],
+		sourceX: 900,
+		sourceY: 0,
+		sourceDistance: 500,
+		targetX: 0,
+		draw: function(elapsedTime, remainingTime, view) {
+			view.draw();
+		}
+	};
+};
+
+/* Returns the animation settings for pan right exit animation */
+InteractionView.prototype.getPanRightExitAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.75, 0, 0.75, 0.9],
+		targetX: ZUI.camera._x + 900,
+		draw: function(elapsedTime, remainingTime, view) {
+			view.draw();
+		}
+	};
+};
+
+/* Returns the loading progress of the view */
 InteractionView.prototype.getLoadProgress = function() {
 	if (this.isDataReady) return 1;
 	else return 0;
 };
 
+/* Takes an interaction object and returns the associated tooltip object */
 InteractionView.prototype.getInteractionTooltip = function(interaction) {
 	for (var n = 0; n < this.interactionTooltips.length; n++) {
 		if (this.interactionTooltips[n].data.interaction == interaction) {

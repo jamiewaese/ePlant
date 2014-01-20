@@ -1,4 +1,12 @@
-/* ChromosomeViewObject class constructor */
+/**
+ * ChromosomeViewObject class
+ * Describes the view objects representing chromosomes in ChromosomeView
+ *
+ * UI design by Jamie Waese
+ * Code by Hans Yu
+ */
+
+/* Constructor */
 ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 	/* Field properties */
 	this.chromosome = chromosome;
@@ -144,7 +152,7 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 		shape: "text",
 		positionScale: "screen",
 		sizeScale: "screen",
-		centerAt: "left top",
+		centerAt: "left center",
 		strokeColor: Eplant.Color.LightGrey,
 		fillColor: Eplant.Color.LightGrey,
 		size: 12
@@ -153,7 +161,7 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 		shape: "text",
 		positionScale: "screen",
 		sizeScale: "screen",
-		centerAt: "left bottom",
+		centerAt: "left center",
 		strokeColor: Eplant.Color.LightGrey,
 		fillColor: Eplant.Color.LightGrey,
 		size: 12
@@ -234,7 +242,7 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 				var mb = Math.round(rangeStart / 10000) / 100;
 				this.lowBpRangeLabel.content = mb + " Mb";
 				this.lowBpRangeLabel.x = topTip.x + halfWidth + 5;
-				this.lowBpRangeLabel.y = 0;
+				this.lowBpRangeLabel.y = 6;
 				this.lowBpRangeLabel.draw();
 
 				/* Draw clipped top */
@@ -242,12 +250,12 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 				if (clipHeight > 20) clipHeight = 20;
 				ZUI.context.save();
 				ZUI.context.beginPath();
-				ZUI.context.moveTo(topTip.x - halfWidth, 0);
-				ZUI.context.lineTo(topTip.x + halfWidth, 0);
-				ZUI.context.lineTo(topTip.x + halfWidth, clipHeight);
+				ZUI.context.moveTo(topTip.x - halfWidth - 0.5, 0);
+				ZUI.context.lineTo(topTip.x + halfWidth + 0.5, 0);
+				ZUI.context.lineTo(topTip.x + halfWidth + 0.5, clipHeight);
 				ZUI.context.lineTo(topTip.x, 0);
-				ZUI.context.lineTo(topTip.x - halfWidth, clipHeight);
-				ZUI.context.lineTo(topTip.x - halfWidth, 0);
+				ZUI.context.lineTo(topTip.x - halfWidth - 0.5, clipHeight);
+				ZUI.context.lineTo(topTip.x - halfWidth - 0.5, 0);
 				ZUI.context.closePath();
 				ZUI.context.strokeStyle = Eplant.Color.White;
 				ZUI.context.fillStyle = Eplant.Color.White;
@@ -261,6 +269,7 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 			this.lowBpRangeLabel.content = 0 + " Mb";
 			this.lowBpRangeLabel.x = topTip.x + halfWidth + 5;
 			this.lowBpRangeLabel.y = topTip.y;
+			if (this.lowBpRangeLabel.y < 6) this.lowBpRangeLabel.y = 6;
 			this.lowBpRangeLabel.draw();
 		}
 
@@ -272,7 +281,7 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 				var mb = Math.round(rangeEnd / 10000) / 100;
 				this.highBpRangeLabel.content = mb + " Mb";
 				this.highBpRangeLabel.x = bottomTip.x + halfWidth + 5;
-				this.highBpRangeLabel.y = ZUI.height;
+				this.highBpRangeLabel.y = ZUI.height - 6;
 				this.highBpRangeLabel.draw();
 
 				/* Draw clipped bottom */
@@ -300,6 +309,7 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 			this.highBpRangeLabel.content = mb + " Mb";
 			this.highBpRangeLabel.x = bottomTip.x + halfWidth + 5;
 			this.highBpRangeLabel.y = bottomTip.y;
+			if (this.highBpRangeLabel.y > ZUI.height - 6) this.highBpRangeLabel.y = ZUI.height - 6;
 			this.highBpRangeLabel.draw();
 		}
 
@@ -374,18 +384,22 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 		return this.mouseEventLayer.screenHeight;
 	};
 
+	/* Returns the world x position of the chromosome view object */
 	ChromosomeView.ChromosomeViewObject.prototype.getX = function() {
 		return this.mouseEventLayer.x;
 	};
 
+	/* Returns the world y position of the chromosome view object */
 	ChromosomeView.ChromosomeViewObject.prototype.getY = function() {
 		return this.mouseEventLayer.y;
 	};
 
+	/* Returns the world width of the chromosome view object */
 	ChromosomeView.ChromosomeViewObject.prototype.getWidth = function() {
 		return this.mouseEventLayer.width;
 	};
 
+	/* Returns the world height of the chromosome view object */
 	ChromosomeView.ChromosomeViewObject.prototype.getHeight = function() {
 		return this.mouseEventLayer.height;
 	};

@@ -1,4 +1,12 @@
-/* Class for handling annotations in the ChromosomeView */
+/**
+ * Annotation class
+ * Handles annotations in the ChromosomeView
+ *
+ * UI design by Jamie Waese
+ * Code by Hans Yu
+ */
+
+/* Constructor */
 ChromosomeView.Annotation = function(elementOfInterest, view) {
 	/* Properties */
 	this.elementOfInterest = elementOfInterest;	// Corresponding ElementOfInterest
@@ -41,7 +49,9 @@ ChromosomeView.Annotation = function(elementOfInterest, view) {
 		offsetX: ((elementOfInterest.element.strand == "+") ? -1 : 1) * (size + 3),
 		centerAt: ((elementOfInterest.element.strand == "+") ? "right" : "left") + " center",
 		content: this.elementOfInterest.element.identifier,
-		strokeColor: color,
+		strokeColor: "#E6F9AF",
+		stroke: false,
+		strokeWidth: 5,
 		fillColor: color,
 		mouseOver: $.proxy(function() {
 			/* Change cursor */
@@ -88,6 +98,12 @@ ChromosomeView.Annotation = function(elementOfInterest, view) {
 
 	/* Draws this annotation */
 	ChromosomeView.Annotation.prototype.draw = function() {
+		/* Check whether elementOfInterest has been removed */
+		if (this.elementOfInterest.speciesOfInterest.elementsOfInterest.indexOf(this.elementOfInterest) < 0) {
+			this.remove();
+			return;
+		}
+
 		/* Draw whisker */
 		this.whisker.vertices[0].x = ((this.elementOfInterest.element.strand == "+") ? -1 : 1) * ZUI.camera.unprojectDistance((this.elementOfInterest.size === undefined) ? 5 : this.elementOfInterest.size * 5);
 		this.whisker.strokeWidth = (this.elementOfInterest.element.end - this.elementOfInterest.element.start) * 0.000015;

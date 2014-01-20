@@ -12,6 +12,20 @@ function CellView(element) {
 CellView.prototype = new EFPView();
 CellView.prototype.constructor = CellView;
 
+CellView.prototype.active = function() {
+	ZUI.container.style.cursor = "default";
+
+	EFPView.prototype.active.call(this);
+
+	/* Append view-specific UI */
+	var viewSpecificUI = document.getElementById("viewSpecificUI");
+	viewSpecificUI.appendChild(this.legendContainerElement);
+};
+
+CellView.prototype.inactive = function() {
+	EFPView.prototype.inactive.call(this);
+};
+
 CellView.prototype.mouseMove = function() {
 	/* Get mouse status */
 	var x = ZUI.mouseStatus.x;

@@ -1,6 +1,13 @@
+/**
+ * This namespace defines some useful geometry functions for the framework.
+ *
+ * Code by Hans Yu
+ */
+
 ZUI.Geometry = {};
 
-ZUI.Geometry.intersectHRayLine = function(x, y, vx, vy, x0, y0, x1, y1) {
+/* Finds the intersect between a ray and a line */
+ZUI.Geometry.intersectRayLine = function(x, y, vx, vy, x0, y0, x1, y1) {
 	/* Coefficients for equation of line */
 	var A = vy;
 	var B = -vx;
@@ -14,10 +21,6 @@ ZUI.Geometry.intersectHRayLine = function(x, y, vx, vy, x0, y0, x1, y1) {
 	if (den == 0) {
 		if (y0 == y) {
 			if (x0 >= x || x1 >= x) {
-/*				return {
-					case: "overlap",
-					intersect: {}
-				}*/
 				if (x0 <= x || x1 <= x) {
 					return {
 						x: x,
@@ -25,19 +28,7 @@ ZUI.Geometry.intersectHRayLine = function(x, y, vx, vy, x0, y0, x1, y1) {
 					}
 				}
 			}
-/*			else {
-				return {
-					case: "overlap out of range",
-					intersect: {}
-				}
-			}*/
 		}
-/*		else {
-			return {
-				case: "parallel no overlap",
-				intersect: {}
-			}
-		}*/
 		return {};
 	}
 
@@ -48,20 +39,9 @@ ZUI.Geometry.intersectHRayLine = function(x, y, vx, vy, x0, y0, x1, y1) {
 	var vxSign = (vx > 0) ? 1 : -1;
 	var vySign = (vy > 0) ? 1 : -1;
 	if (xIntersect * vxSign < x * vxSign || yIntersect * vySign < y * vySign || t < 0 || t > 1) {
-/*		return {
-			case: "no intersect",
-			intersect: {}
-		}*/
 		return {};
 	}
 	else {
-/*		return {
-			case: "intersect",
-			intersect: {
-				x: xIntersect,
-				y: yIntersect
-			}
-		}*/
 		return {
 			x: xIntersect,
 			y: yIntersect
@@ -69,67 +49,8 @@ ZUI.Geometry.intersectHRayLine = function(x, y, vx, vy, x0, y0, x1, y1) {
 	}
 };
 
-ZUI.Geometry.quadraticRoots = function(p0, p1, p2) {
-	/* Discriminant for quadratic formula */
-	var D = p1 * p1 - 4 * p0 * p2;
-
-	/* Defining array for roots of the quadratic equation */
-	var roots = [];
-
-	/* Cases for solution of quadratic roots */
-	if (D == 0) {
-		roots.push(-p1 / (2 * p0));
-		roots.push(-p1 / (2 * p0));
-	}
-	else if (D > 0) {
-		roots.push((-p1 + Math.sqrt(D)) / (2 * p0));
-		roots.push((-p1 - Math.sqrt(D)) / (2 * p0));
-	}
-
-	return roots;
-};
-
-ZUI.Geometry.cubicRoots = function(p0, p1, p2, p3) {
-	/* Check for p0 = 0 */
-	if (p0 == 0) return ZUI.Geometry.quadraticRoots(p1, p2, p3);
-
-	/* Coefficients after normalizing the first coefficient of the previously mentioned function to one */
-	var C0 = p1 / p0;
-	var C1 = p2 / p0;
-	var C2 = p3 / p0;
-
-	/* Constants of an intermediate step in solving the roots of the cubic function */
-	var Q = (3 * C1 - Math.pow(C0, 2)) / 9;
-	var R = (9 * C0 * C1 - 27 * C2 - 2 * Math.pow(C0, 3)) / 54;
-	var D = Math.pow(Q, 3) + Math.pow(R, 2);
-
-	/* Defining array for roots of the cubic function */
-	var roots = [];
-
-	/* Cases for solutions of cubic roots */
-	if (D == 0) {
-		var S = Math.pow(R, (1 / 3));
-		roots.push(-C0 / 3 + 2 * S);
-		roots.push(-C0 / 3 - S);
-	}
-	else if (D > 0) {
-		var num = R + Math.sqrt(D);
-		var S = ((num > 0) ? 1 : -1) * Math.pow(Math.abs(num), (1 / 3));
-		num = R - Math.sqrt(D);
-		var T = ((num > 0) ? 1 : -1) * Math.pow(Math.abs(num), (1 / 3));
-		roots.push(-C0 / 3 + (S + T));
-	}
-	else {
-		var theta = Math.acos(R / Math.sqrt(-Q * Q * Q));
-		roots.push(2 * Math.sqrt(-Q) * Math.cos(theta / 3) - C0 / 3);
-		roots.push(2 * Math.sqrt(-Q) * Math.cos((theta + 2 * Math.PI) / 3) - C0 / 3);
-		roots.push(2 * Math.sqrt(-Q) * Math.cos((theta + 4 * Math.PI) / 3) - C0 / 3);
-	}
-
-	return roots;
-};
-
-ZUI.Geometry.intersectHRayQuadraticBezier = function(x, y, vx, vy, x0, y0, x1, y1, x2, y2) {
+/* Finds the intersect between a ray and a quadratic Bezier curve */
+ZUI.Geometry.intersectRayQuadraticBezier = function(x, y, vx, vy, x0, y0, x1, y1, x2, y2) {
 	/* Coefficients for equation of line */
 	var A = vy;
 	var B = -vx;
@@ -148,7 +69,7 @@ ZUI.Geometry.intersectHRayQuadraticBezier = function(x, y, vx, vy, x0, y0, x1, y
 	var p1 = A * bx1 + B * by1;
 	var p2 = A * bx2 + B * by2 + C;
 
-	var t = ZUI.Geometry.quadraticRoots(p0, p1, p2);
+	var t = ZUI.Math.quadraticRoots(p0, p1, p2);
 
 	/* Calculate intersection points */
 	var solutions = [];
@@ -168,6 +89,7 @@ ZUI.Geometry.intersectHRayQuadraticBezier = function(x, y, vx, vy, x0, y0, x1, y
 	return solutions;
 };
 
+/* Finds the intersect between a ray and a cubic Bezier curve */
 ZUI.Geometry.intersectHRayCubicBezier = function(x, y, vx, vy, x0, y0, x1, y1, x2, y2, x3, y3) {
 	/* Coefficients for equation of line */
 	var A = vy;
@@ -190,7 +112,7 @@ ZUI.Geometry.intersectHRayCubicBezier = function(x, y, vx, vy, x0, y0, x1, y1, x
 	var p2 = A * bx2 + B * by2;
 	var p3 = A * bx3 + B * by3 + C;
 
-	var t = ZUI.Geometry.cubicRoots(p0, p1, p2, p3);
+	var t = ZUI.Math.cubicRoots(p0, p1, p2, p3);
 
 	/* Calculate intersection points */
 	var solutions = [];
@@ -209,4 +131,3 @@ ZUI.Geometry.intersectHRayCubicBezier = function(x, y, vx, vy, x0, y0, x1, y1, x
 
 	return solutions;
 };
-

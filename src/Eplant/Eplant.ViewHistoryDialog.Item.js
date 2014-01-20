@@ -10,6 +10,22 @@ Eplant.ViewHistoryDialog.Item = function(index, viewHistoryDialog) {
 		viewName = "species";
 		target = "ePlant";
 	}
+	else if (this.view instanceof WorldView) {
+		viewName = "world";
+		target = this.view.element.identifier;
+	}
+	else if (this.view instanceof PlantView) {
+		viewName = "plant";
+		target = this.view.element.identifier;
+	}
+	else if (this.view instanceof CellView) {
+		viewName = "cell";
+		target = this.view.element.identifier;
+	}
+	else if (this.view instanceof ExperimentView) {
+		viewName = "experiment";
+		target = this.view.element.identifier;
+	}
 	else if (this.view instanceof ChromosomeView) {
 		viewName = "chromosome";
 		target = this.view.species.scientificName;
@@ -18,12 +34,16 @@ Eplant.ViewHistoryDialog.Item = function(index, viewHistoryDialog) {
 		viewName = "interactions";
 		target = this.view.element.identifier;
 	}
-	else if (this.view instanceof PlantView) {
-		viewName = "plant";
+	else if (this.view instanceof PathwayView) {
+		viewName = "pathway";
 		target = this.view.element.identifier;
 	}
-	else if (this.view instanceof WorldView) {
-		viewName = "world";
+	else if (this.view instanceof MoleculeView) {
+		viewName = "molecule";
+		target = this.view.element.identifier;
+	}
+	else if (this.view instanceof SequenceView) {
+		viewName = "sequence";
 		target = this.view.element.identifier;
 	}
 

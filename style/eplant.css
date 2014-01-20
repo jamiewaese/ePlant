@@ -7,7 +7,6 @@ body {
 	font-weight: normal;
 	text-decoration: none;
 	line-height: 1.5em;
-	overflow-x: hidden;
 }
 smallBodyText {
 	line-height: normal;
@@ -49,16 +48,25 @@ h5 {
 	line-height: 1.25em;
 	text-align: center;
 	color:#333333;
-	}
-logoText {
+}
+#logoText {
 	font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
-	width: 100%;
-	margin-top: 0em;
 	font-size: 2.25em;
 	font-weight: normal;
-	text-align: center;
 	color:#99CC00;
 }
+#speciesLabel {
+	font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
+	font-size: 1.8em;
+	font-weight: normal;
+	color:#666666;
+	font-style: italic;
+	opacity: 0;
+}
+#enter_geneID_box {
+	opacity: 0;
+}
+
 label {
 	font-family: Arial, Helvetica Neue, Verdana, Geneva, sans-serif;
 	width: 100%;
@@ -93,6 +101,8 @@ greyText {
 	text-decoration: none;
 	padding-left: .5em;
 	padding-right: .5em;
+	padding-bottom: .1em;
+	padding-top: .1em;
 	cursor: pointer;
 }
 .button:hover {
@@ -191,11 +201,29 @@ greyText {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	padding: 0 5px;
 }
 .elementListDialogItem:hover {
 	cursor: pointer;
 	color: #FFFFFF;
 	background-color: #3C3C3C;
+}
+
+/* Class for items in the gene panel */
+.elementsOfInterestPanelItem {
+	cursor: pointer;
+	font-family: Helvetica;
+	font-size: 14px;
+	line-height: 24px;
+	color: #787878;
+	display: block;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.elementsOfInterestPanelItem_focus {
+	color: #3C3C3C;
+	font-weight: bold;
 }
 
 /* viewHistoryDialogItem class */
@@ -374,9 +402,8 @@ greyText {
 #ZUI_container {
 	width:900px;
 	height:600px;
-	margin:0 auto 0 50px;
+	margin:0 auto;
 	position:relative;
-	left:-50px;
 	border-radius:20px;
 	background:#fff;
 	overflow:hidden;
@@ -401,9 +428,8 @@ greyText {
 #pageCurlBoxShadow {
 	width:900px;
 	height:600px;
-	margin:0 auto 0 50px;
+	margin:0 auto;
 	position:relative;
-	left:-50px;
 	border-radius:20px;
 	background:#fff;
 	background-color: #fff;
@@ -446,26 +472,64 @@ greyText {
 	transform: skew(5deg) rotate(5deg);
 }
 
-
-
-
-#dialogBox_container {
-	width: 200px;
+#viewSpecificUI {
+	padding-left: 50px;
+	width: 550px;
+	vertical-align: middle;
 }
 
+#crossViewUI {
+	width: 450px;
+	vertical-align: middle;
+}
+
+
+
+
+
 /* Navigation container */
-#navigation_container {
-	width: 200px;
+#navigation_container, #genePanel_container {
+	width: 180px;
+	padding: 15px;
 	font-size: 1.2em;
+	opacity: 0;
 	transition: opacity .5s ease;
 	-webkit-transition: opacity .5s ease;
 	-moz-transition: opacity .5s ease;
 	-o-transition: opacity .5s ease;
 }
 
+/* Gene panel container */
+#genePanel_container {
+	width: 220px;
+	height: 600px;
+	overflow: auto;
+	padding: 15px;
+	font-size: 1.2em;
+	opacity: 0;
+	transition: opacity .5s ease;
+	-webkit-transition: opacity .5s ease;
+	-moz-transition: opacity .5s ease;
+	-o-transition: opacity .5s ease;
+}
+/* Gene panel label */
+#genePanel_label {
+	height: 40px;
+	font-size: 16px;
+	color: #787878;
+	font-weight: bold;
+	display: block;
+}
+/* Gene panel content */
+#genePanel_content {
+	
+}
+
 /* Settings container */
 #settings_container {
 	font-size: 1.2em;
+	opacity: 0;
+	margin-top: 15px;
 	transition: opacity .5s ease;
 	-webkit-transition: opacity .5s ease;
 	-moz-transition: opacity .5s ease;
@@ -494,17 +558,25 @@ greyText {
 #content {
 	margin: 5px auto 0px auto;
 	padding: 0px 5px 5px 5px;
-	width: 1557px;
-	min-width: 300px;
+	width: 1374px;
 	border: 0px solid #DDD;
 }
 
 /* gene input text box */
 #enterIdentifier {
-	width: 114px;
+	width: 145px;
+	height: 1.9em;
 	padding: 5px;
+	padding-left: 10px;
 	margin-top: 5px;
 	margin-bottom: 5px;
+	margin-right: 4px;
+	border: 2px solid #EEEEEE;
+	border-radius: 12px;
+	margin-right-6px;
+    box-shadow:         inset 0 0 3px #EDEDED;
+	-moz-box-shadow:    inset 0 0 3px #EDEDED;
+    -webkit-box-shadow: inset 0 0 3#px #EDEDED;
 }
 
 
@@ -613,3 +685,20 @@ greyText {
 .back-top:hover{
 	background-color: #cbe57b;
 }
+
+
+
+/* Override  some JQuery design settings */
+.ui-corner-all, .ui-corner-top, .ui-corner-left, .ui-corner-tl {
+    border-top-left-radius: 8px;
+}
+.ui-corner-all, .ui-corner-top, .ui-corner-right, .ui-corner-tr {
+    border-top-right-radius: 8px;
+}
+.ui-corner-all, .ui-corner-bottom, .ui-corner-left, .ui-corner-bl {
+    border-bottom-left-radius: 8px;
+}
+.ui-corner-all, .ui-corner-bottom, .ui-corner-right, .ui-corner-br {
+    border-bottom-right-radius: 8px;
+}
+

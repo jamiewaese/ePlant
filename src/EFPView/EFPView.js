@@ -15,6 +15,8 @@ function EFPView(element, diagram) {
 	this.control = null;
 	this.outline = null;
 	this.groups = [];
+	this.compareGroups = null;
+	this.compareElement = null;
 	this.viewObjects = [];
 
 	this.isDataReady = false;
@@ -22,25 +24,14 @@ function EFPView(element, diagram) {
 	this.mode = "absolute";
 
 	this.maxLevel = 0;
+	this.minLevel = 0;
+
+	this.legend = new EFPView.Legend();
 
 	this.groupTooltips = [];
 	this.groupTooltipCountdown = null;
 
-	/* Create view-specific UI elements */
-	this.modeContainerElement = document.createElement("div");
-	this.modeContainerElement.className = "iconSmall hint--top hint--success hint--rounded";
-	this.modeContainerElement.setAttribute("data-hint", "Toggle data mode.");
-	this.modeContainerElement.setAttribute("data-enabled", Eplant.tooltipSwitch.toString());
-	this.modeContainerElement.style.padding = "5px";
-	this.modeContainerElement.onclick = $.proxy(function() {
-		if (this.mode == "absolute") this.mode = "relative";
-		else if (this.mode == "relative") this.mode = "absolute";
-		this.updateEFP();
-	}, this);
-	/* Set icon */
-	var img = document.createElement("img");
-	img.src = "img/efpmode.png";
-	this.modeContainerElement.appendChild(img);
+	this.initIcons();
 
 	/* Retrieve diagram JSON */
 	$.ajax({
@@ -137,7 +128,7 @@ function EFPView(element, diagram) {
 				y: -this.height / 2,
 				paths: group.paths,
 				strokeWidth: 3,
-				strokeColor: Eplant.Color.Green,
+				strokeColor: Eplant.Color.Black,
 				fill: false
 			});
 			_group.color = Eplant.Color.White;
@@ -214,15 +205,85 @@ function EFPView(element, diagram) {
 EFPView.prototype = new ZUI.View();
 EFPView.prototype.constructor = EFPView;
 
+EFPView.prototype.initIcons = function() {
+	/* Create view-specific UI elements */
+	this.modeContainerElement = document.createElement("div");
+	this.modeContainerElement.className = "iconSmall hint--top hint--success hint--rounded";
+	this.modeContainerElement.setAttribute("data-hint", "Toggle data mode (absolute).");
+	this.modeContainerElement.setAttribute("data-enabled", Eplant.tooltipSwitch.toString());
+	this.modeContainerElement.style.padding = "5px";
+	this.modeContainerElement.onclick = $.proxy(function() {
+		if (this.mode == "absolute") {
+			this.mode = "relative";
+			this.modeContainerElement.getElementsByTagName("img")[0].src = "img/efpmode-relative.png";
+			this.modeContainerElement.setAttribute("data-hint", "Toggle data mode: relative.");
+		}
+		else if (this.mode == "relative") {
+			this.mode = "absolute";
+			this.modeContainerElement.getElementsByTagName("img")[0].src = "img/efpmode-absolute.png";
+			this.modeContainerElement.setAttribute("data-hint", "Toggle data mode: absolute.");
+		}
+		this.updateEFP();
+	}, this);
+	/* Set icon */
+	var img = document.createElement("img");
+	img.src = "img/efpmode-absolute.png";
+	this.modeContainerElement.appendChild(img);
+
+	/* Compare */
+	this.compareContainerElement = document.createElement("div");
+	this.compareContainerElement.className = "iconSmall hint--top hint--success hint--rounded";
+	this.compareContainerElement.setAttribute("data-hint", "Compare to another gene.");
+	this.compareContainerElement.setAttribute("data-enabled", Eplant.tooltipSwitch.toString());
+	this.compareContainerElement.style.padding = "5px";
+	this.compareContainerElement.onclick = $.proxy(function() {
+		if (this.mode == "compare") {
+			this.mode = "relative";
+			this.modeContainerElement.getElementsByTagName("img")[0].src = "img/efpmode-relative.png";
+			this.modeContainerElement.setAttribute("data-hint", "Toggle data mode: relative.");
+			this.compareContainerElement.getElementsByTagName("img")[0].src = "img/available/efpmode-compare.png";
+			this.compareContainerElement.setAttribute("data-hint", "Compare to another gene.");
+			this.updateEFP();
+		}
+		else {
+			new EFPView.CompareDialog(this.element, this);
+		}
+	}, this);
+	/* Set icon */
+	var img = document.createElement("img");
+	img.src = "img/available/efpmode-compare.png";
+	this.compareContainerElement.appendChild(img);
+
+	/* Legend */
+	this.legendContainerElement = document.createElement("div");
+	this.legendContainerElement.className = "iconSmall hint--top hint--success hint--rounded";
+	this.legendContainerElement.setAttribute("data-hint", "Legend.");
+	this.legendContainerElement.setAttribute("data-enabled", Eplant.tooltipSwitch.toString());
+	this.legendContainerElement.style.padding = "5px";
+	this.legendContainerElement.onclick = $.proxy(function() {
+		if (this.legend.visible) {
+			this.legend.hide();
+		}
+		else {
+			this.legend.show();
+		}
+	}, this);
+	/* Set icon */
+	var img = document.createElement("img");
+	img.src = "img/legend.png";
+	this.legendContainerElement.appendChild(img);
+};
+
 EFPView.prototype.active = function() {
 	/* Append to view history */
 	if (Eplant.viewHistory[Eplant.viewHistorySelected] != this) {
 		Eplant.pushViewHistory(this);
 	}
 
-	/* Append view-specific UI */
-	var viewSpecificUI = document.getElementById("viewSpecificUI");
-	viewSpecificUI.appendChild(this.modeContainerElement);
+	/* Show legend */
+	if (!this.legend.visible) {
+		this.legend.show();
+	}
 };
 
 EFPView.prototype.inactive = function() {
@@ -231,6 +292,11 @@ EFPView.prototype.inactive = function() {
 		this.groupTooltips[n].remove();
 	}
 	this.groupTooltips = [];
+
+	/* Hide legend */
+	if (this.legend.visible) {
+		this.legend.hide();
+	}
 
 	/* Remove application specific UI */
 	document.getElementById("viewSpecificUI").innerHTML = "";
@@ -269,6 +335,11 @@ EFPView.prototype.draw = function() {
 		}
 		else if (this.mode == "relative") {
 			tooltipAttr.content = conf.group.id + "<br>Log2 value: " + (+parseFloat(ZUI.Math.log(conf.group.meanLevel / this.control.meanLevel, 2)).toFixed(2)) + "<br>Fold difference: " + (+parseFloat(conf.group.meanLevel / this.control.meanLevel).toFixed(2));
+		}
+		else if (this.mode == "compare") {
+			var index = this.groups.indexOf(conf.group);
+			var compareGroup = (index >= 0) ? this.compareGroups[index] : {};
+			tooltipAttr.content = conf.group.id + "<br>Log2 value: " + (+parseFloat(ZUI.Math.log(conf.group.meanLevel / compareGroup.meanLevel, 2)).toFixed(2)) + "<br>Fold difference: " + (+parseFloat(conf.group.meanLevel / compareGroup.meanLevel).toFixed(2));
 		}
 		var groupTooltip = new Eplant.Tooltip(tooltipAttr);
 		groupTooltip.data.group = conf.group;
@@ -319,57 +390,166 @@ EFPView.prototype.updateEFP = function() {
 
 	/* Update eFP */
 	if (this.mode == "absolute") {
+		/* Calculate max */
+		var max = Number.NaN;
+		for (var n = 0; n < this.groups.length; n++) {
+			var group = this.groups[n];
+			if (isNaN(group.meanLevel) || !isFinite(group.meanLevel)) {
+				continue;
+			}
+			if (group.meanLevel > max || isNaN(max)) {
+				max = group.meanLevel;
+			}
+		}
+
+		/* Color groups */
+		var minColor = ZUI.Util.getColorComponents("#FFFF00");
+		var maxColor = ZUI.Util.getColorComponents("#FF0000");
+		var errorColor = "#FFFFFF";
 		for (n = 0; n < this.groups.length; n++) {
 			var group = this.groups[n];
-			var levelRatio = group.meanLevel / this.maxLevel;
-			if (isNaN(levelRatio)) {
-				group.color = "#000000";
+			var levelRatio = group.meanLevel / max;
+			if (isNaN(levelRatio) || !isFinite(levelRatio)) {
+				group.color = errorColor;
 			}
 			else {
-				var green = Math.round((1 - levelRatio) * 255).toString(16).toUpperCase();
-				if (green.length < 2) green = "0" + green;
-				group.color = "#FF" + green + "00";
-//				var red = Math.round((1 - levelRatio) * 255).toString(16).toUpperCase();
-//				if (red.length < 2) red = "0" + red;
-//				group.color = "#" + red + "FF00";
+				var red = minColor.red + Math.round((maxColor.red - minColor.red) * levelRatio);
+				var green = minColor.green + Math.round((maxColor.green - minColor.green) * levelRatio);
+				var blue = minColor.blue + Math.round((maxColor.blue - minColor.blue) * levelRatio);
+				group.color = ZUI.Util.makeColorString(red, green, blue);
 			}
 			group.shape.fillColor = group.color;
 		}
+
+		/* Update legend */
+		var midColor = {
+			red: Math.round((maxColor.red + minColor.red) / 2),
+			green: Math.round((maxColor.green + minColor.green) / 2),
+			blue: Math.round((maxColor.blue + minColor.blue) / 2)
+		};
+		this.legend.update(0, max / 2, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), "Linear", "Absolute");
 	}
 	else if (this.mode == "relative") {
-		var max = ZUI.Math.log(this.maxLevel / this.control.meanLevel, 2);
-		var min = ZUI.Math.log(this.minLevel / this.control.meanLevel, 2);
-		var cap = (Math.abs(max) > Math.abs(min)) ? Math.abs(max) : Math.abs(min);
+		/* Calculate max */
+		var max = Number.NaN;
+		for (var n = 0; n < this.groups.length; n++) {
+			var group = this.groups[n];
+			var absLog2Level = Math.abs(ZUI.Math.log(group.meanLevel / this.control.meanLevel, 2));
+			if (isNaN(absLog2Level) || !isFinite(absLog2Level)) {
+				continue;
+			}
+			if (absLog2Level > max || isNaN(max)) {
+				max = absLog2Level;
+			}
+		}
+
+		/* Color groups */
+		var minColor = ZUI.Util.getColorComponents("#0000FF");
+		var midColor = ZUI.Util.getColorComponents("#FFFF00");
+		var maxColor = ZUI.Util.getColorComponents("#FF0000");
+		var errorColor = "#FFFFFF";
 		for (n = 0; n < this.groups.length; n++) {
 			var group = this.groups[n];
 			var log2Level = ZUI.Math.log(group.meanLevel / this.control.meanLevel, 2);
-			var levelRatio = log2Level / cap;
-			if (isNaN(levelRatio)) {
-				group.color = "#000000";
+			var levelRatio = log2Level / max;
+			if (isNaN(levelRatio) || !isFinite(levelRatio)) {
+				group.color = errorColor;
 			}
 			else {
-				if (levelRatio > 0) {
-					var green = Math.round((1 - levelRatio) * 255).toString(16).toUpperCase();
-					if (green.length < 2) green = "0" + green;
-					group.color = "#FF" + green + "00";
-//					var red = Math.round((1 - levelRatio) * 255).toString(16).toUpperCase();
-//					if (red.length < 2) red = "0" + red;
-//					group.color = "#" + red + "FF00";
+				var color1, color2;
+				if (levelRatio < 0) {
+					color1 = midColor;
+					color2 = minColor;
+					levelRatio *= -1;
 				}
 				else {
-					var redgreen = Math.round((1 + levelRatio) * 255).toString(16).toUpperCase();
-					if (redgreen.length < 2) redgreen = "0" + redgreen;
-					var blue = Math.round(-levelRatio * 255).toString(16).toUpperCase();
-					if (blue.length < 2) blue = "0" + blue;
-//					var green = Math.round((1 + levelRatio) * 255).toString(16).toUpperCase();
-//					if (green.length < 2) green = "0" + green;
-					group.color = "#" + redgreen + redgreen + blue;
-//					group.color = "#FF" + green + "00";
+					color1 = midColor;
+					color2 = maxColor;
 				}
-
+				var red = color1.red + Math.round((color2.red - color1.red) * levelRatio);
+				var green = color1.green + Math.round((color2.green - color1.green) * levelRatio);
+				var blue = color1.blue + Math.round((color2.blue - color1.blue) * levelRatio);
+				group.color = ZUI.Util.makeColorString(red, green, blue);
 			}
 			group.shape.fillColor = group.color;
 		}
+
+		/* Update legend */
+		this.legend.update(-max, 0, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), "Log2 Ratio", "Relative to control: " + (+parseFloat(this.control.meanLevel).toFixed(2)));
+	}
+	else if (this.mode == "compare") {
+		/* Calculate ratios and max */
+		var ratios = [];
+		var max = Number.NaN;
+		for (var n = 0; n < this.groups.length; n++) {
+			var group = this.groups[n];
+			var compareGroup = this.compareGroups[n];
+			var ratio = group.meanLevel / compareGroup.meanLevel;
+			ratios.push(ratio);
+			var absLog2Level = Math.abs(ZUI.Math.log(ratio, 2));
+			if (isNaN(absLog2Level) || !isFinite(absLog2Level)) {
+				continue;
+			}
+			if (absLog2Level > max || isNaN(max)) {
+				max = absLog2Level;
+			}
+		}
+
+		/* Color groups */
+		var minColor = ZUI.Util.getColorComponents("#0000FF");
+		var midColor = ZUI.Util.getColorComponents("#FFFF00");
+		var maxColor = ZUI.Util.getColorComponents("#FF0000");
+		var errorColor = "#FFFFFF";
+		for (n = 0; n < this.groups.length; n++) {
+			var group = this.groups[n];
+			var log2Level = ZUI.Math.log(ratios[n], 2);
+			var levelRatio = log2Level / max;
+			if (isNaN(levelRatio) || !isFinite(levelRatio)) {
+				group.color = errorColor;
+			}
+			else {
+				var color1, color2;
+				if (levelRatio < 0) {
+					color1 = midColor;
+					color2 = minColor;
+					levelRatio *= -1;
+				}
+				else {
+					color1 = midColor;
+					color2 = maxColor;
+				}
+				var red = color1.red + Math.round((color2.red - color1.red) * levelRatio);
+				var green = color1.green + Math.round((color2.green - color1.green) * levelRatio);
+				var blue = color1.blue + Math.round((color2.blue - color1.blue) * levelRatio);
+				group.color = ZUI.Util.makeColorString(red, green, blue);
+			}
+			group.shape.fillColor = group.color;
+		}
+
+		/* Update legend */
+		this.legend.update(-max, 0, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), "Log2 Ratio", "Relative to " + this.compareElement.identifier);
+	}
+};
+
+EFPView.prototype.toCompareMode = function(elementOfInterest) {
+	var _elementOfInterest = Eplant.getSpeciesOfInterest(this.element.chromosome.species).getElementOfInterest(this.element);
+	if (!_elementOfInterest) return;
+	var viewName = null;
+	for (key in _elementOfInterest) {
+		if (_elementOfInterest[key] === this) {
+			viewName = key;
+			break;
+		}
+	}
+	if (viewName) {
+		this.compareGroups = elementOfInterest[viewName].groups;
+		this.compareElement = elementOfInterest.element;
+		this.mode = "compare";
+		this.modeContainerElement.getElementsByTagName("img")[0].src = "img/efpmode-relative.png";
+		this.modeContainerElement.setAttribute("data-hint", "Data mode: compare. Click on Compare button to turn off.");
+		this.compareContainerElement.getElementsByTagName("img")[0].src = "img/active/efpmode-compare.png";
+		this.compareContainerElement.setAttribute("data-hint", "Turn off compare mode.");
+		this.updateEFP();
 	}
 };
 

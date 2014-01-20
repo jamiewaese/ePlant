@@ -1,6 +1,6 @@
 /**
  * Animation class for ZUI framework
- * By Hans Yu
+ * Code by Hans Yu
  */
 
 /* Class constructor */
@@ -18,9 +18,9 @@ ZUI.Animation = function(attributes) {
 		this.sourceX = (attributes.sourceX === undefined) ? undefined : attributes.sourceX;
 		this.sourceY = (attributes.sourceY === undefined) ? undefined : attributes.sourceY;
 		this.sourceDistance = (attributes.sourceDistance === undefined) ? undefined : attributes.sourceDistance;
-		this.targetX = (attributes.targetX === undefined) ? 0 : attributes.targetX;
-		this.targetY = (attributes.targetY === undefined) ? 0 : attributes.targetY;
-		this.targetDistance = (attributes.targetDistance === undefined) ? 0 : attributes.targetDistance;
+		this.targetX = (attributes.targetX === undefined) ? undefined : attributes.targetX;
+		this.targetY = (attributes.targetY === undefined) ? undefined : attributes.targetY;
+		this.targetDistance = (attributes.targetDistance === undefined) ? undefined : attributes.targetDistance;
 	}
 };
 
@@ -34,6 +34,9 @@ ZUI.Animation.prototype.begin = function() {
 		if (this.sourceX === undefined) this.sourceX = ZUI.camera._x;
 		if (this.sourceY === undefined) this.sourceY = ZUI.camera._y;
 		if (this.sourceDistance === undefined) this.sourceDistance = ZUI.camera._distance;
+		if (this.targetX === undefined) this.targetX = this.sourceX;
+		if (this.targetY === undefined) this.targetY = this.sourceY;
+		if (this.targetDistance === undefined) this.targetDistance = this.sourceDistance;
 	}
 	this._begin(this.data);
 	if (this.remainingTime <= 0) {

@@ -4,7 +4,7 @@
  * Code by Hans Yu
  */
 
-function SequenceView() {
+function SequenceView(element) {
 }
 
 /* Inherit from View superclass */

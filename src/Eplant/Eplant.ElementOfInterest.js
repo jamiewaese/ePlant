@@ -24,8 +24,8 @@ Eplant.ElementOfInterest = function(element, speciesOfInterest) {
 	this.worldView = new WorldView(element);
 	this.plantView = new PlantView(element);
 	this.cellView = new CellView(element);
-	this.interactionView = new InteractionView(element);
 	this.pathwayView = new PathwayView(element);
-	this.moleculeView = null;
+	this.moleculeView = new MoleculeView(element);
 	this.sequenceView = null;
+	this.interactionView = new InteractionView(element);
 };

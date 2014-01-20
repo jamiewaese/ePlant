@@ -12,6 +12,22 @@ function PlantView(element) {
 PlantView.prototype = new EFPView();
 PlantView.prototype.constructor = PlantView;
 
+PlantView.prototype.active = function() {
+	ZUI.container.style.cursor = "default";
+
+	EFPView.prototype.active.call(this);
+
+	/* Append view-specific UI */
+	var viewSpecificUI = document.getElementById("viewSpecificUI");
+	viewSpecificUI.appendChild(this.modeContainerElement);
+	viewSpecificUI.appendChild(this.compareContainerElement);
+	viewSpecificUI.appendChild(this.legendContainerElement);
+};
+
+PlantView.prototype.inactive = function() {
+	EFPView.prototype.inactive.call(this);
+};
+
 PlantView.prototype.mouseMove = function() {
 	/* Get mouse status */
 	var x = ZUI.mouseStatus.x;

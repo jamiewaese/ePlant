@@ -6,9 +6,9 @@ Welcome to ePlant, a unique data visualization tool for integrating and explorin
 This project was produced in Nicholas Provart's lab in the department of Cell & Systems Biology, University of Toronto.
 
 Design & UI by Jamie Waese
-Code by Zhenming Yu
+Code by Hans Yu
 
-It is theoretically based on an earlier version of ePlant by Nicholas Provart: http://bar.utoronto.ca/eplant/
+It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utoronto.ca/eplant/
 
 -->
 
@@ -29,11 +29,13 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 		<link rel="stylesheet" href="lib/spectrum/spectrum.css"></link>
 		<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/smoothness/jquery-ui.min.css"></link>
 		<script type="text/javascript" src="lib/JSmol/JSmol.min.nojq.js"></script>
+			<script type="text/javascript" src="lib/JSmol/JSmolThree.js"></script>
+			<script type="text/javascript" src="lib/JSmol/JSmolGLmol.js"></script>
 		<script type="text/javascript" src="lib/cytoscape/cytoscape.min.js"></script>
 		<script type="text/javascript" src="lib/cytoscape/arbor.js"></script>
 		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDT2IJLsslEC94ECmcXlAvz9ukPRH0fbh0&sensor=false"></script>
+			<script type="text/javascript" src="lib/GMaps/infobox_packed.js"></script>
 		<script type="text/javascript" src="lib/OverlappingMarkerSpiderfier/oms.min.js"></script>
-		<script type="text/javascript" src="lib/markerclusterer/markerclusterer_compiled.js"></script>
 
 		<!-- Tooltip Pop-Up Stylesheet. (From: https://github.com/chinchang/hint.css) -->
 		<link rel="stylesheet" href="lib/hint/hint.css"></link>
@@ -66,16 +68,33 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			<!-- Title strip -->
 			<table width="90%">
 				<tr>
-					<td>
+					<!-- BAR logo -->
+					<td width="227px" style="text-align:center;">
 						<div class="hint--right  hint--success  hint--rounded" data-hint="See more bio visualization tools at the BAR." data-enabled="true">
-							<a href='http://bar.utoronto.ca'><img id="logo" src='img/BAR.png' alt='To the Bio-Array Resource Homepage' align="absmiddle" style="position:relative;left:40px;"></a>&nbsp;&nbsp;
+							<a href='http://bar.utoronto.ca'><img id="logo" src='img/BAR.png' alt='To the Bio-Array Resource Homepage' align="absmiddle" style="position:relative;left:-4px;"></a>&nbsp;&nbsp;
 						</div>
 					</td>
-					<td>
-						<h1 style="position:relative;left:-30px;">ePlant</h1>
+					<!-- ePlant title & species name -->
+					<td width="460px">
+						<span id="logoText">ePlant&nbsp;&nbsp;</span>
+						<span id="speciesLabel">
+								<!-- Plant name should update when user changes species -->
+						</span>
 					</td>
+					<!-- Enter Gene ID box -->
+					<td width="284px">
+						<div id="enter_geneID_box">
+							<!-- text box -->
+							<input id="enterIdentifier" type="text" name="GeneID" value="Enter gene ID or alias" onfocus="inputFocus(this)" onblur="inputBlur(this)">
+							<!-- Get Data button -->
+							<div class="hint--left hint--success hint--rounded" data-hint="Download all available data for this gene" data-enabled="true">
+								<input type="button" class="button" value="Get Data" onclick="Eplant.getElement();"  >
+							</div>
+						</div>
+					</td>
+					<!-- Save / Load buttons -->
 					<td>
-						<div style="float: right; padding: 17px 0px 0px 0px">
+						<div style="float: left;padding-top:6px;">
 							<div class="hint--left  hint--success  hint--rounded" data-hint="Save your work session" data-enabled="true"><input type="button" class="button" value="Save" onclick="saveFile();"/></div>
 							<div class="hint--left  hint--success  hint--rounded" data-hint="Load a previously saved session" data-enabled="true"><input type="button" class="button" id="fileinput" value="Load" onchange="readFile(this);"></div>
 						</div>
@@ -84,64 +103,67 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 			</table>
 
 			<!-- Application contents -->
-			<table width="100%" style="padding:20px 0 0 0;">
+			<table style="padding:20px 0 0 0;">
 				<tr>
 					<td valign="top">
+						<!-- Icon Dock -->
 						<div id="navigation_container" style="opacity:0;">
-							<h3 id="speciesLabel">
-								<!-- Plant name should update when user changes species -->
-							</h3>							
-							<smallBodyText>Enter gene identifier or alias:</smallBodyText><br>
-							<input id="enterIdentifier" type="text" name="GeneID">
-							<div class="hint--right hint--success hint--rounded" data-hint="Download all available data for this gene" data-enabled="true">
-									<input type="button" class="button" value="Get" onclick="Eplant.getElement();">
-								</div>
+							<div style="text-align:center;position:relative;">
 							<br>
-							<br>
-							<div class="hint--right hint--success hint--rounded" data-hint="Quickly switch between loaded genes." data-enabled="true">
-								<select id="elementsOfInterest" style="width:180px;" onchange="Eplant.onchangeElementOfFocus();">
-									<option disabled value="Currently loaded genes:" selected>Currently loaded genes:</option>
-								</select>
- 							</div>
-							<div style="text-align:center;position:relative;left:-20px;">
-							<br>
+							<!-- Species Selector -->
 							<div id="speciesViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Species selector" data-enabled="true" onclick="Eplant.toSpeciesView();">
 								<img src="img/unavailable/species.png"></img>
 							</div>
 							<br>
+							<!-- World eFP -->
 							<div id="worldViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="World eFP" data-enabled="true" onclick="Eplant.toWorldView();">
 								<img src="img/unavailable/world.png"></img>
 							</div>
 							<br>
+							<!-- Plant eFP -->
 							<div id="plantViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Plant eFP" data-enabled="true" onclick="Eplant.toPlantView();">
 								<img src="img/unavailable/plant.png"></img>
 							</div>
 							<br>
+							<!-- Sub cellular eFP -->
 							<div id="cellViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Subcellular eFP" data-enabled="true" onclick="Eplant.toCellView();">
 								<img src="img/unavailable/cell.png"></img>
 							</div>
+							<!-- Experimental eFP's -->
 							<div id="experimentViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Experimental eFP" data-enabled="true">
 								<img src="img/unavailable/experiment.png"></img>
 							</div>
 							<br>
+							<!-- Chromosome Viewer -->
 							<div id="chromosomeViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Chromosome viewer" data-enabled="true" onclick="Eplant.toChromosomeView();">
 								<img src="img/unavailable/chromosome.png"></img>
 							</div>
 							<br>
+							<!-- Protein Protein Interactions - Cytoscape -->
 							<div id="interactionViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Protein-protein interactions" data-enabled="true" onclick="Eplant.toInteractionView();">
 								<img src="img/unavailable/interaction.png"></img>
 							</div>
+							<!-- Pathway Reactome Viewer -->
 							<div id="pathwayViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Metabolic pathways" data-enabled="true" onclick="Eplant.toPathwayView();">
 								<img src="img/unavailable/pathway.png"></img>
 							</div>
 							<br>
+							<!-- Molecular JSmol viewer -->
 							<div id="moleculeViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Molecular structure" data-enabled="true" onclick="Eplant.toMoleculeView();">
 								<img src="img/unavailable/molecule.png"></img>
 							</div>
 							<br>
+							<!-- Sequence Viewer - JBrowse -->
 							<div id="sequenceViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Sequence viewer" data-enabled="true">
 								<img src="img/unavailable/sequence.png"></img>
 							</div>
+							<br>
+							<!-- External Links -->
+							<div id="sequenceViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Auto link outs" data-enabled="true">
+								<img src="img/unavailable/externalTools.png"></img>
+							</div>
+
+
 							</div>
 						</div>
 					</td>
@@ -158,13 +180,13 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 								<div id="map_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;visibility:hidden;">
 								</div>
 							</div>
-						</div>	
-						<div id="settings_container" style="opacity:0;margin-top:15px;">
+						</div>
+						<div id="settings_container" style="opacity:0;">
 							<table>
 								<tr>
-									<td id="viewSpecificUI" style="padding-left:50px;width:550px;vertical-align:middle;">
+									<td id="viewSpecificUI">
 									</td>
-									<td id="crossViewUI" style="width:450px;vertical-align:middle;">
+									<td id="crossViewUI">
 										<div id="historyBackIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Go back to the previous view" data-enabled="true" style="padding-right:0;width:20px;height:25px;" onclick="Eplant.backViewHistory();">
 											<img src="img/available/history-back.png" style="width:20px;height:20px;"></img>
 										</div>
@@ -180,7 +202,7 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 										<div id="tooltipIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Toggle tooltip" data-enabled="true" onclick="Eplant.toggleTooltip();">
 											<img src="img/on/tooltip.png"></img>
 										</div>
-										<div id="getImageIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Save current screen as high resolution image" data-enabled="true" onclick="ZUI.toImageInWindow();">
+										<div id="getImageIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Save current screen as high resolution image" data-enabled="true" onclick="Eplant.toImageInWindow();">
 											<img src="img/getimage.png"></img>
 										</div>
 										<div id="citationIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Get citation" data-enabled="true" onclick="Eplant.showCitation();">
@@ -195,7 +217,10 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 						</div>
 					</td>
 					<td valign="top">
-						<div id="dialogBox_container">
+						<div id="genePanel_container" style="opacity:0;">
+							<span id="genePanel_label">Currently loaded genes:</span>
+							<div id="genePanel_content">
+							</div>
 						</div>
 					</td>
 				</tr>
@@ -210,6 +235,8 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 				<script type="text/javascript" src="src/ZUI/ZUI.Math.js"></script>
 				<script type="text/javascript" src="src/ZUI/ZUI.Parser.js"></script>
 				<script type="text/javascript" src="src/ZUI/ZUI.Util.js"></script>
+				<script type="text/javascript" src="src/ZUI/ZUI.ContextMenu.js"></script>
+				<script type="text/javascript" src="src/ZUI/ZUI.ContextMenuOption.js"></script>
 					<script type="text/javascript" src="src/ZUI/ZUI.Util.KeySpline.js"></script>
 			<script type="text/javascript" src="src/Eplant/Eplant.js"></script>
 				<script type="text/javascript" src="src/Eplant/Eplant.Color.js"></script>
@@ -238,9 +265,13 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 					<script type="text/javascript" src="src/ChromosomeView/ChromosomeView.ElementListDialog.js"></script>
 					<script type="text/javascript" src="src/ChromosomeView/ChromosomeView.ElementListDialogItem.js"></script>
 				<script type="text/javascript" src="src/InteractionView/InteractionView.js"></script>
+					<script type="text/javascript" src="src/InteractionView/InteractionView.Legend.js"></script>
+					<script type="text/javascript" src="src/InteractionView/InteractionView.Annotation.js"></script>
 				<script type="text/javascript" src="src/MoleculeView/MoleculeView.js"></script>
 				<script type="text/javascript" src="src/PathwayView/PathwayView.js"></script>
 				<script type="text/javascript" src="src/EFPView/EFPView.js"></script>
+					<script type="text/javascript" src="src/EFPView/EFPView.Legend.js"></script>
+					<script type="text/javascript" src="src/EFPView/EFPView.CompareDialog.js"></script>
 				<script type="text/javascript" src="src/PlantView/PlantView.js"></script>
 				<script type="text/javascript" src="src/CellView/CellView.js"></script>
 				<script type="text/javascript" src="src/WorldView/WorldView.js"></script>
@@ -332,6 +363,18 @@ It is theoretically based on an earlier version of ePlant by Nicholas Provart: h
 				$("#view5").load("example-gallery.html", tabViewsOnLoad);
 				$("#view6").load("contact.html", tabViewsOnLoad);
 			</script>
+
+
+			<!-- Preload Text in selection box -->
+			<script type="text/javascript">
+				function inputFocus(i){
+				    if(i.value==i.defaultValue){ i.value=""; i.style.color="#000"; }
+				}
+				function inputBlur(i){
+				    if(i.value==""){ i.value=i.defaultValue; i.style.color="#666"; }
+				}
+			</script>
+
 		</div>
 	</body>
 </html>

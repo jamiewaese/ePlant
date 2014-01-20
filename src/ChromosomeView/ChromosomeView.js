@@ -129,6 +129,8 @@ ChromosomeView.prototype.constructor = ChromosomeView;
 
 /* Override active */
 ChromosomeView.prototype.active = function() {
+	ZUI.container.style.cursor = "default";
+
 	/* Append to view history */
 	if (Eplant.viewHistory[Eplant.viewHistorySelected] != this) {
 		Eplant.pushViewHistory(this);

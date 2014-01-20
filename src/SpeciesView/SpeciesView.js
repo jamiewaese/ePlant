@@ -28,7 +28,10 @@ SpeciesView.prototype.active = function() {
 
 	/* Hide extra UI */
 	document.getElementById("navigation_container").style.opacity = "0";
+	document.getElementById("genePanel_container").style.opacity = "0";
 	document.getElementById("settings_container").style.opacity = "0";
+	document.getElementById("speciesLabel").style.opacity = "0";
+	document.getElementById("enter_geneID_box").style.opacity = "0";
 
 	/* Initialize properties */
 	this.selectedSpecies = null;
@@ -51,7 +54,10 @@ SpeciesView.prototype.active = function() {
 SpeciesView.prototype.inactive = function() {
 	/* Show extra UI */
 	document.getElementById("navigation_container").style.opacity = "1";
+	document.getElementById("genePanel_container").style.opacity = "1";
 	document.getElementById("settings_container").style.opacity = "1";
+	document.getElementById("speciesLabel").style.opacity = "1";
+	document.getElementById("enter_geneID_box").style.opacity = "1";
 
 	/* Remove species list */
 	ZUI.container.removeChild(this.speciesList.element);

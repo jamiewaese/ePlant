@@ -1,6 +1,14 @@
+/**
+ * This namespace defines some useful parser functions for the framework.
+ *
+ * Code by Hans Yu
+ */
+
 ZUI.Parser = {};
 
+/* Parses an SVG path to an array of instruction objects with properties that allow for convenient usage in a canvas */
 ZUI.Parser.pathToObj = function(path) {
+	/* Splits the path string into instructions */
 	var instructions = [];
 	for (var n = 0; n + 1 < path.length;) {
 		var instruction = path[n];
@@ -16,6 +24,8 @@ ZUI.Parser.pathToObj = function(path) {
 		});
 		n = next;
 	}
+
+	/* Process instructions */
 	var objs = []
 	var lastX = 0, lastY = 0;
 	for (n = 0; n < instructions.length; n++) {
@@ -149,7 +159,7 @@ ZUI.Parser.pathToObj = function(path) {
 			lastX += instructions[n].args[0];
 			lastY += instructions[n].args[1];
 		}
-		else if (instructions[n].instruction == "A") {		// elliptical arc (absolute)
+		else if (instructions[n].instruction == "A") {		// elliptical arc (absolute), NOT THE SAME AS THE SVG COMMAND
 			var obj = {};
 			obj.instruction = "arcTo";
 			obj.args = [instructions[n].args[0], instructions[n].args[1], instructions[n].args[2], instructions[n].args[3], instructions[n].args[4]];
@@ -157,7 +167,7 @@ ZUI.Parser.pathToObj = function(path) {
 			lastX = instructions[n].args[2];
 			lastY = instructions[n].args[3];
 		}
-		else if (instructions[n].instruction == "a") {		// elliptical arc (relative)
+		else if (instructions[n].instruction == "a") {		// elliptical arc (relative), NOT THE SAME AS THE SVG COMMAND
 			var obj = {};
 			obj.instruction = "arcTo";
 			obj.args = [instructions[n].args[0] + lastX, instructions[n].args[1] + lastY, instructions[n].args[2] + lastX, instructions[n].args[3] + lastY, instructions[n].args[4]];

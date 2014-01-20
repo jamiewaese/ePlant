@@ -1,4 +1,12 @@
-/* Class for items in the element list dialog */
+/**
+ * ElementListDialogItem class
+ * Describes itmes in an ElementListDialog
+ *
+ * UI design by Jamie Waese
+ * Code by Hans Yu
+ */
+
+/* Constructor */
 ChromosomeView.ElementListDialogItem = function(element, elementListDialog) {
 	/* Store parameters as attributes */
 	this.element = element;
@@ -11,6 +19,9 @@ ChromosomeView.ElementListDialogItem = function(element, elementListDialog) {
 		this.containerElement.innerHTML += " / " + element.aliases.join(", ");
 	}
 	this.containerElement.className = "elementListDialogItem";
+	this.elementListDialog.containerElement.appendChild(this.containerElement);
+
+	/* Mouse over event handler */
 	this.containerElement.onmouseover = $.proxy(function() {
 		/* Create element dialog */
 		if (Eplant.getElementDialog(this.element) == null) {
@@ -22,6 +33,8 @@ ChromosomeView.ElementListDialogItem = function(element, elementListDialog) {
 			});
 		}
 	}, this);
+
+	/* Mouse out event handler */
 	this.containerElement.onmouseout = $.proxy(function() {
 		/* Close element dialog */
 		var elementDialog = Eplant.getElementDialog(this.element);
@@ -29,6 +42,8 @@ ChromosomeView.ElementListDialogItem = function(element, elementListDialog) {
 			elementDialog.close();
 		}
 	}, this);
+
+	/* Click event handler */
 	this.containerElement.onclick = $.proxy(function() {
 		/* Pin element dialog */
 		var elementDialog = Eplant.getElementDialog(this.element);
@@ -36,5 +51,4 @@ ChromosomeView.ElementListDialogItem = function(element, elementListDialog) {
 			elementDialog.pinned = true;
 		}
 	}, this);
-	this.elementListDialog.containerElement.appendChild(this.containerElement);
 };

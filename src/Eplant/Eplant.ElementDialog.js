@@ -16,6 +16,7 @@ Eplant.ElementDialog = function(attributes) {
 
 	/* Set class-specific attributes */
 	this.element = (attributes.element === undefined) ? null : attributes.element;
+	this.elementOfInterest = Eplant.getSpeciesOfInterest(this.element.chromosome.species).getElementOfInterest(this.element);
 
 	/* Set up dialog content */
 		/* Data container */
@@ -140,16 +141,6 @@ Eplant.ElementDialog = function(attributes) {
 				tagsElement.appendChild(tag.containerElement);
 				this.tags.push(tag);
 			container.appendChild(tagsElement);
-
-			/* Top 50 Similar */
-			this.top50SimilarElement = document.createElement("input");
-			this.top50SimilarElement.type = "button";
-			this.top50SimilarElement.className = "button";
-			this.top50SimilarElement.value = "Top 50 Similar";
-			this.top50SimilarElement.onclick = $.proxy(function() {
-				//TODO
-			}, this);
-			container.appendChild(this.top50SimilarElement);
 		this.containerElement.appendChild(container);
 
 		/* View icons container */
@@ -163,6 +154,12 @@ Eplant.ElementDialog = function(attributes) {
 				var img = document.createElement("img");
 				img.src = "img/unavailable/world.png";
 				this.worldViewElement.appendChild(img);
+			this.worldViewElement.onclick = $.proxy(function() {
+				if (this.elementOfInterest) {
+					Eplant.speciesOfFocus.setElementOfFocus(this.elementOfInterest);
+					Eplant.toWorldView();
+				}
+			}, this);
 			container.appendChild(this.worldViewElement);
 
 			/* Plant */
@@ -172,6 +169,12 @@ Eplant.ElementDialog = function(attributes) {
 				var img = document.createElement("img");
 				img.src = "img/unavailable/plant.png";
 				this.plantViewElement.appendChild(img);
+			this.plantViewElement.onclick = $.proxy(function() {
+				if (this.elementOfInterest) {
+					Eplant.speciesOfFocus.setElementOfFocus(this.elementOfInterest);
+					Eplant.toPlantView();
+				}
+			}, this);
 			container.appendChild(this.plantViewElement);
 
 			/* Cell */
@@ -181,7 +184,28 @@ Eplant.ElementDialog = function(attributes) {
 				var img = document.createElement("img");
 				img.src = "img/unavailable/cell.png";
 				this.cellViewElement.appendChild(img);
+			this.cellViewElement.onclick = $.proxy(function() {
+				if (this.elementOfInterest) {
+					Eplant.speciesOfFocus.setElementOfFocus(this.elementOfInterest);
+					Eplant.toCellView();
+				}
+			}, this);
 			container.appendChild(this.cellViewElement);
+
+			/* Experiment */
+			this.experimentViewElement = document.createElement("div");
+			this.experimentViewElement.className = "iconSmall";
+			this.experimentViewElement.style.display = "inline-block";
+				var img = document.createElement("img");
+				img.src = "img/unavailable/experiment.png";
+				this.experimentViewElement.appendChild(img);
+			this.experimentViewElement.onclick = $.proxy(function() {
+				if (this.elementOfInterest) {
+					Eplant.speciesOfFocus.setElementOfFocus(this.elementOfInterest);
+					Eplant.toExperimentView();
+				}
+			}, this);
+			container.appendChild(this.experimentViewElement);
 
 			/* Interaction */
 			this.interactionViewElement = document.createElement("div");
@@ -190,6 +214,12 @@ Eplant.ElementDialog = function(attributes) {
 				var img = document.createElement("img");
 				img.src = "img/unavailable/interaction.png";
 				this.interactionViewElement.appendChild(img);
+			this.interactionViewElement.onclick = $.proxy(function() {
+				if (this.elementOfInterest) {
+					Eplant.speciesOfFocus.setElementOfFocus(this.elementOfInterest);
+					Eplant.toInteractionView();
+				}
+			}, this);
 			container.appendChild(this.interactionViewElement);
 
 			/* Pathway */
@@ -199,6 +229,12 @@ Eplant.ElementDialog = function(attributes) {
 				var img = document.createElement("img");
 				img.src = "img/unavailable/pathway.png";
 				this.pathwayViewElement.appendChild(img);
+			this.pathwayViewElement.onclick = $.proxy(function() {
+				if (this.elementOfInterest) {
+					Eplant.speciesOfFocus.setElementOfFocus(this.elementOfInterest);
+					Eplant.toPathwayView();
+				}
+			}, this);
 			container.appendChild(this.pathwayViewElement);
 
 			/* Molecule */
@@ -208,6 +244,12 @@ Eplant.ElementDialog = function(attributes) {
 				var img = document.createElement("img");
 				img.src = "img/unavailable/molecule.png";
 				this.moleculeViewElement.appendChild(img);
+			this.moleculeViewElement.onclick = $.proxy(function() {
+				if (this.elementOfInterest) {
+					Eplant.speciesOfFocus.setElementOfFocus(this.elementOfInterest);
+					Eplant.toMoleculeView();
+				}
+			}, this);
 			container.appendChild(this.moleculeViewElement);
 
 			/* Sequence */
@@ -217,11 +259,14 @@ Eplant.ElementDialog = function(attributes) {
 				var img = document.createElement("img");
 				img.src = "img/unavailable/sequence.png";
 				this.sequenceViewElement.appendChild(img);
+			this.sequenceViewElement.onclick = $.proxy(function() {
+				if (this.elementOfInterest) {
+					Eplant.speciesOfFocus.setElementOfFocus(this.elementOfInterest);
+					Eplant.toSequenceView();
+				}
+			}, this);
 			container.appendChild(this.sequenceViewElement);
 		this.containerElement.appendChild(container);
-
-	/* Get ElementOfInterest */
-	this.elementOfInterest = Eplant.getSpeciesOfInterest(this.element.chromosome.species).getElementOfInterest(this.element);
 
 	/* Open dialog */
 	this.open();
@@ -363,79 +408,86 @@ Eplant.ElementDialog.prototype.toDropData = function() {
 
 Eplant.ElementDialog.prototype.updateIcons = function() {
 	/* WorldView */
-	if (this.elementOfInterest == null || this.elementOfInterest.worldView == null || this.elementOfInterest.worldView.getLoadProgress() < 1) {
-		this.worldViewElement.getElementsByTagName("img")[0].src = "img/unavailable/world.png";
+	var img = this.worldViewElement.getElementsByTagName("img")[0];
+	if (!this.elementOfInterest || !this.elementOfInterest.worldView || this.elementOfInterest.worldView.getLoadProgress() < 1) {
+		if (!ZUI.endsWith(img.src, "img/unavailable/world.png")) img.src = "img/unavailable/world.png";
 	}
 	else if (this.elementOfInterest.worldView == ZUI.activeView) {
-		this.worldViewElement.getElementsByTagName("img")[0].src = "img/active/world.png";
+		if (!ZUI.endsWith(img.src, "img/active/world.png")) img.src = "img/active/world.png";
 	}
 	else {
-		this.worldViewElement.getElementsByTagName("img")[0].src = "img/available/world.png";
+		if (!ZUI.endsWith(img.src, "img/available/world.png")) img.src = "img/available/world.png";
 	}
 
 	/* PlantView */
-	if (this.elementOfInterest == null || this.elementOfInterest.plantView == null || this.elementOfInterest.plantView.getLoadProgress() < 1) {
-		this.plantViewElement.getElementsByTagName("img")[0].src = "img/unavailable/plant.png";
+	var img = this.plantViewElement.getElementsByTagName("img")[0];
+	if (!this.elementOfInterest || !this.elementOfInterest.plantView || this.elementOfInterest.plantView.getLoadProgress() < 1) {
+		if (!ZUI.endsWith(img.src, "img/unavailable/plant.png")) img.src = "img/unavailable/plant.png";
 	}
 	else if (this.elementOfInterest.plantView == ZUI.activeView) {
-		this.plantViewElement.getElementsByTagName("img")[0].src = "img/active/plant.png";
+		if (!ZUI.endsWith(img.src, "img/active/plant.png")) img.src = "img/active/plant.png";
 	}
 	else {
-		this.plantViewElement.getElementsByTagName("img")[0].src = "img/available/plant.png";
+		if (!ZUI.endsWith(img.src, "img/available/plant.png")) img.src = "img/available/plant.png";
 	}
 
 	/* CellView */
-	if (this.elementOfInterest == null || this.elementOfInterest.cellView == null || this.elementOfInterest.cellView.getLoadProgress() < 1) {
-		this.cellViewElement.getElementsByTagName("img")[0].src = "img/unavailable/cell.png";
+	var img = this.cellViewElement.getElementsByTagName("img")[0];
+	if (!this.elementOfInterest || !this.elementOfInterest.cellView || this.elementOfInterest.cellView.getLoadProgress() < 1) {
+		if (!ZUI.endsWith(img.src, "img/unavailable/cell.png")) img.src = "img/unavailable/cell.png";
 	}
 	else if (this.elementOfInterest.cellView == ZUI.activeView) {
-		this.cellViewElement.getElementsByTagName("img")[0].src = "img/active/cell.png";
+		if (!ZUI.endsWith(img.src, "img/active/cell.png")) img.src = "img/active/cell.png";
 	}
 	else {
-		this.cellViewElement.getElementsByTagName("img")[0].src = "img/available/cell.png";
+		if (!ZUI.endsWith(img.src, "img/available/cell.png")) img.src = "img/available/cell.png";
 	}
 
 	/* InteractionView */
-	if (this.elementOfInterest == null || this.elementOfInterest.interactionView == null || this.elementOfInterest.interactionView.getLoadProgress() < 1) {
-		this.interactionViewElement.getElementsByTagName("img")[0].src = "img/unavailable/interaction.png";
+	var img = this.interactionViewElement.getElementsByTagName("img")[0];
+	if (!this.elementOfInterest || !this.elementOfInterest.interactionView || this.elementOfInterest.interactionView.getLoadProgress() < 1) {
+		if (!ZUI.endsWith(img.src, "img/unavailable/interaction.png")) img.src = "img/unavailable/interaction.png";
 	}
 	else if (this.elementOfInterest.interactionView == ZUI.activeView) {
-		this.interactionViewElement.getElementsByTagName("img")[0].src = "img/active/interaction.png";
+		if (!ZUI.endsWith(img.src, "img/active/interaction.png")) img.src = "img/active/interaction.png";
 	}
 	else {
-		this.interactionViewElement.getElementsByTagName("img")[0].src = "img/available/interaction.png";
+		if (!ZUI.endsWith(img.src, "img/available/interaction.png")) img.src = "img/available/interaction.png";
 	}
 
 	/* PathwayView */
-	if (this.elementOfInterest == null || this.elementOfInterest.pathwayView == null || this.elementOfInterest.pathwayView.getLoadProgress() < 1) {
-		this.pathwayViewElement.getElementsByTagName("img")[0].src = "img/unavailable/pathway.png";
+	var img = this.pathwayViewElement.getElementsByTagName("img")[0];
+	if (!this.elementOfInterest || !this.elementOfInterest.pathwayView || this.elementOfInterest.pathwayView.getLoadProgress() < 1) {
+		if (!ZUI.endsWith(img.src, "img/unavailable/pathway.png")) img.src = "img/unavailable/pathway.png";
 	}
 	else if (this.elementOfInterest.pathwayView == ZUI.activeView) {
-		this.pathwayViewElement.getElementsByTagName("img")[0].src = "img/active/pathway.png";
+		if (!ZUI.endsWith(img.src, "img/active/pathway.png")) img.src = "img/active/pathway.png";
 	}
 	else {
-		this.pathwayViewElement.getElementsByTagName("img")[0].src = "img/available/pathway.png";
+		if (!ZUI.endsWith(img.src, "img/available/pathway.png")) img.src = "img/available/pathway.png";
 	}
 
 	/* MoleculeView */
-	if (this.elementOfInterest == null || this.elementOfInterest.moleculeView == null || this.elementOfInterest.moleculeView.getLoadProgress() < 1) {
-		this.moleculeViewElement.getElementsByTagName("img")[0].src = "img/unavailable/molecule.png";
+	var img = this.moleculeViewElement.getElementsByTagName("img")[0];
+	if (!this.elementOfInterest || !this.elementOfInterest.moleculeView || this.elementOfInterest.moleculeView.getLoadProgress() < 1) {
+		if (!ZUI.endsWith(img.src, "img/unavailable/molecule.png")) img.src = "img/unavailable/molecule.png";
 	}
 	else if (this.elementOfInterest.moleculeView == ZUI.activeView) {
-		this.moleculeViewElement.getElementsByTagName("img")[0].src = "img/active/molecule.png";
+		if (!ZUI.endsWith(img.src, "img/active/molecule.png")) img.src = "img/active/molecule.png";
 	}
 	else {
-		this.moleculeViewElement.getElementsByTagName("img")[0].src = "img/available/molecule.png";
+		if (!ZUI.endsWith(img.src, "img/available/molecule.png")) img.src = "img/available/molecule.png";
 	}
 
 	/* SequenceView */
-	if (this.elementOfInterest == null || this.elementOfInterest.sequenceView == null || this.elementOfInterest.sequenceView.getLoadProgress() < 1) {
-		this.sequenceViewElement.getElementsByTagName("img")[0].src = "img/unavailable/sequence.png";
+	var img = this.sequenceViewElement.getElementsByTagName("img")[0];
+	if (!this.elementOfInterest || !this.elementOfInterest.sequenceView || this.elementOfInterest.sequenceView.getLoadProgress() < 1) {
+		if (!ZUI.endsWith(img.src, "img/unavailable/sequence.png")) img.src = "img/unavailable/sequence.png";
 	}
 	else if (this.elementOfInterest.sequenceView == ZUI.activeView) {
-		this.sequenceViewElement.getElementsByTagName("img")[0].src = "img/active/sequence.png";
+		if (!ZUI.endsWith(img.src, "img/active/sequence.png")) img.src = "img/active/sequence.png";
 	}
 	else {
-		this.sequenceViewElement.getElementsByTagName("img")[0].src = "img/available/sequence.png";
+		if (!ZUI.endsWith(img.src, "img/available/sequence.png")) img.src = "img/available/sequence.png";
 	}
 };

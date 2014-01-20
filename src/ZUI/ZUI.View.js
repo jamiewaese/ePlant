@@ -59,6 +59,19 @@ ZUI.View.prototype.mouseWheel = function(scroll) {};
 /* Called when context menu is summoned */
 ZUI.View.prototype.contextMenu = function() {};
 
-/* Returns the load progress of the View (0 to 1) */
-ZUI.View.prototype.getLoadProgress = function() {};
+ZUI.View.prototype.pinch = function(scale) {};
 
+ZUI.View.prototype.rotate = function(rotation) {};
+
+ZUI.View.prototype.touchStart = function(pointer) {};
+
+ZUI.View.prototype.touchMove = function(pointer) {};
+
+ZUI.View.prototype.touchEnd = function(pointer) {};
+
+ZUI.View.prototype.touchCancel = function(pointer) {};
+
+/* Returns the load progress of the View (0 to 1) */
+ZUI.View.prototype.getLoadProgress = function() {
+	return 0;
+};
