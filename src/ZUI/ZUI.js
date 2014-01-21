@@ -61,6 +61,7 @@ ZUI.background = {			// Background color
 	blue : 255,
 	alpha : 0
 };
+ZUI.eventListeners = {};		// Event listeners (hash table)
 
 /* Initialize */
 ZUI.initialize = function(settings) {
@@ -463,6 +464,59 @@ ZUI.gestureEnd = function(event) {
 	/* Reset gesture status */
 	ZUI.touchStatus.isPinch = false;
 	ZUI.touchStatus.isRotate = false;
+};
+
+/* Fires a ZUI event */
+ZUI.fireEvent = function(event) {
+	/* Filter event listeners by type */
+	var eventListeners1 = ZUI.eventListeners[event.type];
+	if (!eventListeners1) {
+		return;
+	}
+
+	/* Filter event listeners by target */
+	var eventListeners2 = eventListeners1[event.target];
+	if (!eventListeners2) {
+		return;
+	}
+
+	/* Execute callback functions */
+	for (var n = 0; n < eventListeners2.length; n++) {
+		eventListeners[n].callback(event.data);
+	}
+
+	/* Execute callback functions with no particular target */
+	var eventListeners3 = eventListeners1["_all"];
+	if (!eventListeners3) {
+		return;
+	}
+	for (n = 0; n < eventListeners3.length; n++) {
+		eventListeners[n].callback(event.data);
+	}
+};
+
+/* Adds a ZUI event listener */
+ZUI.addEventListener = function(eventListener) {
+	/* Filter event listeners by type */
+	var eventListeners1 = ZUI.eventListeners[eventListener.type];
+	if (!eventListeners1) {
+		eventListeners1 = {};
+		ZUI.eventListeners[eventListener.type] = eventListeners1;
+	}
+
+	/* Filter event listeners by target */
+	var target = eventListener.target;
+	if (target === undefined || target === null) {
+		target = "_all";
+	}
+	var eventListeners2 = eventListeners1[target];
+	if (!eventListeners2) {
+		eventListeners2 = [];
+		eventListeners1[target] = eventListeners2;
+	}
+
+	/* Add event listener */
+	eventListeners2.push(eventListener);
 };
 
 /* Function for passing input events to another element, override with custom function if needed */
