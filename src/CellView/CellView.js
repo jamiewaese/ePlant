@@ -4,13 +4,12 @@
  * Code by Hans Yu
  */
 
-function CellView(element) {
-	EFPView.call(this, element, "data/cell/" + element.chromosome.species.scientificName.replace(" ", "_") + ".json");
+function CellView(elementOfInterest) {
+	EFPView.call(this, elementOfInterest, "data/cell/" + elementOfInterest.element.chromosome.species.scientificName.replace(" ", "_") + ".json");
 }
 
 /* Inherit from EFPView superclass */
-CellView.prototype = new EFPView();
-CellView.prototype.constructor = CellView;
+ZUI.Util.inheritClass(EFPView, CellView);
 
 CellView.prototype.active = function() {
 	ZUI.container.style.cursor = "default";

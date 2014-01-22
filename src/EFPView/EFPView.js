@@ -4,8 +4,9 @@
  * Code by Hans Yu
  */
 
-function EFPView(element, diagram) {
-	this.element = element;
+function EFPView(elementOfInterest, diagram) {
+	this.elementOfInterest = elementOfInterest;
+	this.element = elementOfInterest.element;
 	this.diagram = diagram;
 
 	this.width = null;
@@ -18,6 +19,7 @@ function EFPView(element, diagram) {
 	this.compareGroups = null;
 	this.compareElement = null;
 	this.viewObjects = [];
+	this.tags = [];
 
 	this.isDataReady = false;
 
@@ -32,6 +34,14 @@ function EFPView(element, diagram) {
 	this.groupTooltipCountdown = null;
 
 	this.initIcons();
+
+	this.updateTags();
+	var eventListener = new ZUI.EventListener("update-tags", this.elementOfInterest, function(event, eventData, listenerData) {
+		var view = listenerData.view;
+		view.updateTags();
+	}, {
+		view: this
+	});
 
 	/* Retrieve diagram JSON */
 	$.ajax({
@@ -307,7 +317,7 @@ EFPView.prototype.draw = function() {
 	ZUI.camera.update();
 
 	/* Draw group shapes */
-	for (n = 0; n < this.groups.length; n++) {
+	for (var n = 0; n < this.groups.length; n++) {
 		this.groups[n].shape.draw();
 	}
 
@@ -322,8 +332,13 @@ EFPView.prototype.draw = function() {
 	}
 
 	/* Draw labels */
-	for (var n = 0; n < this.labels.length; n++) {
+	for (n = 0; n < this.labels.length; n++) {
 		this.labels[n].text.draw();
+	}
+
+	/* Draw tags */
+	for (n = 0; n < this.tags.length; n++) {
+		this.tags[n].draw();
 	}
 
 	/* Create group tooltip */
@@ -531,12 +546,30 @@ EFPView.prototype.updateEFP = function() {
 	}
 };
 
+EFPView.prototype.updateTags = function() {
+	this.tags = [];
+	for (var n = 0; n < this.elementOfInterest.tags.length; n++) {
+		var tag = this.elementOfInterest.tags[n];
+		this.tags.push(new ZUI.ViewObject({
+			shape: "circle",
+			positionScale: "world",
+			sizeScale: "world",
+			x: ZUI.width - 13 - n * 8,
+			y: ZUI.height - 13,
+			radius: 3,
+			centerAt: "center center",
+			strokeColor: tag.color,
+			fillColor: tag.color
+		}));
+	}
+};
+
 EFPView.prototype.toCompareMode = function(elementOfInterest) {
-	var _elementOfInterest = Eplant.getSpeciesOfInterest(this.element.chromosome.species).getElementOfInterest(this.element);
-	if (!_elementOfInterest) return;
+	this.elementOfInterest = Eplant.getSpeciesOfInterest(this.element.chromosome.species).getElementOfInterest(this.element);
+	if (!this.elementOfInterest) return;
 	var viewName = null;
-	for (key in _elementOfInterest) {
-		if (_elementOfInterest[key] === this) {
+	for (key in this.elementOfInterest) {
+		if (this.elementOfInterest[key] === this) {
 			viewName = key;
 			break;
 		}

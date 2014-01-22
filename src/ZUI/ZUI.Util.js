@@ -101,3 +101,12 @@ ZUI.Util.getColorComponents = function(color) {
 		};
 	}
 };
+
+/* Makes the child class inherit from the parent class */
+ZUI.Util.inheritClass = function(parent, child) {
+	function protoCreator() {
+		this.constructor = child.prototype.constructor;
+	}
+	protoCreator.prototype = parent.prototype;
+	child.prototype = new protoCreator();
+};

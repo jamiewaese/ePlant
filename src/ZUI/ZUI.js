@@ -61,10 +61,13 @@ ZUI.background = {			// Background color
 	blue : 255,
 	alpha : 0
 };
-ZUI.eventListeners = {};		// Event listeners (hash table)
+ZUI.eventListeners = null;		// Event listeners hash table, initialized in ZUI.initialize
 
 /* Initialize */
 ZUI.initialize = function(settings) {
+	/* Initialize eventListeners */
+	ZUI.eventListeners = new ZUI.HashMap();
+
 	/* Set canvas and container handles */
 	if (settings.canvas) {
 		ZUI.canvas = settings.canvas;
@@ -469,39 +472,39 @@ ZUI.gestureEnd = function(event) {
 /* Fires a ZUI event */
 ZUI.fireEvent = function(event) {
 	/* Filter event listeners by type */
-	var eventListeners1 = ZUI.eventListeners[event.type];
+	var eventListeners1 = ZUI.eventListeners.get(event.type);
 	if (!eventListeners1) {
 		return;
 	}
 
 	/* Filter event listeners by target */
-	var eventListeners2 = eventListeners1[event.target];
+	var eventListeners2 = eventListeners1.get(event.target);
 	if (!eventListeners2) {
 		return;
 	}
 
 	/* Execute callback functions */
 	for (var n = 0; n < eventListeners2.length; n++) {
-		eventListeners[n].callback(event.data);
+		eventListeners2[n].callback(event, event.data, eventListeners2[n].data);
 	}
 
 	/* Execute callback functions with no particular target */
-	var eventListeners3 = eventListeners1["_all"];
+	var eventListeners3 = eventListeners1.get("_all");
 	if (!eventListeners3) {
 		return;
 	}
 	for (n = 0; n < eventListeners3.length; n++) {
-		eventListeners[n].callback(event.data);
+		eventListeners3[n].callback(event, event.data, eventListeners3[n].data);
 	}
 };
 
 /* Adds a ZUI event listener */
 ZUI.addEventListener = function(eventListener) {
 	/* Filter event listeners by type */
-	var eventListeners1 = ZUI.eventListeners[eventListener.type];
+	var eventListeners1 = ZUI.eventListeners.get(eventListener.type);
 	if (!eventListeners1) {
-		eventListeners1 = {};
-		ZUI.eventListeners[eventListener.type] = eventListeners1;
+		eventListeners1 = new ZUI.HashMap();
+		ZUI.eventListeners.put(eventListener.type, eventListeners1);
 	}
 
 	/* Filter event listeners by target */
@@ -509,14 +512,50 @@ ZUI.addEventListener = function(eventListener) {
 	if (target === undefined || target === null) {
 		target = "_all";
 	}
-	var eventListeners2 = eventListeners1[target];
+	var eventListeners2 = eventListeners1.get(target);
 	if (!eventListeners2) {
 		eventListeners2 = [];
-		eventListeners1[target] = eventListeners2;
+		eventListeners1.put(target, eventListeners2);
 	}
 
 	/* Add event listener */
 	eventListeners2.push(eventListener);
+};
+
+/* Removes a ZUI event listener */
+ZUI.removeEventListener = function(eventListener) {
+	/* Filter event listeners by type */
+	var eventListeners1 = ZUI.eventListeners.get(eventListener.type);
+	if (!eventListeners1) {
+		return;
+	}
+
+	/* Filter event listeners by target */
+	var target = eventListener.target;
+	if (target === undefined || target === null) {
+		target = "_all";
+	}
+	var eventListeners2 = eventListeners1.get(target);
+	if (!eventListeners2) {
+		return;
+	}
+
+	/* Remove event listener */
+	var index = eventListeners2.indexOf(eventListener);
+	if (index < 0) {
+		return;
+	}
+	eventListeners2.splice(index, 1);
+
+	/* Remove target level eventListeners if empty */
+	if (eventListeners2.length == 0) {
+		eventListeners1.delete(target);
+	}
+
+	/* Remove type level eventListeners if empty */
+	if (eventListeners1.length == 0) {
+		ZUI.eventListeners.delete(eventListener.type);
+	}
 };
 
 /* Function for passing input events to another element, override with custom function if needed */

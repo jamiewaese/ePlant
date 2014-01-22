@@ -4,13 +4,13 @@
  * Code by Hans Yu
  */
 
-function PlantView(element) {
-	EFPView.call(this, element, "data/plant/" + element.chromosome.species.scientificName.replace(" ", "_") + ".json");
+function PlantView(elementOfInterest) {
+	EFPView.call(this, elementOfInterest, "data/plant/" + elementOfInterest.element.chromosome.species.scientificName.replace(" ", "_") + ".json");
 }
 
-/* Inherit from EFPView superclass */
-PlantView.prototype = new EFPView();
-PlantView.prototype.constructor = PlantView;
+/* Inherit from EFPView superclass, http://stackoverflow.com/questions/7533473/javascript-inheritance-when-constructor-has-arguments */
+
+ZUI.Util.inheritClass(EFPView, PlantView);
 
 PlantView.prototype.active = function() {
 	ZUI.container.style.cursor = "default";

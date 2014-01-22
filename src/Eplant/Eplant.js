@@ -15,6 +15,7 @@ Eplant.elementDialogs = [];			// Element dialogs
 Eplant.viewHistory = [];			// View history stack
 Eplant.viewHistorySelected = null;		// Selected index of view history
 Eplant.animateViewChange = true;		// Toggle view change animation
+Eplant._updatePanelTagsEventListeners = [];	// Event listeners that listen to tag update for updating elements of interest panel
 
 Eplant.initialize = function() {
 	ZUI.initialize({
@@ -40,6 +41,25 @@ Eplant.initialize = function() {
 			}).done(function(data) {
 				response(data);
 			});
+		}
+	});
+
+	/* Override Eplant.elementsDialogs push method to detect new items */
+	Eplant.elementDialogs.push = function(item) {
+		Array.prototype.push.call(Eplant.elementDialogs, item);
+		Eplant.updateElementsOfInterestPanel();
+	}
+
+	/* Override Eplant.elementsDialogs splice method to detect new items */
+	Eplant.elementDialogs.splice = function(index, length) {
+		Array.prototype.splice.call(Eplant.elementDialogs, index, length);
+		Eplant.updateElementsOfInterestPanel();
+	}
+
+	/* Allow Enter key for submitting gene query */
+	$("#enterIdentifier").keypress(function(event) {
+		if (event.keyCode == 13) {
+			Eplant.getElement();
 		}
 	});
 };
@@ -464,23 +484,8 @@ Eplant.popViewHistory = function() {
 Eplant.collapseElementDialogs = function() {
 	for (var n = 0; n < Eplant.elementDialogs.length; n++) {
 		var elementDialog = Eplant.elementDialogs[n];
-		if (!elementDialog.minimized) {
-			$(elementDialog.minimizeButtonElement).button({
-				icons: {
-					primary: "ui-icon-plus"
-				},
-				text: false
-			});
-			elementDialog.minimized = true;
-			elementDialog._height = $(elementDialog.containerElement).height();
-			$(elementDialog.containerElement).height(elementDialog._height);
-			$(elementDialog.containerElement).hide().show(0);		// Hack to force redraw
-			$(elementDialog.containerElement).addClass("minimized");
-			$(elementDialog.containerElement).height(0);
-		}
-		$(elementDialog.containerElement.parentNode).animate({
-			top: $(window).height() - 50
-		}, 200);
+		elementDialog.close();
+		n--;
 	}
 };
 
@@ -493,23 +498,102 @@ Eplant.updateElementsOfInterestPanel = function() {
 	var container = document.getElementById("genePanel_content");
 	container.innerHTML = "";
 
+	/* Remove old panel tags update event listeners */
+	for (var n = 0; n < Eplant._updatePanelTagsEventListeners.length; n++) {
+		ZUI.removeEventListener(Eplant._updatePanelTagsEventListeners[n]);
+	}
+	Eplant._updatePanelTagsEventListeners = [];
+
 	/* Add items to panel */
 	var elementsOfInterest = Eplant.speciesOfFocus.elementsOfInterest;
-	for (var n = 0; n < elementsOfInterest.length; n++) {
+	for (n = 0; n < elementsOfInterest.length; n++) {
 		var elementOfInterest = elementsOfInterest[n];
 		var element = elementOfInterest.element;
-		var item = document.createElement("span");
-		item.innerHTML = element.identifier;
-		if (element.aliases != null && element.aliases.length > 0 && element.aliases[0].length > 0) {
-			item.innerHTML += " / " + element.aliases.join(", ");
-		}
+
+		/* Container */
+		var item = document.createElement("div");
 		item.className = "elementsOfInterestPanelItem";
 		if (elementOfInterest == Eplant.speciesOfFocus.elementOfFocus) {
 			item.className += " elementsOfInterestPanelItem_focus";
 		}
-		item.onclick = $.proxy(function() {
+
+		/* Icon */
+		var img = document.createElement("img");
+		if (Eplant.getElementDialog(elementOfInterest.element)) {
+			if (elementOfInterest == Eplant.speciesOfFocus.elementOfFocus) {
+				img.src = "img/expand-focus";
+			}
+			else {
+				img.src = "img/expand-open.png";
+			}
+		}
+		else {
+			img.src = "img/expand.png";
+		}
+		img.onclick = $.proxy(function() {
+			var elementDialog = Eplant.getElementDialog(this.element);
+			if (elementDialog) {
+				elementDialog.close();
+			}
+			else {
+				elementDialog = new Eplant.ElementDialog({
+					x: ZUI.width,
+					y: 50,
+					orientation: "left",
+					element: this.element
+				});
+			}
+		}, elementOfInterest);
+		item.appendChild(img);
+
+		/* Label */
+		var span = document.createElement("span");
+		span.innerHTML = element.identifier;
+		if (element.aliases != null && element.aliases.length > 0 && element.aliases[0].length > 0) {
+			span.innerHTML += " / " + element.aliases.join(", ");
+		}
+		span.title = span.innerHTML;
+		span.onclick = $.proxy(function() {
 			this.speciesOfInterest.setElementOfFocus(this);
 		}, elementOfInterest);
+		item.appendChild(span);
+
+		/* Tags */
+		var tagsContainer = document.createElement("div");
+		tagsContainer.style.display = "inline";
+		for (var m = 0; m < elementOfInterest.tags.length; m++) {
+			var tag = elementOfInterest.tags[m];
+			var tagElement = document.createElement("div");
+			tagElement.style.borderRadius = "999px";
+			tagElement.style.width = "7px";
+			tagElement.style.height = "7px";
+			tagElement.style.margin = "1px";
+			tagElement.style.display = "inline-block";
+			tagElement.style.backgroundColor = tag.color;
+			tagsContainer.appendChild(tagElement);
+		}
+		var eventListener = new ZUI.EventListener("update-tags", elementOfInterest, function(event, eventData, listenerData) {
+			var elementOfInterest = event.target;
+			var tagsContainer = listenerData.tagsContainer;
+			tagsContainer.innerHTML = "";
+			for (var m = 0; m < elementOfInterest.tags.length; m++) {
+				var tag = elementOfInterest.tags[m];
+				var tagElement = document.createElement("div");
+				tagElement.style.borderRadius = "999px";
+				tagElement.style.width = "7px";
+				tagElement.style.height = "7px";
+				tagElement.style.margin = "1px";
+				tagElement.style.display = "inline-block";
+				tagElement.style.backgroundColor = tag.color;
+				tagsContainer.appendChild(tagElement);
+			}
+		}, {
+			tagsContainer: tagsContainer
+		});
+		Eplant._updatePanelTagsEventListeners.push(eventListener);
+		ZUI.addEventListener(eventListener);
+		item.appendChild(tagsContainer);
+		
 		container.appendChild(item);
 	}
 };

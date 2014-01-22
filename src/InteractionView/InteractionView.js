@@ -558,7 +558,7 @@ InteractionView.prototype.makeNodeObject = function(identifier) {
 		obj.data = {};
 			obj.data.id = identifier.toUpperCase();
 			obj.data.outerColor = Eplant.Color.White;
-			obj.data.innerColor = (elementOfInterest) ? ((speciesOfInterest.elementOfFocus == elementOfInterest) ? Eplant.Color.Green : Eplant.Color.LightGrey) : Eplant.Color.DarkGrey;
+			obj.data.innerColor = (elementOfInterest) ? Eplant.Color.DarkGrey : Eplant.Color.LightGrey;
 			obj.data.labelOutlineWidth = (isQuery) ? 2 : 0;
 			obj.data.mass = (isQuery) ? 25 : 9;
 			obj.data.elementOfInterest = elementOfInterest;

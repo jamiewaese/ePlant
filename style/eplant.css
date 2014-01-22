@@ -211,16 +211,32 @@ greyText {
 
 /* Class for items in the gene panel */
 .elementsOfInterestPanelItem {
+	display: block;
+	vertical-align: middle;
+}
+.elementsOfInterestPanelItem img {
 	cursor: pointer;
+	width: 16px;
+	height: 16px;
+	position: relative;
+	top: 3px;
+}
+.elementsOfInterestPanelItem span {
+	cursor: pointer;
+	display: inline-block;
+	max-width: 146px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	font-family: Helvetica;
 	font-size: 14px;
 	line-height: 24px;
 	color: #787878;
-	display: block;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	vertical-align: middle;
+	padding-left: 2px;
+	padding-right: 2px;
 }
+
 .elementsOfInterestPanelItem_focus {
 	color: #3C3C3C;
 	font-weight: bold;

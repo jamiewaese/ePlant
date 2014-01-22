@@ -25,17 +25,12 @@ Eplant.ElementDialog.Tag = function(color, elementDialog) {
 			if (this.selected) {
 				this.selected = false;
 				this.containerElement.setAttribute("selected", "false");
-				for (var n = 0; n < this.elementDialog.elementOfInterest.tags.length; n++) {
-					if (this.elementDialog.elementOfInterest.tags[n].color == this.color) {
-						this.elementDialog.elementOfInterest.tags.splice(n, 1);
-						break;
-					}
-				}
+				this.elementDialog.elementOfInterest.setTagByColor(this.color, false);
 			}
 			else {
 				this.selected = true;
 				this.containerElement.setAttribute("selected", "true");
-				this.elementDialog.elementOfInterest.tags.push(new Eplant.ElementOfInterest.Tag(this.color));
+				this.elementDialog.elementOfInterest.setTagByColor(this.color, true);
 			}
 		}
 	}, this);
