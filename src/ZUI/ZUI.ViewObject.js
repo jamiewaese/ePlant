@@ -331,7 +331,7 @@ ZUI.ViewObject = function(attributes) {
 		});
 	}
 	else if (this.shape == "path") {
-		this.private.vertices = (attributes.vertices === undefined) ? "" : attributes.vertices;
+		this.private.vertices = (attributes.vertices === undefined) ? [] : attributes.vertices;
 		Object.defineProperty(this, "vertices", {
 			get: function() {
 				return this.private.vertices;
@@ -538,10 +538,6 @@ ZUI.ViewObject = function(attributes) {
 		Object.defineProperty(this, "width", {
 			get: function() {
 				return this.private.width;
-			},
-			set: function(value) {
-				this.private.width = value;
-				this.redraw = true;
 			}
 		});
 
@@ -549,10 +545,6 @@ ZUI.ViewObject = function(attributes) {
 		Object.defineProperty(this, "height", {
 			get: function() {
 				return this.private.height;
-			},
-			set: function(value) {
-				this.private.height = value;
-				this.redraw = true;
 			}
 		});
 
@@ -596,17 +588,47 @@ ZUI.ViewObject = function(attributes) {
 			}
 		});
 
+		this.private.dataString = (attributes.dataString === undefined) ? null : attributes.dataString;
+		Object.defineProperty(this, "dataString", {
+			get: function() {
+				return this.private.dataString;
+			},
+			set: function(value) {
+				this.private.dataString = value;
+				this.redraw = true;
+			}
+		});
+
 		this.ready = false;
-		$.ajax({
-			type: "GET",
-			url: this.url,
-			dataType: "xml"
-		}).done($.proxy(function(response) {
+		if (!this.dataString) {
+			$.ajax({
+				type: "GET",
+				url: this.url,
+				dataType: "xml"
+			}).done($.proxy(function(response) {
+				var svg = response.getElementsByTagName("svg")[0];
+				this.private.width = svg.getAttribute("width");
+				this.private.height = svg.getAttribute("height");
+				if (this.private.width.indexOf("px") >= 0) this.private.width = Number(this.private.width.substring(0, this.private.width.indexOf("px")));
+				if (this.private.height.indexOf("px") >= 0) this.private.height = Number(this.private.height.substring(0, this.private.height.indexOf("px")));
+				var paths = svg.getElementsByTagName("path");
+				this.paths = [];
+				for (var n = 0; n < paths.length; n++) {
+					var path = {};
+					path.id = paths[n].getAttribute("id");
+					path.instructions = ZUI.Parser.pathToObj(paths[n].getAttribute("d"));
+					this.paths.push(path);
+				}
+				this.ready = true;
+			}, this));
+		}
+		else {
+			var xmlDoc = (new DOMParser()).parseFromString(this.dataString, "text/xml");
 			var svg = response.getElementsByTagName("svg")[0];
-			this.width = svg.getAttribute("width");
-			this.height = svg.getAttribute("height");
-			if (this.width.indexOf("px") >= 0) this.width = Number(this.width.substring(0, this.width.indexOf("px")));
-			if (this.height.indexOf("px") >= 0) this.height = Number(this.height.substring(0, this.height.indexOf("px")));
+			this.private.width = svg.getAttribute("width");
+			this.private.height = svg.getAttribute("height");
+			if (this.private.width.indexOf("px") >= 0) this.private.width = Number(this.private.width.substring(0, this.private.width.indexOf("px")));
+			if (this.private.height.indexOf("px") >= 0) this.private.height = Number(this.private.height.substring(0, this.private.height.indexOf("px")));
 			var paths = svg.getElementsByTagName("path");
 			this.paths = [];
 			for (var n = 0; n < paths.length; n++) {
@@ -616,7 +638,7 @@ ZUI.ViewObject = function(attributes) {
 				this.paths.push(path);
 			}
 			this.ready = true;
-		}, this));
+		}
 	}
 	else if (this.shape == "advshape") {
 		this.private.paths = [];
@@ -635,6 +657,95 @@ ZUI.ViewObject = function(attributes) {
 		});
 		this.private.rawPaths = (attributes.paths === undefined) ? [] : attributes.paths;
 		this.paths = this.private.rawPaths;
+	}
+	else if (this.shape == "image") {
+		this.private.width = 0;
+		Object.defineProperty(this, "width", {
+			get: function() {
+				return this.private.width;
+			}
+		});
+
+		this.private.height = 0;
+		Object.defineProperty(this, "height", {
+			get: function() {
+				return this.private.height;
+			}
+		});
+
+		this.private.hscale = (attributes.hscale === undefined) ? 1 : attributes.hscale;
+		Object.defineProperty(this, "hscale", {
+			get: function() {
+				return this.private.hscale;
+			},
+			set: function(value) {
+				this.private.hscale = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.vscale = (attributes.vscale === undefined) ? 1 : attributes.vscale;
+		Object.defineProperty(this, "vscale", {
+			get: function() {
+				return this.private.vscale;
+			},
+			set: function(value) {
+				this.private.vscale = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.url = (attributes.url === undefined) ? "" : attributes.url;
+		Object.defineProperty(this, "url", {
+			get: function() {
+				return this.private.url;
+			}
+		});
+
+		this.private.type = "";
+		var index = this.url.lastIndexOf(".");
+		if (index > -1) {
+			this.private.type = this.url.substring(index);
+		}
+		if (attributes.type !== undefined) {
+			this.private.type = attributes.type;
+		}
+		Object.defineProperty(this, "type", {
+			get: function() {
+				return this.private.type;
+			}
+		});
+
+		this.private.dataString = (attributes.dataString === undefined) ? null : attributes.dataString;
+		Object.defineProperty(this, "dataString", {
+			get: function() {
+				return this.private.dataString;
+			},
+			set: function(value) {
+				this.private.dataString = value;
+				this.redraw = true;
+			}
+		});
+
+		this.private.image = new Image();
+		Object.defineProperty(this, "image", {
+			get: function() {
+				return this.private.image;
+			}
+		});
+
+		this.ready = false;
+		this.image.onload = (function() {
+			this.private.width = this.image.width;
+			this.private.height = this.image.height;
+			this.ready = true;
+		}).bind(this);
+		if (!this.dataString) {
+			this.image.src = this.url;
+		}
+		else {
+			this.image.src = "data:image/" + this.type + ";base64," + this.dataString;
+		}
 	}
 	else {
 		return null;
@@ -1196,6 +1307,55 @@ ZUI.ViewObject.prototype.draw = function(canvasContext) {
 		this.redraw = false;
 		this.isOnScreen = true;
 	}
+	else if (this.shape == "image" && this.ready) {
+		if (this.positionScale == "world") {
+			var position = ZUI.camera.projectPoint(this.x, this.y);
+			this.screenX = position.x;
+			this.screenY = position.y;
+		}
+		else if (this.positionScale == "screen") {
+			this.screenX = this.x;
+			this.screenY = this.y;
+		}
+		if (this.sizeScale == "world") {
+			this.screenOffsetX = ZUI.camera.projectDistance(this.offsetX);
+			this.screenOffsetY = ZUI.camera.projectDistance(this.offsetY);
+			this.screenWidth = ZUI.camera.projectDistance(this.width) * this.hscale;
+			this.screenHeight = ZUI.camera.projectDistance(this.height) * this.vscale;
+		}
+		else if (this.sizeScale == "screen") {
+			this.screenOffsetX = this.offsetX;
+			this.screenOffsetY = this.offsetY;
+			this.screenWidth = this.width * this.hscale;
+			this.screenHeight = this.height * this.vscale;
+		}
+
+		var screenX, screenY;
+		var centerAt = this.centerAt.split(" ");
+		if (centerAt[0] == "left") {
+			screenX = 0;
+		}
+		else if (centerAt[0] == "center") {
+			screenX = -this.screenWidth / 2;
+		}
+		else if (centerAt[0] == "right") {
+			screenX = -this.screenWidth;
+		}
+		screenX += this.screenX + this.screenOffsetX;
+		if (centerAt[1] == "top") {
+			screenY = 0;
+		}
+		else if (centerAt[1] == "center") {
+			screenY = -this.screenHeight / 2;
+		}
+		else if (centerAt[1] == "bottom") {
+			screenY = -this.screenHeight;
+		}
+		screenY += this.screenY + this.screenOffsetY;
+
+		ZUI.context.drawImage(this.image, screenX, screenY, this.screenWidth, this.screenHeight);
+		this.isOnScreen = true;
+	}
 };
 
 /* Checks whether the given coordinate pair is inside the view object */
@@ -1294,5 +1454,42 @@ ZUI.ViewObject.prototype.isInBound = function(x, y) {
 		}
 		return(this.cacheContext.isPointInPath(ZUI.mouseStatus.x, ZUI.mouseStatus.y));
 	}
+	else if (this.shape == "image") {
+		var screenX, screenY;
+		var centerAt = this.centerAt.split(" ");
+		if (centerAt[0] == "left") {
+			screenX = 0;
+		}
+		else if (centerAt[0] == "center") {
+			screenX =  -this.screenWidth / 2;
+		}
+		else if (centerAt[0] == "right") {
+			screenX = -this.screenWidth;
+		}
+		screenX += this.screenX + this.screenOffsetX;
+		if (centerAt[1] == "top") {
+			screenY = 0;
+		}
+		else if (centerAt[1] == "center") {
+			screenY = -this.screenHeight / 2;
+		}
+		else if (centerAt[1] == "bottom") {
+			screenY = -this.screenHeight;
+		}
+		screenY += this.screenY + this.screenOffsetY;
+		if (x < screenX) return false;
+		if (x > screenX + this.screenWidth) return false;
+		if (y < screenY) return false;
+		if (y > screenY + this.screenHeight) return false;
+		return true;
+	}
 	return false;
+};
+
+/* Removes the ViewObject from the global ZUI reference, so that it becomes available for garbage collection */
+ZUI.ViewObject.prototype.remove = function() {
+	var index = ZUI.viewObjects.indexOf(this);
+	if (index >= 0) {
+		ZUI.viewObjects.splice(index, 1);
+	}
 };

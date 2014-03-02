@@ -36,6 +36,7 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDT2IJLsslEC94ECmcXlAvz9ukPRH0fbh0&sensor=false"></script>
 			<script type="text/javascript" src="lib/GMaps/infobox_packed.js"></script>
 		<script type="text/javascript" src="lib/OverlappingMarkerSpiderfier/oms.min.js"></script>
+		<script language="javascript" src="lib/dalliance/dalliance-compiled.js"></script>
 
 		<!-- Tooltip Pop-Up Stylesheet. (From: https://github.com/chinchang/hint.css) -->
 		<link rel="stylesheet" href="lib/hint/hint.css"></link>
@@ -77,13 +78,13 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 					<!-- ePlant title & species name -->
 					<td width="460px">
 						<span id="logoText">ePlant&nbsp;&nbsp;</span>
-						<span id="speciesLabel">
+						<span id="speciesLabel" class="hiddenInSpeciesView">
 								<!-- Plant name should update when user changes species -->
 						</span>
 					</td>
 					<!-- Enter Gene ID box -->
 					<td width="284px">
-						<div id="enter_geneID_box">
+						<div id="enter_geneID_box" class="hiddenInSpeciesView">
 							<!-- text box -->
 							<input id="enterIdentifier" type="text" name="GeneID" value="Enter gene ID or alias" onfocus="inputFocus(this)" onblur="inputBlur(this)">
 							<!-- Get Data button -->
@@ -99,6 +100,14 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 							<div class="hint--left  hint--success  hint--rounded" data-hint="Load a previously saved session" data-enabled="true"><input type="button" class="button" id="fileinput" value="Load" onchange="readFile(this);"></div>
 						</div>
 					</td>
+					<!-- Example button -->
+					<td>
+						<div style="float: left;padding-top:6px;">
+							<div id="getExample" class="hint--left  hint--success  hint--rounded hiddenInSpeciesView" data-hint="Example" data-enabled="true">
+								<input type="button" class="button" value="Example" onclick="getExample();"/>
+							</div>
+						</div>
+					</td>
 				</tr>
 			</table>
 
@@ -107,7 +116,7 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 				<tr>
 					<td valign="top">
 						<!-- Icon Dock -->
-						<div id="navigation_container" style="opacity:0;">
+						<div id="navigation_container" class="hiddenInSpeciesView">
 							<div style="text-align:center;position:relative;">
 							<br>
 							<!-- Species Selector -->
@@ -130,7 +139,7 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 								<img src="img/unavailable/cell.png"></img>
 							</div>
 							<!-- Experimental eFP's -->
-							<div id="experimentViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Experimental eFP" data-enabled="true">
+							<div id="experimentViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Experimental eFP" data-enabled="true" onclick="Eplant.toExperimentView();">
 								<img src="img/unavailable/experiment.png"></img>
 							</div>
 							<br>
@@ -154,7 +163,7 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 							</div>
 							<br>
 							<!-- Sequence Viewer - JBrowse -->
-							<div id="sequenceViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Sequence viewer" data-enabled="true">
+							<div id="sequenceViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Sequence viewer" data-enabled="true" onclick="Eplant.toSequenceView();">
 								<img src="img/unavailable/sequence.png"></img>
 							</div>
 							<br>
@@ -174,14 +183,16 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 								</div>
 								<div id="JSmol_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;">
 								</div>
+								<div id="map_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;visibility:hidden;">
+								</div>
+								<div id="dalliance_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;visibility:hidden;">
+								</div>
 								<canvas id="ZUI_canvas" width="900px" height="600px" style="position:absolute;left:0;top:0;outline:none;">
 									Canvas is not supported by your browser, please upgrade.
 								</canvas>
-								<div id="map_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;visibility:hidden;">
-								</div>
 							</div>
 						</div>
-						<div id="settings_container" style="opacity:0;">
+						<div id="settings_container" class="hiddenInSpeciesView">
 							<table>
 								<tr>
 									<td id="viewSpecificUI">
@@ -209,7 +220,7 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 											<img src="img/citation.png"></img>
 										</div>
 										<div id="collapseDialogsIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Remove all dialogs" data-enabled="true" onclick="Eplant.collapseElementDialogs();">
-											<img src="img/collapsedialogs.png"></img>
+											<img src="img/removedialogs.png"></img>
 										</div>
 									</td>
 								</tr>
@@ -217,7 +228,7 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 						</div>
 					</td>
 					<td valign="top">
-						<div id="genePanel_container" style="opacity:0;">
+						<div id="genePanel_container" class="hiddenInSpeciesView">
 							<span id="genePanel_label">Currently loaded genes:</span>
 							<div id="genePanel_content">
 							</div>
@@ -275,10 +286,13 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 				<script type="text/javascript" src="src/EFPView/EFPView.js"></script>
 					<script type="text/javascript" src="src/EFPView/EFPView.Legend.js"></script>
 					<script type="text/javascript" src="src/EFPView/EFPView.CompareDialog.js"></script>
+					<script type="text/javascript" src="src/EFPView/EFPView.MaskDialog.js"></script>
 				<script type="text/javascript" src="src/PlantView/PlantView.js"></script>
 				<script type="text/javascript" src="src/CellView/CellView.js"></script>
 				<script type="text/javascript" src="src/WorldView/WorldView.js"></script>
 				<script type="text/javascript" src="src/ExperimentView/ExperimentView.js"></script>
+					<script type="text/javascript" src="src/ExperimentView/ExperimentView.ItemList.js"></script>
+					<script type="text/javascript" src="src/ExperimentView/ExperimentView.ItemListItem.js"></script>
 				<script type="text/javascript" src="src/SequenceView/SequenceView.js"></script>
 			<script type="text/javascript">
 				Eplant.initialize();
@@ -375,6 +389,27 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 				}
 				function inputBlur(i){
 				    if(i.value==""){ i.value=i.defaultValue; i.style.color="#666"; }
+				}
+			</script>
+
+
+			<script type="text/javascript">
+				function getExample() {
+					if (ZUI.activeView instanceof SpeciesView) {
+						alert("Please choose a plant first!");
+						return;
+					}
+
+					var map = {
+						"Arabidopsis thaliana": "ABI3, ABI5"
+					};
+
+					for (key in map) {
+						if (Eplant.speciesOfFocus.species.scientificName == key) {
+							document.getElementById("enterIdentifier").value = map[key];
+							break;
+						}
+					}
 				}
 			</script>
 

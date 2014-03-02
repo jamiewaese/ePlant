@@ -1,4 +1,11 @@
-/* SpeciesList class for dealing with the list of species on the left panel */
+/**
+ * SpeciesView.SpeciesList class
+ * UI design by Jamie Waese
+ * Code by Hans Yu
+ *
+ * This is a class for dealing with the interactive species list found in SpeciesView.
+ */
+
 SpeciesView.SpeciesList = function(view) {
 	/* Properties */
 	this.view = view;		// Parent view
@@ -7,22 +14,14 @@ SpeciesView.SpeciesList = function(view) {
 
 	/* Create HTML element */
 	this.element = document.createElement("div");
-	this.element.style.position = "absolute";
-	this.element.style.left = "0px";
-	this.element.style.top = "0px";
-	this.element.style.width = ZUI.width / 3 + "px";
-	this.element.style.height = ZUI.height + "px";
-	this.element.style.padding = "30px";
-	this.element.style.backgroundColor = "transparent";
+	this.element.className = "selectionList";
+	this.element.oncontextmenu = function() {
+		return false;
+	};
 
 	/* Add title */
 	var title = document.createElement("span");
-	title.style.fontFamily = "Helvetica";
-	title.style.fontSize = "34px";
-	title.style.textIndent = "14px";
-	title.style.lineHeight = "56px";
-	title.style.color = Eplant.Color.Green;
-	title.style.display = "block";
+	title.className = "selectionListTitle";
 	title.textContent = "Select a plant";
 	this.element.appendChild(title);
 

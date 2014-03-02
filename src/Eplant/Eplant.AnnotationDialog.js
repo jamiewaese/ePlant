@@ -162,9 +162,6 @@ Eplant.AnnotationDialog = function() {
 			$(this.containerElement).remove();
 		}, this)
 	});
-
-//this.containerElement.parentNode.style.background = "rgba(255,0,0,0.5)";
-//this.containerElement.style.background = "rgba(255,0,0,0.5)";
 };
 
 /* Close annotation dialog */

@@ -26,7 +26,7 @@ Eplant.Species.prototype.getElementByIdentifier = function(identifier) {
 /* Get the Chromosome object associated with the given name */
 Eplant.Species.prototype.getChromosome = function(name) {
 	for (var n = 0; n < this.chromosomes.length; n++) {
-		if (this.chromosomes[n].name == name) {
+		if (this.chromosomes[n].name == name || this.chromosomes[n].name.replace(" ", "") == name) {
 			return this.chromosomes[n];
 		}
 	}

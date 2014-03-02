@@ -21,6 +21,7 @@ PlantView.prototype.active = function() {
 	var viewSpecificUI = document.getElementById("viewSpecificUI");
 	viewSpecificUI.appendChild(this.modeContainerElement);
 	viewSpecificUI.appendChild(this.compareContainerElement);
+	viewSpecificUI.appendChild(this.maskContainerElement);
 	viewSpecificUI.appendChild(this.legendContainerElement);
 };
 

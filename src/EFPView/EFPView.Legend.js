@@ -1,13 +1,14 @@
 EFPView.Legend = function() {
 	/* Properties */
-	this.width = 60;
-	this.height = 132;
+	this.width = 300;
+	this.height = 158;
 	this.x = 10;
 	this.y = ZUI.height - this.height - 10;
 	this.container = document.createElement("div");
 	this.visible = false;
 
 	/* Set up container */
+	this.container.style.pointerEvents = "none";
 	this.container.style.position = "absolute";
 	this.container.style.left = this.x + "px";
 	this.container.style.top = this.y + "px";
@@ -23,23 +24,19 @@ EFPView.Legend = function() {
 	this.canvas.height = this.height;
 	this.context = this.canvas.getContext("2d");
 	this.container.appendChild(this.canvas);
-
-	/* Set up title label */
-	this.titleLabel = document.createElement("span");
-	this.titleLabel.style.position = "absolute";
-	this.titleLabel.style.left = this.x + "px";
-	this.titleLabel.style.top = (this.y - 16) + "px";
-
-	/* Set up control label */
-	this.controlLabel = document.createElement("span");
-	this.controlLabel.style.position = "absolute";
-	this.controlLabel.style.left = (this.x + this.width + 10) + "px";
-	this.controlLabel.style.top = (this.y + this.height - 16) + "px";
 };
 
-EFPView.Legend.prototype.update = function(min, mid, max, minColor, midColor, maxColor, titleLabel, controlLabel) {
+EFPView.Legend.prototype.update = function(min, mid, max, minColor, midColor, maxColor, maskColor, maskThreshold, titleLabel, controlLabel) {
 	/* Clear canvas */
 	this.context.clearRect(0, 0, this.width, this.height);
+	this.context.save();
+
+	/* Draw labels */
+	this.context.fillStyle = Eplant.Color.Black;
+	this.context.font = "12px Helvetica";
+	this.context.fillText(titleLabel, 0, 10);
+	this.context.fillText(controlLabel, 130, this.height - 1);
+	var yOffset = 14;
 
 	/* Break down color components */
 	minColor = ZUI.Util.getColorComponents(minColor);
@@ -47,21 +44,21 @@ EFPView.Legend.prototype.update = function(min, mid, max, minColor, midColor, ma
 	maxColor = ZUI.Util.getColorComponents(maxColor);
 
 	/* Draw color scale on canvas */
+	this.context.font = "10px Helvetica";
 	var level = Number(min);
 	var color = {
 		red: minColor.red,
 		green: minColor.green,
 		blue: minColor.blue
 	};
-	this.context.save();
 	/* min to mid */
 	for (var n = 0; n < 5; n++) {
 		this.context.fillStyle = ZUI.Util.makeColorString(Math.round(color.red), Math.round(color.green), Math.round(color.blue));
-		this.context.fillRect(0, (10 - n) * 12, 16, 12);
+		this.context.fillRect(0, (10 - n) * 12 + yOffset, 16, 12);
 		this.context.fillStyle = Eplant.Color.Black;
 		var label = level.toFixed(2);
 		if (label == "-0.00") label = "0.00";
-		this.context.fillText(label, 20, (10 - n) * 12 + 10);
+		this.context.fillText(label, 20, (10 - n) * 12 + 10 + yOffset);
 
 		/* Calculate level and color for next step */
 		level += (mid - min) / 5;
@@ -72,11 +69,11 @@ EFPView.Legend.prototype.update = function(min, mid, max, minColor, midColor, ma
 	/* mid to max */
 	for (var n = 5; n < 11; n++) {
 		this.context.fillStyle = ZUI.Util.makeColorString(Math.round(color.red), Math.round(color.green), Math.round(color.blue));
-		this.context.fillRect(0, (10 - n) * 12, 16, 12);
+		this.context.fillRect(0, (10 - n) * 12 + yOffset, 16, 12);
 		this.context.fillStyle = Eplant.Color.Black;
 		var label = level.toFixed(2);
 		if (label == "-0.00") label = "0.00";
-		this.context.fillText(label, 20, (10 - n) * 12 + 10);
+		this.context.fillText(label, 20, (10 - n) * 12 + 10 + yOffset);
 
 		/* Calculate level and color for next step */
 		level += (max - mid) / 5;
@@ -84,11 +81,19 @@ EFPView.Legend.prototype.update = function(min, mid, max, minColor, midColor, ma
 		color.green += (maxColor.green - midColor.green) / 5;
 		color.blue += (maxColor.blue - midColor.blue) / 5;
 	}
+	/* mask */
+	this.context.fillStyle = maskColor;
+	this.context.fillRect(0, 11 * 12 + yOffset, 16, 12);
+	this.context.fillStyle = Eplant.Color.Black;
+	var text = "Masked";
+	if (maskThreshold !== null) {
+		text += " (" + String.fromCharCode(8805) + (maskThreshold * 100) + "% RSE)";
+	}
+	else {
+		text += " (off)";
+	}
+	this.context.fillText(text, 20, 11 * 12 + 10 + yOffset);
 	this.context.restore();
-
-	/* Update labels */
-	this.titleLabel.innerHTML = titleLabel;
-	this.controlLabel.innerHTML = controlLabel;
 };
 
 EFPView.Legend.prototype.remove = function() {
@@ -99,14 +104,10 @@ EFPView.Legend.prototype.remove = function() {
 
 EFPView.Legend.prototype.hide = function() {
 	ZUI.container.removeChild(this.container);
-	ZUI.container.removeChild(this.titleLabel);
-	ZUI.container.removeChild(this.controlLabel);
 	this.visible = false;
 };
 
 EFPView.Legend.prototype.show = function() {
 	ZUI.container.appendChild(this.container);
-	ZUI.container.appendChild(this.titleLabel);
-	ZUI.container.appendChild(this.controlLabel);
 	this.visible = true;
 };

@@ -35,7 +35,7 @@ function InteractionView(element) {
 	}, this);
 	/* Set icon */
 	var img = document.createElement("img");
-	img.src = "img/filter.png";
+	img.src = "img/off/filter.png";
 	this.filterContainerElement.appendChild(img);
 
 	/* Link */
@@ -367,6 +367,16 @@ function InteractionView(element) {
 				});
 			}
 		}
+
+		/* Get localization data */
+		var ids = [];
+		for (var n = 0; n < nodes.length; n++) {
+			ids.push(nodes[n].data.id);
+		}
+		$.getJSON("http://bar.utoronto.ca/~eplant/cgi-bin/groupsuba3.cgi?ids=" + JSON.stringify(ids), $.proxy(function(response) {
+			this.processLocalizations(response);
+		}, this));
+
 		if (nodes.length <= 1) {
 			this.cytoscapeConf.layout.name = "grid";
 		}
@@ -483,33 +493,34 @@ InteractionView.localisationToColor = function(localisation) {
 	return color;
 };
 
-/* Retrieves the subcellular localisation data for a node */
-InteractionView.getNodeLocalisation = function(node, interactionView) {
-	var obj = {
-		node: node,
-		interactionView: interactionView
-	};
-	$.ajax({
-		type: "GET",
-		url: "http://bar.utoronto.ca/~eplant/cgi-bin/suba3.cgi?id=" + node.data.id,
-		dataType: "json"
-	}).done($.proxy(function(response) {
+/* Processes an array of localization data and updates node colors */
+InteractionView.prototype.processLocalizations = function(data) {
+	var nodes = this.cytoscapeConf.elements.nodes;
+	for (var n = 0; n < data.length; n++) {
+		var item = data[n];
+		var node;
+		for (var m = 0; m < nodes.length; m++) {
+			if (item.id.toUpperCase() == nodes[m].data.id.toUpperCase()) {
+				node = nodes[m];
+				break;
+			}
+		}
 		var localisation = "";
 		var highestScore = 0;
-		for (var location in response) {
-			if (response[location] > highestScore) {
+		for (var location in item.data) {
+			if (item.data[location] > highestScore) {
 				localisation = location;
-				highestScore = response[location];
+				highestScore = item.data[location];
 			}
 		}
 		var color = InteractionView.localisationToColor(localisation)
-		if (this.interactionView.cy) {
-			this.interactionView.cy.elements("node#" + this.node.data.id).data("outerColor", color);
+		if (this.cy) {
+			this.cy.elements("node#" + node.data.id).data("outerColor", color);
 		}
 		else {
-			this.node.data.outerColor = color;
+			node.data.outerColor = color;
 		}
-	}, obj));
+	}
 };
 
 /* Converts Cytoscape camera zoom value to ZUI camera distance value */
@@ -565,7 +576,6 @@ InteractionView.prototype.makeNodeObject = function(identifier) {
 			obj.data.annotation = annotation;
 		obj.classes = "";
 		if (isQuery) obj.classes += "query ";
-	InteractionView.getNodeLocalisation(obj, this);
 	if (annotation) this.annotations.push(annotation);
 	return obj;
 };

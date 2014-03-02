@@ -425,3 +425,25 @@ ChromosomeView.ChromosomeViewObject = function(chromosome, view, index) {
 			return null;
 		}
 	};
+
+/* Clean up */
+ChromosomeView.ChromosomeViewObject.prototype.remove = function() {
+	/* Remove view objects representing chromosome */
+	for (var n = 0; n < this.viewObjects.length; n++) {
+		this.viewObjects[n].remove();
+	}
+
+	/* Remove mouse event layer */
+	this.mouseEventLayer.remove();
+
+	/* Remove label */
+	this.label.remove();
+
+	/* Remove overflow labels */
+	this.lowBpRangeLabel.remove();
+	this.highBpRangeLabel.remove();
+
+	/* Remove mini chromosome */
+	this.miniOuter.remove();
+	this.miniInner.remove();
+};

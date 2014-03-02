@@ -6,17 +6,8 @@
 
 ZUI.Util = {};
 
-/* Gets mouse screen coordinates */
-ZUI.getMousePosition = function(event) {
-	var canvasBoundingRect = ZUI.canvas.getBoundingClientRect();
-	return {
-		x: event.clientX - canvasBoundingRect.left,
-		y: event.clientY - canvasBoundingRect.top
-	};
-};
-
 /* Checks whether the given string is a valid color */
-ZUI.isValidColor = function(str) {
+ZUI.Util.isValidColor = function(str) {
 	if (!str || !str.match) {
 		return null;
 	}
@@ -26,12 +17,12 @@ ZUI.isValidColor = function(str) {
 };
 
 /* Checks whether the given string ends with the given suffix */
-ZUI.endsWith = function(str, suffix) {
+ZUI.Util.endsWith = function(str, suffix) {
 	return str.indexOf(suffix, str.length - suffix.length) !== -1;
 };
 
 /* Converts number to string with comma separators */
-ZUI.getNumberWithComma = function(number) {
+ZUI.Util.getNumberWithComma = function(number) {
 	/* By mikez302, http://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript */
 	var parts = (number + "").split(".");
 	parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -39,7 +30,7 @@ ZUI.getNumberWithComma = function(number) {
 };
 
 /* Converts canvases in the ZUI container to image and display in new window */
-ZUI.toImageInWindow = function(canvas) {
+ZUI.Util.toImageInWindow = function(canvas) {
 	if (!canvas) {
 		window.open(ZUI.canvas.toDataURL());
 	}
@@ -109,4 +100,18 @@ ZUI.Util.inheritClass = function(parent, child) {
 	}
 	protoCreator.prototype = parent.prototype;
 	child.prototype = new protoCreator();
+};
+
+/* Interprets a string representing a class path and returns the actual class */
+ZUI.Util.readClassPath = function(classPath) {
+	var parts = classPath.split(".");
+	var scope = window;
+	for (var n = 0; n < parts.length; n++) {
+		scope = scope[parts[n]];
+		if (scope === undefined || scope === null) {
+			console.log("Warning: The class path " + classPath + " cannot be found.");
+			return undefined;
+		}
+	}
+	return scope;
 };

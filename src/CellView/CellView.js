@@ -119,3 +119,34 @@ CellView.prototype.getZoomOutExitAnimationSettings = function() {
 		}
 	};
 };
+
+/* Returns the animation settings for pan left entry animation */
+CellView.prototype.getPanLeftEntryAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.75, 0, 0.75, 0.9],
+		sourceX: 900,
+		sourceY: 0,
+		sourceDistance: 500,
+		targetX: 0,
+		draw: function(elapsedTime, remainingTime, view) {
+			view.draw();
+		}
+	};
+};
+
+/* Returns the animation settings for pan right exit animation */
+CellView.prototype.getPanRightExitAnimationSettings = function() {
+	return {
+		type: "zoom",
+		view: this,
+		duration: 1000,
+		bezier: [0.75, 0, 0.75, 0.9],
+		targetX: ZUI.camera._x + 900,
+		draw: function(elapsedTime, remainingTime, view) {
+			view.draw();
+		}
+	};
+};

@@ -18,6 +18,19 @@ function ChromosomeView(species) {
 	this.mouseFramesIdle = 0;							// Number of frames that the mouse stays idle
 	this.viewObjects = [];
 
+	/* Title of the view */
+	this.viewTitle = new ZUI.ViewObject({
+		shape: "text",
+		positionScale: "screen",
+		sizeScale: "screen",
+		x: 20,
+		y: 7,
+		size: 13,
+		fillColor: Eplant.Color.DarkGrey,
+		content: "Chromosome Viewer",
+		centerAt: "left top"
+	});
+
 	/* Create background */
 	this.background = new ZUI.ViewObject({
 		shape: "rect",
@@ -88,8 +101,9 @@ function ChromosomeView(species) {
 			this.species.chromosomes = [];
 			for (var n = 0; n < response.chromosomes.length; n++) {
 				var chromosome = new Eplant.Chromosome(this.species);
+				chromosome.identifier = response.chromosomes[n].id;
 				chromosome.name = response.chromosomes[n].name;
-				chromosome.length = response.chromosomes[n].length;
+				chromosome.length = response.chromosomes[n].size;
 				chromosome.elements = [];
 				chromosome.centromeres = [];
 				for (var m = 0; m < response.chromosomes[n].centromeres.length; m++) {
@@ -171,6 +185,9 @@ ChromosomeView.prototype.draw = function() {
 	/* Update camera */
 	ZUI.camera.update();
 
+	/* Draw view title */
+	this.viewTitle.draw();
+
 	/* Draw background */
 	this.background.draw();
 
@@ -195,6 +212,30 @@ ChromosomeView.prototype.draw = function() {
 	/* Draw element list dialog */
 	if (this.elementListDialog) {
 		this.elementListDialog.draw();
+	}
+};
+
+/* Clean up */
+ChromosomeView.prototype.remove = function() {
+	/* Remove view title */
+	this.viewTitle.remove();
+
+	/* Remove background */
+	this.background.remove();
+
+	/* Remove chromosomes */
+	for (var n = 0; n < this.chromosomeViewObjects.length; n++) {
+		this.chromosomeViewObjects[n].remove();
+	}
+
+	/* Remove annotations */
+	for (n = 0; n < this.annotations.length; n++) {
+		this.annotations[n].remove();
+	}
+
+	/* Remove element list dialog */
+	if (this.elementListDialog) {
+		this.elementListDialog.close();
 	}
 };
 

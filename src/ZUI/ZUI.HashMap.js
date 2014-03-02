@@ -40,3 +40,17 @@ ZUI.HashMap.prototype.delete = function(key) {
 		}
 	}
 };
+
+/* Returns a list of keys */
+ZUI.HashMap.prototype.getKeys = function() {
+	var keys = [];
+	for (var n = 0; n < this.pairs.length; n++) {
+		keys.push(this.pairs[n].key);
+	}
+	return keys;
+};
+
+/* Returns the number of key:value pairs */
+ZUI.HashMap.prototype.getSize = function() {
+	return this.pairs.length;
+};

@@ -13,6 +13,7 @@ ChromosomeView.Annotation = function(elementOfInterest, view) {
 	this.view = view;		// Parent view
 	this.whisker = null;		// Whisker view object
 	this.label = null;		// Label view object
+	this.tags = null;		// Tag view objects
 
 	/* Create whisker */
 	var chromosomeViewObject = view.getChromosomeViewObject(elementOfInterest.element.chromosome);
@@ -94,6 +95,49 @@ ChromosomeView.Annotation = function(elementOfInterest, view) {
 			this.elementOfInterest.speciesOfInterest.setElementOfFocus(this.elementOfInterest);
 		}, this)
 	});
+
+	/* Create tags */
+	this.tags = [];
+	var offset = 5;
+	for (var n = 0; n < this.elementOfInterest.tags.length; n++) {
+		this.tags.push(new ZUI.ViewObject({
+			shape: "circle",
+			positionScale: "world",
+			sizeScale: "screen",
+			x: this.label.x,
+			y: this.label.y,
+			offsetX: this.label.offsetX + ((this.elementOfInterest.element.strand == "+") ? -1 : 1) * (this.label.width + offset),
+			radius: 3,
+			centerAt: "center center",
+			strokeColor: this.elementOfInterest.tags[n].color,
+			fillColor: this.elementOfInterest.tags[n].color
+		}));
+		offset += 8;
+	}
+	this.tagsUpdateEventListener = new ZUI.EventListener("update-tags", this.elementOfInterest, function(event, eventData, listenerData) {
+		var elementOfInterest = event.target;
+		var view = listenerData.view;
+		view.tags = [];
+		var offset = 5;
+		for (var n = 0; n < elementOfInterest.tags.length; n++) {
+			view.tags.push(new ZUI.ViewObject({
+				shape: "circle",
+				positionScale: "world",
+				sizeScale: "screen",
+				x: view.label.x,
+				y: view.label.y,
+				offsetX: view.label.offsetX + ((elementOfInterest.element.strand == "+") ? -1 : 1) * (view.label.width + offset),
+				radius: 3,
+				centerAt: "center center",
+				strokeColor: elementOfInterest.tags[n].color,
+				fillColor: elementOfInterest.tags[n].color
+			}));
+			offset += 8;
+		}
+	}, {
+		view: this
+	});
+	ZUI.addEventListener(this.tagsUpdateEventListener);
 };
 
 	/* Draws this annotation */
@@ -115,23 +159,6 @@ ChromosomeView.Annotation = function(elementOfInterest, view) {
 		this.label.draw();
 
 		/* Draw tags */
-		this.tags = [];
-		var offset = 5;
-		for (var n = 0; n < this.elementOfInterest.tags.length; n++) {
-			this.tags.push(new ZUI.ViewObject({
-				shape: "circle",
-				positionScale: "world",
-				sizeScale: "screen",
-				x: this.label.x,
-				y: this.label.y,
-				offsetX: this.label.offsetX + ((this.elementOfInterest.element.strand == "+") ? -1 : 1) * (this.label.width + offset),
-				radius: 3,
-				centerAt: "center center",
-				strokeColor: this.elementOfInterest.tags[n].color,
-				fillColor: this.elementOfInterest.tags[n].color
-			}));
-			offset += 8;
-		}
 		for (var n = 0; n < this.tags.length; n++) {
 			this.tags[n].draw();
 		}
@@ -150,4 +177,14 @@ ChromosomeView.Annotation = function(elementOfInterest, view) {
 				}
 			}
 		}
+
+		/* Remove view objects */
+		this.label.remove();
+		this.whisker.remove();
+		for (var n = 0; n < this.tags.length; n++) {
+			this.tags[n].remove();
+		}
+
+		/* Remove event listeners */
+		ZUI.removeEventListener(this.tagsUpdateEventListener);
 	};

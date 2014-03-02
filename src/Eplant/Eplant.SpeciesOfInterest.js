@@ -56,6 +56,7 @@ Eplant.SpeciesOfInterest.prototype.addElementOfInterest = function(element, attr
 
 /* Removes the given ElementOfInterest object from the array */
 Eplant.SpeciesOfInterest.prototype.removeElementOfInterest = function(elementOfInterest) {
+	elementOfInterest.remove();
 	var index = this.elementsOfInterest.indexOf(elementOfInterest);
 	if (index >= 0) {
 		this.elementsOfInterest.splice(index, 1);

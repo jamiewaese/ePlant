@@ -34,7 +34,7 @@ ChromosomeView.ElementListDialog = function(chromosome, start, end, x, y, orient
 	/* Query elements */
 	$.ajax({
 		type: "GET",
-		url: "cgi-bin/querygenesbyposition.cgi?chromosome=" + chromosome.name.replace(" ", "_") + "&start=" + start + "&end=" + end,
+		url: "cgi-bin/querygenesbyposition.cgi?chromosome=" + chromosome.identifier + "&start=" + start + "&end=" + end,
 		dataType: "json"
 	}).done($.proxy(function(response) {
 		/* Populate list */
@@ -112,6 +112,10 @@ ChromosomeView.ElementListDialog = function(chromosome, start, end, x, y, orient
 		maxHeight: 200,
 		close: $.proxy(function(event, ui) {
 			$(this.containerElement).remove();
+			this.whisker.remove();
+			this.connector.remove();
+			this.lowRangeIndicator.remove();
+			this.highRangeIndicator.remove();
 		}, this)
 	});
 	this.yOffset = $(this.containerElement).outerHeight() * -0.35;
@@ -177,7 +181,7 @@ ChromosomeView.ElementListDialog = function(chromosome, start, end, x, y, orient
 		x: this.x + (this.xOffset + 10) * sign,
 		y: this.y + this.yOffset - 2,
 		centerAt: hPosition + " bottom",
-		content: ZUI.getNumberWithComma(Math.ceil(start)),
+		content: ZUI.Util.getNumberWithComma(Math.ceil(start)),
 		strokeColor: Eplant.Color.LightGrey,
 		fillColor: Eplant.Color.LightGrey
 	});
@@ -188,7 +192,7 @@ ChromosomeView.ElementListDialog = function(chromosome, start, end, x, y, orient
 		x: this.x + (this.xOffset + 10) * sign,
 		y: this.y + this.yOffset - $(this.containerElement).position().top + $(this.containerElement).parent().outerHeight() + 2,
 		centerAt: hPosition + " top",
-		content: ZUI.getNumberWithComma(Math.floor(end)),
+		content: ZUI.Util.getNumberWithComma(Math.floor(end)),
 		strokeColor: Eplant.Color.LightGrey,
 		fillColor: Eplant.Color.LightGrey
 	});

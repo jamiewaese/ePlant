@@ -410,84 +410,84 @@ Eplant.ElementDialog.prototype.updateIcons = function() {
 	/* WorldView */
 	var img = this.worldViewElement.getElementsByTagName("img")[0];
 	if (!this.elementOfInterest || !this.elementOfInterest.worldView || this.elementOfInterest.worldView.getLoadProgress() < 1) {
-		if (!ZUI.endsWith(img.src, "img/unavailable/world.png")) img.src = "img/unavailable/world.png";
+		if (!ZUI.Util.endsWith(img.src, "img/unavailable/world.png")) img.src = "img/unavailable/world.png";
 	}
 	else if (this.elementOfInterest.worldView == ZUI.activeView) {
-		if (!ZUI.endsWith(img.src, "img/active/world.png")) img.src = "img/active/world.png";
+		if (!ZUI.Util.endsWith(img.src, "img/active/world.png")) img.src = "img/active/world.png";
 	}
 	else {
-		if (!ZUI.endsWith(img.src, "img/available/world.png")) img.src = "img/available/world.png";
+		if (!ZUI.Util.endsWith(img.src, "img/available/world.png")) img.src = "img/available/world.png";
 	}
 
 	/* PlantView */
 	var img = this.plantViewElement.getElementsByTagName("img")[0];
 	if (!this.elementOfInterest || !this.elementOfInterest.plantView || this.elementOfInterest.plantView.getLoadProgress() < 1) {
-		if (!ZUI.endsWith(img.src, "img/unavailable/plant.png")) img.src = "img/unavailable/plant.png";
+		if (!ZUI.Util.endsWith(img.src, "img/unavailable/plant.png")) img.src = "img/unavailable/plant.png";
 	}
 	else if (this.elementOfInterest.plantView == ZUI.activeView) {
-		if (!ZUI.endsWith(img.src, "img/active/plant.png")) img.src = "img/active/plant.png";
+		if (!ZUI.Util.endsWith(img.src, "img/active/plant.png")) img.src = "img/active/plant.png";
 	}
 	else {
-		if (!ZUI.endsWith(img.src, "img/available/plant.png")) img.src = "img/available/plant.png";
+		if (!ZUI.Util.endsWith(img.src, "img/available/plant.png")) img.src = "img/available/plant.png";
 	}
 
 	/* CellView */
 	var img = this.cellViewElement.getElementsByTagName("img")[0];
 	if (!this.elementOfInterest || !this.elementOfInterest.cellView || this.elementOfInterest.cellView.getLoadProgress() < 1) {
-		if (!ZUI.endsWith(img.src, "img/unavailable/cell.png")) img.src = "img/unavailable/cell.png";
+		if (!ZUI.Util.endsWith(img.src, "img/unavailable/cell.png")) img.src = "img/unavailable/cell.png";
 	}
 	else if (this.elementOfInterest.cellView == ZUI.activeView) {
-		if (!ZUI.endsWith(img.src, "img/active/cell.png")) img.src = "img/active/cell.png";
+		if (!ZUI.Util.endsWith(img.src, "img/active/cell.png")) img.src = "img/active/cell.png";
 	}
 	else {
-		if (!ZUI.endsWith(img.src, "img/available/cell.png")) img.src = "img/available/cell.png";
+		if (!ZUI.Util.endsWith(img.src, "img/available/cell.png")) img.src = "img/available/cell.png";
 	}
 
 	/* InteractionView */
 	var img = this.interactionViewElement.getElementsByTagName("img")[0];
 	if (!this.elementOfInterest || !this.elementOfInterest.interactionView || this.elementOfInterest.interactionView.getLoadProgress() < 1) {
-		if (!ZUI.endsWith(img.src, "img/unavailable/interaction.png")) img.src = "img/unavailable/interaction.png";
+		if (!ZUI.Util.endsWith(img.src, "img/unavailable/interaction.png")) img.src = "img/unavailable/interaction.png";
 	}
 	else if (this.elementOfInterest.interactionView == ZUI.activeView) {
-		if (!ZUI.endsWith(img.src, "img/active/interaction.png")) img.src = "img/active/interaction.png";
+		if (!ZUI.Util.endsWith(img.src, "img/active/interaction.png")) img.src = "img/active/interaction.png";
 	}
 	else {
-		if (!ZUI.endsWith(img.src, "img/available/interaction.png")) img.src = "img/available/interaction.png";
+		if (!ZUI.Util.endsWith(img.src, "img/available/interaction.png")) img.src = "img/available/interaction.png";
 	}
 
 	/* PathwayView */
 	var img = this.pathwayViewElement.getElementsByTagName("img")[0];
 	if (!this.elementOfInterest || !this.elementOfInterest.pathwayView || this.elementOfInterest.pathwayView.getLoadProgress() < 1) {
-		if (!ZUI.endsWith(img.src, "img/unavailable/pathway.png")) img.src = "img/unavailable/pathway.png";
+		if (!ZUI.Util.endsWith(img.src, "img/unavailable/pathway.png")) img.src = "img/unavailable/pathway.png";
 	}
 	else if (this.elementOfInterest.pathwayView == ZUI.activeView) {
-		if (!ZUI.endsWith(img.src, "img/active/pathway.png")) img.src = "img/active/pathway.png";
+		if (!ZUI.Util.endsWith(img.src, "img/active/pathway.png")) img.src = "img/active/pathway.png";
 	}
 	else {
-		if (!ZUI.endsWith(img.src, "img/available/pathway.png")) img.src = "img/available/pathway.png";
+		if (!ZUI.Util.endsWith(img.src, "img/available/pathway.png")) img.src = "img/available/pathway.png";
 	}
 
 	/* MoleculeView */
 	var img = this.moleculeViewElement.getElementsByTagName("img")[0];
 	if (!this.elementOfInterest || !this.elementOfInterest.moleculeView || this.elementOfInterest.moleculeView.getLoadProgress() < 1) {
-		if (!ZUI.endsWith(img.src, "img/unavailable/molecule.png")) img.src = "img/unavailable/molecule.png";
+		if (!ZUI.Util.endsWith(img.src, "img/unavailable/molecule.png")) img.src = "img/unavailable/molecule.png";
 	}
 	else if (this.elementOfInterest.moleculeView == ZUI.activeView) {
-		if (!ZUI.endsWith(img.src, "img/active/molecule.png")) img.src = "img/active/molecule.png";
+		if (!ZUI.Util.endsWith(img.src, "img/active/molecule.png")) img.src = "img/active/molecule.png";
 	}
 	else {
-		if (!ZUI.endsWith(img.src, "img/available/molecule.png")) img.src = "img/available/molecule.png";
+		if (!ZUI.Util.endsWith(img.src, "img/available/molecule.png")) img.src = "img/available/molecule.png";
 	}
 
 	/* SequenceView */
 	var img = this.sequenceViewElement.getElementsByTagName("img")[0];
 	if (!this.elementOfInterest || !this.elementOfInterest.sequenceView || this.elementOfInterest.sequenceView.getLoadProgress() < 1) {
-		if (!ZUI.endsWith(img.src, "img/unavailable/sequence.png")) img.src = "img/unavailable/sequence.png";
+		if (!ZUI.Util.endsWith(img.src, "img/unavailable/sequence.png")) img.src = "img/unavailable/sequence.png";
 	}
 	else if (this.elementOfInterest.sequenceView == ZUI.activeView) {
-		if (!ZUI.endsWith(img.src, "img/active/sequence.png")) img.src = "img/active/sequence.png";
+		if (!ZUI.Util.endsWith(img.src, "img/active/sequence.png")) img.src = "img/active/sequence.png";
 	}
 	else {
-		if (!ZUI.endsWith(img.src, "img/available/sequence.png")) img.src = "img/available/sequence.png";
+		if (!ZUI.Util.endsWith(img.src, "img/available/sequence.png")) img.src = "img/available/sequence.png";
 	}
 };

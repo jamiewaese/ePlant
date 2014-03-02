@@ -4,8 +4,9 @@
  * Code by Hans Yu
  */
 
-function WorldView(element) {
-	this.element = element;
+function WorldView(elementOfInterest) {
+	this.elementOfInterest = elementOfInterest;
+	this.element = elementOfInterest.element;
 
 	this.webService = null;
 	this.control = null;
@@ -13,9 +14,14 @@ function WorldView(element) {
 	this.compareGroups = null;
 	this.compareElement = null;
 
+	this.tags = [];
+	this.tagsUpdateEventListener = null;
+
 	this.isDataReady = false;
 
 	this.mode = "absolute";
+	this.maskThreshold = 1;
+	this.maskOn = false;
 
 	this.maxLevel = 0;
 
@@ -24,7 +30,7 @@ function WorldView(element) {
 	EFPView.prototype.initIcons.call(this);
 
 	/* Retrieve eFP JSON */
-	$.getJSON("data/world/" + element.chromosome.species.scientificName.replace(" ", "_") + ".json", $.proxy(function(response) {
+	$.getJSON("data/world/" + this.element.chromosome.species.scientificName.replace(" ", "_") + ".json", $.proxy(function(response) {
 		this.webService = response.webService;
 
 		this.marker = response.marker;
@@ -110,8 +116,28 @@ function WorldView(element) {
 				ZUI.mouseStatus.y = y;
 			}, _group));
 			google.maps.event.addListener(_group.marker, "mouseout", $.proxy(function() {
-				this.tooltip.remove();
-				this.tooltip = null;
+				if (this.tooltip) {
+					this.tooltip.remove();
+					this.tooltip = null;
+				}
+			}, _group));
+			google.maps.event.addListener(_group.marker, "rightclick", $.proxy(function() {
+				var overlay = new google.maps.OverlayView();
+				overlay.draw = function() {};
+				overlay.setMap(WorldView.googleMap);
+				var point = overlay.getProjection().fromLatLngToContainerPixel(this.marker.getPosition());
+				ZUI.customContextMenu.open(
+					point.x, point.y - 15,
+					[
+						new ZUI.ContextMenuOption("Data source", function(data) {
+							window.open(data.source);
+						}, this, (this.source) ? true : false)
+					]
+				);
+				if (this.tooltip) {
+					this.tooltip.remove();
+					this.tooltip = null;
+				}
 			}, _group));
 			this.groups.push(_group);
 
@@ -131,7 +157,7 @@ function WorldView(element) {
 			for (var m = 0; m < this.samples.length; m++) {
 				for (var n = 0; n < response.length; n++) {
 					if (response[n].name == this.samples[m].name) {
-						this.samples[m].level = Number(response[n].level);
+						this.samples[m].level = Number(response[n].value);
 						break;
 					}
 				}
@@ -162,6 +188,12 @@ WorldView.initGoogleMaps = function() {
 	WorldView.oms = new OverlappingMarkerSpiderfier(WorldView.googleMap, {
 		markersWontMove: true,
 		markersWontHide: true
+	});
+
+	google.maps.event.addListener(WorldView.googleMap, "mousedown", function(event) {
+		if (ZUI.customContextMenu.active) {
+			ZUI.customContextMenu.close();
+		}
 	});
 };
 
@@ -205,6 +237,7 @@ WorldView.prototype.active = function() {
 	var viewSpecificUI = document.getElementById("viewSpecificUI");
 	viewSpecificUI.appendChild(this.modeContainerElement);
 	viewSpecificUI.appendChild(this.compareContainerElement);
+	viewSpecificUI.appendChild(this.maskContainerElement);
 	viewSpecificUI.appendChild(this.legendContainerElement);
 
 	WorldView.container.style.visibility = "visible";
@@ -221,6 +254,19 @@ WorldView.prototype.active = function() {
 	if (!this.legend.visible) {
 		this.legend.show();
 	}
+
+	/* Update tags */
+	EFPView.prototype.updateTags.call(this);
+	this.tagsUpdateEventListener = new ZUI.EventListener("update-tags", this.elementOfInterest, function(event, eventData, listenerData) {
+		var view = listenerData.view;
+		EFPView.prototype.updateTags.call(view);
+	}, {
+		view: this
+	});
+	ZUI.addEventListener(this.tagsUpdateEventListener);
+
+	/* Disable point events setting for ZUI canvas */
+	ZUI.disablePointerEvents();
 };
 
 WorldView.prototype.inactive = function() {
@@ -235,7 +281,6 @@ WorldView.prototype.inactive = function() {
 		var marker = group.marker;
 		group.marker.setMap(null);
 		WorldView.oms.clearMarkers();
-		WorldView.markerCluster.clearMarkers();
 	}
 
 	/* Remove tooltips */
@@ -250,6 +295,19 @@ WorldView.prototype.inactive = function() {
 	/* Hide legend */
 	if (this.legend.visible) {
 		this.legend.hide();
+	}
+
+	/* Remove tags update listener */
+	ZUI.removeEventListener(this.tagsUpdateEventListener);
+
+	/* Restore point events setting for ZUI canvas */
+	ZUI.restorePointerEvents();
+};
+
+WorldView.prototype.draw = function() {
+	/* Draw tags */
+	for (n = 0; n < this.tags.length; n++) {
+		this.tags[n].draw();
 	}
 };
 
@@ -293,6 +351,8 @@ WorldView.prototype.updateLevels = function() {
 WorldView.prototype.updateEFP = function() {
 	if (!this.isDataReady) return;
 
+	var maskColor = Eplant.Color.LightGrey;
+
 	/* Update eFP */
 	if (this.mode == "absolute") {
 		/* Calculate max */
@@ -332,7 +392,7 @@ WorldView.prototype.updateEFP = function() {
 			green: Math.round((maxColor.green + minColor.green) / 2),
 			blue: Math.round((maxColor.blue + minColor.blue) / 2)
 		};
-		this.legend.update(0, max / 2, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), "Linear", "Absolute");
+		this.legend.update(0, max / 2, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), maskColor, this.maskThreshold, "Linear", "Absolute");
 	}
 	else if (this.mode == "relative") {
 		/* Calculate max */
@@ -380,7 +440,7 @@ WorldView.prototype.updateEFP = function() {
 		}
 
 		/* Update legend */
-		this.legend.update(-max, 0, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), "Log2 Ratio", "Relative to control: " + (+parseFloat(this.control.meanLevel).toFixed(2)));
+		this.legend.update(-max, 0, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), maskColor, this.maskThreshold, "Log2 Ratio", "Relative to control: " + (+parseFloat(this.control.meanLevel).toFixed(2)));
 	}
 	else if (this.mode == "compare") {
 		/* Calculate ratios and max */
@@ -432,7 +492,18 @@ WorldView.prototype.updateEFP = function() {
 		}
 
 		/* Update legend */
-		this.legend.update(-max, 0, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), "Log2 Ratio", "Relative to " + this.compareElement.identifier);
+		this.legend.update(-max, 0, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), maskColor, this.maskThreshold, "Log2 Ratio", "Relative to " + this.compareElement.identifier);
+	}
+
+	/* Mask */
+	if (this.maskOn) {
+		for (var n = 0; n < this.groups.length; n++) {
+			var group = this.groups[n];
+			if (isNaN(group.sterrorLevel) || group.sterrorLevel >= group.meanLevel * this.maskThreshold) {
+				group.color = maskColor;
+				group.marker.setIcon(this.getMarkerIcon(group.color));
+			}
+		}
 	}
 };
 

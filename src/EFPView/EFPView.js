@@ -20,10 +20,13 @@ function EFPView(elementOfInterest, diagram) {
 	this.compareElement = null;
 	this.viewObjects = [];
 	this.tags = [];
+	this.tagsUpdateEventListener = null;
 
 	this.isDataReady = false;
 
 	this.mode = "absolute";
+	this.maskThreshold = 1;
+	this.maskOn = false;
 
 	this.maxLevel = 0;
 	this.minLevel = 0;
@@ -34,14 +37,6 @@ function EFPView(elementOfInterest, diagram) {
 	this.groupTooltipCountdown = null;
 
 	this.initIcons();
-
-	this.updateTags();
-	var eventListener = new ZUI.EventListener("update-tags", this.elementOfInterest, function(event, eventData, listenerData) {
-		var view = listenerData.view;
-		view.updateTags();
-	}, {
-		view: this
-	});
 
 	/* Retrieve diagram JSON */
 	$.ajax({
@@ -100,8 +95,25 @@ function EFPView(elementOfInterest, diagram) {
 				strokeWidth: 1,
 				strokeColor: this.outline.strokeColor,
 				fillColor: Eplant.Color.White,
-				leftClick: $.proxy(function() {
-					if (this.group.source) window.open(this.group.source);
+				contextMenu: $.proxy(function() {
+					ZUI.customContextMenu.open(
+						ZUI.mouseStatus.x, ZUI.mouseStatus.y,
+						[
+							new ZUI.ContextMenuOption("Data source", function(data) {
+								window.open(data.group.source);
+							}, this, (this.group.source) ? true : false)
+						]
+					);
+
+					var groupTooltip = this.view.getGroupTooltip(this.group);
+					if (groupTooltip) {
+						groupTooltip.remove();
+						var index = this.view.groupTooltips.indexOf(groupTooltip);
+						this.view.groupTooltips.splice(index, 1);
+					}
+					else if (this.view.groupTooltipCountdown && this.view.groupTooltipCountdown.group == this.group) {
+						this.view.groupTooltipCountdown = null;
+					}
 				}, obj),
 				mouseOver: $.proxy(function() {
 					this.group.highlight = true;
@@ -165,7 +177,7 @@ function EFPView(elementOfInterest, diagram) {
 			for (var n = 0; n < response.length; n++) {
 				for (var m = 0; m < this.samples.length; m++) {
 					if (response[n].name == this.samples[m].name) {
-						this.samples[m].level = Number(response[n].level);
+						this.samples[m].level = Number(response[n].value);
 						break;
 					}
 				}
@@ -264,6 +276,28 @@ EFPView.prototype.initIcons = function() {
 	img.src = "img/available/efpmode-compare.png";
 	this.compareContainerElement.appendChild(img);
 
+	/* Mask */
+	this.maskContainerElement = document.createElement("div");
+	this.maskContainerElement.className = "iconSmall hint--top hint--success hint--rounded";
+	this.maskContainerElement.setAttribute("data-hint", "Mask data with below threshold confidence.");
+	this.maskContainerElement.setAttribute("data-enabled", Eplant.tooltipSwitch.toString());
+	this.maskContainerElement.style.padding = "5px";
+	this.maskContainerElement.onclick = $.proxy(function() {
+		if (this.maskOn) {
+			this.maskThreshold = 1;
+			this.maskContainerElement.getElementsByTagName("img")[0].src = "img/off/filter.png";
+			this.maskOn = false;
+			this.updateEFP();
+		}
+		else {
+			new EFPView.MaskDialog(this);
+		}
+	}, this);
+	/* Set icon */
+	var img = document.createElement("img");
+	img.src = "img/off/filter.png";
+	this.maskContainerElement.appendChild(img);
+
 	/* Legend */
 	this.legendContainerElement = document.createElement("div");
 	this.legendContainerElement.className = "iconSmall hint--top hint--success hint--rounded";
@@ -294,6 +328,16 @@ EFPView.prototype.active = function() {
 	if (!this.legend.visible) {
 		this.legend.show();
 	}
+
+	/* Update tags */
+	this.updateTags();
+	this.tagsUpdateEventListener = new ZUI.EventListener("update-tags", this.elementOfInterest, function(event, eventData, listenerData) {
+		var view = listenerData.view;
+		view.updateTags();
+	}, {
+		view: this
+	});
+	ZUI.addEventListener(this.tagsUpdateEventListener);
 };
 
 EFPView.prototype.inactive = function() {
@@ -307,6 +351,9 @@ EFPView.prototype.inactive = function() {
 	if (this.legend.visible) {
 		this.legend.hide();
 	}
+
+	/* Remove tags update listener */
+	ZUI.removeEventListener(this.tagsUpdateEventListener);
 
 	/* Remove application specific UI */
 	document.getElementById("viewSpecificUI").innerHTML = "";
@@ -403,6 +450,8 @@ EFPView.prototype.updateLevels = function() {
 EFPView.prototype.updateEFP = function() {
 	if (!this.isDataReady) return;
 
+	var maskColor = Eplant.Color.LightGrey;
+
 	/* Update eFP */
 	if (this.mode == "absolute") {
 		/* Calculate max */
@@ -442,7 +491,7 @@ EFPView.prototype.updateEFP = function() {
 			green: Math.round((maxColor.green + minColor.green) / 2),
 			blue: Math.round((maxColor.blue + minColor.blue) / 2)
 		};
-		this.legend.update(0, max / 2, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), "Linear", "Absolute");
+		this.legend.update(0, max / 2, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), maskColor, (this.maskOn) ? this.maskThreshold : null, "Linear", "Absolute");
 	}
 	else if (this.mode == "relative") {
 		/* Calculate max */
@@ -490,7 +539,7 @@ EFPView.prototype.updateEFP = function() {
 		}
 
 		/* Update legend */
-		this.legend.update(-max, 0, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), "Log2 Ratio", "Relative to control: " + (+parseFloat(this.control.meanLevel).toFixed(2)));
+		this.legend.update(-max, 0, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), maskColor, (this.maskOn) ? this.maskThreshold : null, "Log2 Ratio", "Relative to control: " + (+parseFloat(this.control.meanLevel).toFixed(2)));
 	}
 	else if (this.mode == "compare") {
 		/* Calculate ratios and max */
@@ -542,7 +591,18 @@ EFPView.prototype.updateEFP = function() {
 		}
 
 		/* Update legend */
-		this.legend.update(-max, 0, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), "Log2 Ratio", "Relative to " + this.compareElement.identifier);
+		this.legend.update(-max, 0, max, ZUI.Util.makeColorString(minColor), ZUI.Util.makeColorString(midColor), ZUI.Util.makeColorString(maxColor), maskColor, (this.maskOn) ? this.maskThreshold : null, "Log2 Ratio", "Relative to " + this.compareElement.identifier);
+	}
+
+	/* Mask */
+	if (this.maskOn) {
+		for (var n = 0; n < this.groups.length; n++) {
+			var group = this.groups[n];
+			if (isNaN(group.sterrorLevel) || group.sterrorLevel >= group.meanLevel * this.maskThreshold) {
+				group.color = maskColor;
+				group.shape.fillColor = group.color;
+			}
+		}
 	}
 };
 
@@ -552,9 +612,9 @@ EFPView.prototype.updateTags = function() {
 		var tag = this.elementOfInterest.tags[n];
 		this.tags.push(new ZUI.ViewObject({
 			shape: "circle",
-			positionScale: "world",
-			sizeScale: "world",
-			x: ZUI.width - 13 - n * 8,
+			positionScale: "screen",
+			sizeScale: "screen",
+			x: ZUI.width - 20 - (this.elementOfInterest.tags.length - 1) * 8 + n * 8,
 			y: ZUI.height - 13,
 			radius: 3,
 			centerAt: "center center",
@@ -599,3 +659,4 @@ EFPView.prototype.getLoadProgress = function() {
 	if (this.isDataReady) return 1;
 	else return 0;
 };
+

@@ -1,7 +1,9 @@
 /**
- * Species View class
+ * SpeciesView class
  * UI design by Jamie Waese
  * Code by Hans Yu
+ *
+ * This is a View class for letting the user choose which species to work with.
  */
 
 /* Constructor */
@@ -10,7 +12,7 @@ function SpeciesView() {
 	ZUI.View.call(this);
 
 	/* Properties */
-	this.isDataLoaded = false;			// Data loading status
+	this.isDataReady = false;			// Data loading status
 	this.selectedSpecies = null;		// Species selected
 	this.speciesList = new SpeciesView.SpeciesList(this);	// Species list
 }
@@ -27,14 +29,10 @@ SpeciesView.prototype.active = function() {
 	}
 
 	/* Hide extra UI */
-	document.getElementById("navigation_container").style.opacity = "0";
-	document.getElementById("genePanel_container").style.opacity = "0";
-	document.getElementById("settings_container").style.opacity = "0";
-	document.getElementById("speciesLabel").style.opacity = "0";
-	document.getElementById("enter_geneID_box").style.opacity = "0";
-
-	/* Initialize properties */
-	this.selectedSpecies = null;
+	$(".hiddenInSpeciesView").css("opacity", "0");
+	setTimeout(function() {
+		$(".hiddenInSpeciesView").css("visibility", "hidden");
+	}, 1000)
 
 	/* Add species list element */
 	ZUI.container.appendChild(this.speciesList.element);
@@ -48,16 +46,16 @@ SpeciesView.prototype.active = function() {
 			}
 		}
 	}
+	else {
+		this.selectedSpecies = null;
+	}
 };
 
 /* inactive event handler */
 SpeciesView.prototype.inactive = function() {
 	/* Show extra UI */
-	document.getElementById("navigation_container").style.opacity = "1";
-	document.getElementById("genePanel_container").style.opacity = "1";
-	document.getElementById("settings_container").style.opacity = "1";
-	document.getElementById("speciesLabel").style.opacity = "1";
-	document.getElementById("enter_geneID_box").style.opacity = "1";
+	$(".hiddenInSpeciesView").css("visibility", "visible");
+	$(".hiddenInSpeciesView").css("opacity", "1");
 
 	/* Remove species list */
 	ZUI.container.removeChild(this.speciesList.element);
@@ -74,9 +72,18 @@ SpeciesView.prototype.draw = function() {
 	}
 };
 
+/* Clean up */
+SpeciesView.prototype.remove = function() {
+	/* Remove species view objects */
+	for (var n = 0; n < this.speciesList.items.length; n++) {
+		var speciesItem = this.speciesList.items[n];
+		speciesItem.viewObject.remove();
+	}
+};
+
 /* Returns the view's load progress */
 SpeciesView.prototype.getLoadProgress = function() {
-	if (this.isDataLoaded) return 1;
+	if (this.isDataReady) return 1;
 	else return 0;
 };
 

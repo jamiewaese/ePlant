@@ -1,4 +1,11 @@
-/* SpeciesListItem class for dealing with individual items in a SpeciesList */
+/**
+ * SpeciesView.SpeciesListItem class
+ * UI design by Jamie Waese
+ * Code by Hans Yu
+ *
+ * This is a class for dealing with the items of the interactive species list found in SpeciesView.
+ */
+
 SpeciesView.SpeciesListItem = function(species, speciesList) {
 	/* Properties */
 	this.species = species;			// Species that this item is representing
@@ -8,16 +15,11 @@ SpeciesView.SpeciesListItem = function(species, speciesList) {
 
 	/* Create HTML element */
 	this.element = document.createElement("span");
-	this.element.style.cursor = "default";
-	this.element.style.fontFamily = "Helvetica";
-	this.element.style.fontSize = "20px";
-	this.element.style.fontStyle = "italic";
-	this.element.style.textIndent = "20px";
-	this.element.style.lineHeight = "40px";
-	this.element.style.color = Eplant.Color.DarkGrey;
-	this.element.style.display = "block";
-	this.element.style.cursor = "pointer";
+	this.element.className = "selectionListItem";
 	this.element.textContent = this.species.scientificName;
+	this.element.oncontextmenu = function() {
+		return false;
+	};
 	this.speciesList.element.appendChild(this.element);
 
 	/* Mouse hover event handler */

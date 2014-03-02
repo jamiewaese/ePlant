@@ -21,13 +21,14 @@ Eplant.ElementOfInterest = function(element, speciesOfInterest) {
 	this.tags = [];
 
 	/* Preload views */
-	this.worldView = new WorldView(element);
+	this.worldView = new WorldView(this);
 	this.plantView = new PlantView(this);
 	this.cellView = new CellView(this);
+	this.experimentView = new ExperimentView(this);
+	this.interactionView = new InteractionView(element);
 	this.pathwayView = new PathwayView(element);
 	this.moleculeView = new MoleculeView(element);
-	this.sequenceView = null;
-	this.interactionView = new InteractionView(element);
+	this.sequenceView = new SequenceView(this);
 };
 
 Eplant.ElementOfInterest.prototype.setTagByColor = function(color, onState) {
@@ -50,4 +51,17 @@ Eplant.ElementOfInterest.prototype.setTagByColor = function(color, onState) {
 	/* Fire event */
 	var event = new ZUI.Event("update-tags", this, null);
 	ZUI.fireEvent(event);
+};
+
+/* Clean up */
+Eplant.ElementOfInterest.prototype.remove = function() {
+	/* Clean up views */
+	this.worldView.remove();
+	this.plantView.remove();
+	this.cellView.remove();
+	this.experimentView.remove();
+	this.interactionView.remove();
+	this.pathwayView.remove();
+	this.moleculeView.remove();
+	this.sequenceView.remove();
 };
