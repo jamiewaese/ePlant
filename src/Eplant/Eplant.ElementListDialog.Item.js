@@ -1,2 +1,0 @@
-Eplant.ElementListDialog.Item = function() {
-};
