@@ -25,7 +25,7 @@ ZUI.ContextMenu = function() {
 	};
 };
 
-ZUI.ContextMenu.prototype.open = function(options, x, y) {
+ZUI.ContextMenu.prototype.open = function(x, y, options) {
 	/* Close context menu if already open */
 	if (this.active) {
 		this.close();

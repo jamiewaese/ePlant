@@ -135,10 +135,10 @@ greyText {
 	width: 40px;
 	height: 40px;
 
-	transition:transform .25s ease;
-	-webkit-transition:transform .25s ease;
-	-moz-transition:transform .25s ease;
-	-o-transition:transform .25s ease;
+	transition:transform 0.25s ease;
+	-webkit-transition:-webkit-transform 0.25s ease;
+	-moz-transition:-moz-transform 0.25s ease;
+	-o-transition:-o-transform 0.25s ease;
 }
 .icon:hover img {
 	transform:scale(1.1);
@@ -159,10 +159,10 @@ greyText {
 	width: 30px;
 	height: 30px;
 
-	transition:transform .25s ease;
-	-webkit-transition:transform .25s ease;
-	-moz-transition:transform .25s ease;
-	-o-transition:transform .25s ease;
+	transition:transform 0.25s ease;
+	-webkit-transition:-webkit-transform 0.25s ease;
+	-moz-transition:-moz-transform 0.25s ease;
+	-o-transition:-o-transform 0.25s ease;
 }
 .iconSmall:hover img {
 	transform:scale(1.1);
@@ -174,9 +174,9 @@ greyText {
 /* GrowWhenHoveredOver class */
 .growWhenHoveredOver {
 	transition:transform .75s ease;
-	-webkit-transition:transform .75s ease;
-	-moz-transition:transform .75s ease;
-	-o-transition:transform .75s ease;
+	-webkit-transition:-webkit-transform .75s ease;
+	-moz-transition:-moz-transform .75s ease;
+	-o-transition:-o-transform .75s ease;
 }
 .growWhenHoveredOver:hover {
 	transform:scale(1.1);
@@ -189,8 +189,8 @@ greyText {
 	-moz-transform: rotate(180deg);
 }
 
-/* ElementListDialogItem class */
-.elementListDialogItem {
+/* eplant-geneticElementList-choice class */
+.eplant-geneticElementList-choice {
 	cursor: default;
 	font-family: Helvetica;
 	font-size: 14px;
@@ -203,28 +203,28 @@ greyText {
 	text-overflow: ellipsis;
 	padding: 0 5px;
 }
-.elementListDialogItem:hover {
+.eplant-geneticElementList-choice:hover {
 	cursor: pointer;
 	color: #FFFFFF;
 	background-color: #3C3C3C;
 }
 
 /* Class for items in the gene panel */
-.elementsOfInterestPanelItem {
+.eplant-geneticElementPanel-item {
 	display: block;
 	vertical-align: middle;
 }
-.elementsOfInterestPanelItem img {
+.eplant-geneticElementPanel-item img {
 	cursor: pointer;
 	width: 16px;
 	height: 16px;
 	position: relative;
 	top: 3px;
 }
-.elementsOfInterestPanelItem span {
+.eplant-geneticElementPanel-item span {
 	cursor: pointer;
 	display: inline-block;
-	max-width: 146px;
+	width: 146px;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -237,13 +237,21 @@ greyText {
 	padding-right: 2px;
 }
 
-.elementsOfInterestPanelItem_focus {
+.eplant-geneticElementPanel-item-focus {
 	color: #3C3C3C;
 	font-weight: bold;
 }
 
+.eplant-geneticElementPanel-item-annotationTag {
+	border-radius: 999px;
+	width: 7px;
+	height: 7px;
+	margin: 1px;
+	display: inline-block;
+}
+
 /* viewHistoryDialogItem class */
-.viewHistoryDialogItem {
+.eplant-historyItem {
 	cursor: default;
 	font-family: Helvetica;
 	font-size: 14px;
@@ -255,14 +263,14 @@ greyText {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
-.viewHistoryDialogItem:hover {
+.eplant-historyItem:hover {
 	cursor: pointer;
 	color: #FFFFFF;
 	background-color: #3C3C3C;
 }
 
-/* Class for circular tags */
-.circularTag {
+/* Class for genetic element dialog annotation tags */
+.eplant-geneticElementDialog-annotationTag {
 	-webkit-border-radius: 999px;
 	-moz-border-radius: 999px;
 	border-radius: 999px;
@@ -273,21 +281,41 @@ greyText {
 	margin: 2px;
 	vertical-align: middle;
 }
-.circularTag:hover {
+.eplant-geneticElementDialog-annotationTag:hover {
 	cursor: pointer;
 }
-.circularTag[selected="true"] {
+.eplant-geneticElementDialog-annotationTag[data-selected="true"] {
 	border-width: 3px;
 	margin: 0;
 }
 
-/* noTitleBar class for disabling jQuery UI dialog title bar */
-.noTitleBar .ui-dialog-titlebar {
+/* Class for chromosome view annotate dialog annotation tags tags */
+.eplant-chromosomeView-annotateDialog-annotationTag {
+	-webkit-border-radius: 999px;
+	-moz-border-radius: 999px;
+	border-radius: 999px;
+	border: 1px solid #3C3C3C;
+	width: 10px;
+	height: 10px;
+	display: inline-block;
+	margin: 2px;
+	vertical-align: middle;
+}
+.eplant-chromosomeView-annotateDialog-annotationTag:hover {
+	cursor: pointer;
+}
+.eplant-chromosomeView-annotateDialog-annotationTag[data-selected="true"] {
+	border-width: 3px;
+	margin: 0;
+}
+
+/* .ui-dialog-noTitleBar class for disabling jQuery UI dialog title bar */
+.ui-dialog-noTitleBar .ui-dialog-titlebar {
 	display: none;
 }
 
 /* tooltip */
-.tooltip {
+.eplant-tooltip {
 	font-size: 12px;
 	margin: 0;
 	padding: 5px;
@@ -297,39 +325,39 @@ greyText {
 	-khtml-opacity: 0.97;
 	opacity: 0.97;
 }
-.tooltip .ui-dialog-titlebar {
+.eplant-tooltip .ui-dialog-titlebar {
 	display: none;
 }
-.tooltip .ui-dialog-content:hover {
+.eplant-tooltip .ui-dialog-content:hover {
 	cursor: default;
 }
-.tooltip-left-arrow, .tooltip-right-arrow, .tooltip-left-arrow-inside, .tooltip-right-arrow-inside {
+.eplant-tooltip-leftArrow, .eplant-tooltip-rightArrow, .eplant-tooltip-leftArrow-inner, .eplant-tooltip-rightArrow-inner {
 	width: 0;
 	height: 0;
 	position: absolute;
 }
-.tooltip-left-arrow {
+.eplant-tooltip-leftArrow {
 	top: calc(50% - 10px);
 	left: -14px;
 	border-top: 10px solid transparent;
 	border-bottom: 10px solid transparent;
 	border-right: 14px solid #AAAAAA;
 }
-.tooltip-right-arrow {
+.eplant-tooltip-rightArrow {
 	top: calc(50% - 10px);
 	right: -14px;
 	border-top: 10px solid transparent;
 	border-bottom: 10px solid transparent;
 	border-left: 14px solid #AAAAAA;
 }
-.tooltip-left-arrow-inside {
+.eplant-tooltip-leftArrow-inner {
 	left: 1px;
 	top: -9px;
 	border-top: 9px solid transparent;
 	border-bottom: 9px solid transparent;
 	border-right: 13px solid #FFFFFF;
 }
-.tooltip-right-arrow-inside {
+.eplant-tooltip-rightArrow-inner {
 	right: 1px;
 	top: -9px;
 	border-top: 9px solid transparent;
@@ -337,7 +365,7 @@ greyText {
 	border-left: 13px solid #FFFFFF;
 }
 
-.popupDialog {
+.eplant-geneticElementDialog {
 	filter:alpha(opacity=97); /* for IE4 - IE7 */
 	-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=97)"; /* IE8 */
 	-moz-opacity:0.97;
@@ -345,29 +373,29 @@ greyText {
 	opacity: 0.97;
 }
 
-.popupDialog .minimized {
+.eplant-geneticElementDialog .eplant-geneticElementDialog-minimized {
 	height: 0;
 	padding-top: 0;
 	padding-bottom: 0;
 }
 
-.popupDialog .ui-dialog-content {
+.eplant-geneticElementDialog .ui-dialog-content {
 	overflow: hidden;
-	transition: padding .25s ease, height .25s ease;
-	-webkit-transition: padding .25s ease, height .25s ease;
-	-moz-transition: padding .25s ease, height .25s ease;
-	-o-transition: padding .25s ease, height .25s ease;
+	transition: padding 0.25s ease, height 0.25s ease;
+	-webkit-transition: padding 0.25s ease, height 0.25s ease;
+	-moz-transition: padding 0.25s ease, height 0.25s ease;
+	-o-transition: padding 0.25s ease, height 0.25s ease;
 }
 
-.popupDialog .ui-dialog-titlebar {
+.eplant-geneticElementDialog .ui-dialog-titlebar {
 	background: #E7E7E7;
 }
 
-.loadedDialog .ui-dialog-titlebar {
+.eplant-geneticElementDialog-loaded .ui-dialog-titlebar {
 	background: #E6F9AF;
 }
 
-.activeDialog .ui-dialog-titlebar {
+.eplant-geneticElementDialog-active .ui-dialog-titlebar {
 	background: #99CC00;
 }
 
@@ -504,8 +532,7 @@ greyText {
 
 
 /* Navigation container */
-#navigation_container, #genePanel_container {
-	width: 180px;
+#navigationContainer, #genePanel_container {
 	padding: 15px;
 	font-size: 1.2em;
 	opacity: 0;
@@ -513,6 +540,12 @@ greyText {
 	-webkit-transition: opacity .5s ease;
 	-moz-transition: opacity .5s ease;
 	-o-transition: opacity .5s ease;
+}
+
+#navigationContainer {
+	width: 180px;
+	text-align: center;
+	position: relative;
 }
 
 /* Gene panel container */
@@ -558,10 +591,10 @@ greyText {
 	height: 56px;
 	margin: 3px;
 
-	transition:All .25s ease;
-	-webkit-transition:All .25s ease;
-	-moz-transition:All .25s ease;
-	-o-transition:All .25s ease;
+	transition:All 0.25s ease;
+	-webkit-transition:All 0.25s ease;
+	-moz-transition:All 0.25s ease;
+	-o-transition:All 0.25s ease;
 }
 #logo:hover {
 	transform:scale(1.1);
@@ -655,10 +688,10 @@ greyText {
 	width: 30px;
 	height: 30px;
 
-	transition:transform .25s ease;
-	-webkit-transition:transform .25s ease;
-	-moz-transition:transform .25s ease;
-	-o-transition:transform .25s ease;
+	transition:transform 0.25s ease;
+	-webkit-transition:-webkit-transform 0.25s ease;
+	-moz-transition:-moz-transform 0.25s ease;
+	-o-transition:-o-transform 0.25s ease;
 }
 
 
@@ -703,6 +736,47 @@ greyText {
 }
 
 
+.hiddenInSpeciesView {
+	visibility: hidden;
+	opacity: 0;
+	transition:opacity 1s ease;
+	-webkit-transition:opacity 1s ease;
+	-moz-transition:opacity 1s ease;
+	-o-transition:opacity 1s ease;
+}
+
+.eplant-selectList {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 300px;
+	height: 600px;
+	padding: 30px;
+	backgroundColor: transparent;
+}
+
+.eplant-selectList-title {
+	font-family: Helvetica;
+	font-size: 34px;
+	text-indent: 14px;
+	line-height: 56px;
+	color: #99CC00;
+	display: block;
+}
+
+.eplant-selectList-choice {
+	font-family: Helvetica;
+	font-size: 20px;
+	text-indent: 20px;
+	line-height: 40px;
+	color: #3C3C3C;
+	display: block;
+	cursor: pointer;
+}
+
+.eplant-selectList-choice-selected {
+	background-color: #99CC00;
+}
 
 /* Override  some JQuery design settings */
 .ui-corner-all, .ui-corner-top, .ui-corner-left, .ui-corner-tl {

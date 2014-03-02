@@ -6,6 +6,13 @@
 /* Class constructor */
 ZUI.View = function() {
 	this.viewObjects = [];
+	this.animations = [];
+};
+
+/* Start an animation */
+ZUI.View.prototype.animate = function(animation) {
+	this.animations.push(animation);
+	animation.begin();
 };
 
 /* Called when View becomes active */
@@ -16,6 +23,9 @@ ZUI.View.prototype.inactive = function() {};
 
 /* Called when View is ready to be drawn */
 ZUI.View.prototype.draw = function() {};
+
+/* Manually call when View is no longer needed */
+ZUI.View.prototype.remove = function() {};
 
 /* Called when left mouse is down */
 ZUI.View.prototype.leftMouseDown = function() {};
@@ -71,7 +81,3 @@ ZUI.View.prototype.touchEnd = function(pointer) {};
 
 ZUI.View.prototype.touchCancel = function(pointer) {};
 
-/* Returns the load progress of the View (0 to 1) */
-ZUI.View.prototype.getLoadProgress = function() {
-	return 0;
-};

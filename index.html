@@ -36,6 +36,8 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDT2IJLsslEC94ECmcXlAvz9ukPRH0fbh0&sensor=false"></script>
 			<script type="text/javascript" src="lib/GMaps/infobox_packed.js"></script>
 		<script type="text/javascript" src="lib/OverlappingMarkerSpiderfier/oms.min.js"></script>
+		<script type="text/javascript" src="lib/dalliance/dalliance-compiled.js"></script>
+		<script type="text/javascript" src="lib/html2canvas/html2canvas.js"></script>
 
 		<!-- Tooltip Pop-Up Stylesheet. (From: https://github.com/chinchang/hint.css) -->
 		<link rel="stylesheet" href="lib/hint/hint.css"></link>
@@ -59,7 +61,7 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 		<!-- Facebook Like Button -->
 
 		<!-- CSS -->
-		<link rel="stylesheet" href="style/eplant.css"></link>
+		<link rel="stylesheet" href="style/new_eplant.css"></link>
 	</head>
 
 
@@ -77,26 +79,34 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 					<!-- ePlant title & species name -->
 					<td width="460px">
 						<span id="logoText">ePlant&nbsp;&nbsp;</span>
-						<span id="speciesLabel">
+						<span id="speciesLabel" class="hiddenInSpeciesView">
 								<!-- Plant name should update when user changes species -->
 						</span>
 					</td>
 					<!-- Enter Gene ID box -->
 					<td width="284px">
-						<div id="enter_geneID_box">
+						<div id="enter_geneID_box" class="hiddenInSpeciesView">
 							<!-- text box -->
 							<input id="enterIdentifier" type="text" name="GeneID" value="Enter gene ID or alias" onfocus="inputFocus(this)" onblur="inputBlur(this)">
 							<!-- Get Data button -->
 							<div class="hint--left hint--success hint--rounded" data-hint="Download all available data for this gene" data-enabled="true">
-								<input type="button" class="button" value="Get Data" onclick="Eplant.getElement();"  >
+								<input type="button" id="queryIdentifier" class="button" value="Get Data">
 							</div>
 						</div>
 					</td>
 					<!-- Save / Load buttons -->
 					<td>
 						<div style="float: left;padding-top:6px;">
-							<div class="hint--left  hint--success  hint--rounded" data-hint="Save your work session" data-enabled="true"><input type="button" class="button" value="Save" onclick="saveFile();"/></div>
-							<div class="hint--left  hint--success  hint--rounded" data-hint="Load a previously saved session" data-enabled="true"><input type="button" class="button" id="fileinput" value="Load" onchange="readFile(this);"></div>
+							<div class="hint--left  hint--success  hint--rounded" data-hint="Save your work session" data-enabled="true"><input type="button" id="saveSession" class="button" value="Save"/></div>
+							<div class="hint--left  hint--success  hint--rounded" data-hint="Load a previously saved session" data-enabled="true"><input type="button" id="loadSession" class="button" value="Load"></div>
+						</div>
+					</td>
+					<!-- Example button -->
+					<td>
+						<div style="float: left;padding-top:6px;">
+							<div class="hint--left  hint--success  hint--rounded hiddenInSpeciesView" data-hint="Example" data-enabled="true">
+								<input id="getExample" type="button" class="button" value="Example"/>
+							</div>
 						</div>
 					</td>
 				</tr>
@@ -107,64 +117,7 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 				<tr>
 					<td valign="top">
 						<!-- Icon Dock -->
-						<div id="navigation_container" style="opacity:0;">
-							<div style="text-align:center;position:relative;">
-							<br>
-							<!-- Species Selector -->
-							<div id="speciesViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Species selector" data-enabled="true" onclick="Eplant.toSpeciesView();">
-								<img src="img/unavailable/species.png"></img>
-							</div>
-							<br>
-							<!-- World eFP -->
-							<div id="worldViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="World eFP" data-enabled="true" onclick="Eplant.toWorldView();">
-								<img src="img/unavailable/world.png"></img>
-							</div>
-							<br>
-							<!-- Plant eFP -->
-							<div id="plantViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Plant eFP" data-enabled="true" onclick="Eplant.toPlantView();">
-								<img src="img/unavailable/plant.png"></img>
-							</div>
-							<br>
-							<!-- Sub cellular eFP -->
-							<div id="cellViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Subcellular eFP" data-enabled="true" onclick="Eplant.toCellView();">
-								<img src="img/unavailable/cell.png"></img>
-							</div>
-							<!-- Experimental eFP's -->
-							<div id="experimentViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Experimental eFP" data-enabled="true">
-								<img src="img/unavailable/experiment.png"></img>
-							</div>
-							<br>
-							<!-- Chromosome Viewer -->
-							<div id="chromosomeViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Chromosome viewer" data-enabled="true" onclick="Eplant.toChromosomeView();">
-								<img src="img/unavailable/chromosome.png"></img>
-							</div>
-							<br>
-							<!-- Protein Protein Interactions - Cytoscape -->
-							<div id="interactionViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Protein-protein interactions" data-enabled="true" onclick="Eplant.toInteractionView();">
-								<img src="img/unavailable/interaction.png"></img>
-							</div>
-							<!-- Pathway Reactome Viewer -->
-							<div id="pathwayViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Metabolic pathways" data-enabled="true" onclick="Eplant.toPathwayView();">
-								<img src="img/unavailable/pathway.png"></img>
-							</div>
-							<br>
-							<!-- Molecular JSmol viewer -->
-							<div id="moleculeViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Molecular structure" data-enabled="true" onclick="Eplant.toMoleculeView();">
-								<img src="img/unavailable/molecule.png"></img>
-							</div>
-							<br>
-							<!-- Sequence Viewer - JBrowse -->
-							<div id="sequenceViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Sequence viewer" data-enabled="true">
-								<img src="img/unavailable/sequence.png"></img>
-							</div>
-							<br>
-							<!-- External Links -->
-							<div id="sequenceViewIcon" class="icon hint--right hint--success hint--rounded" data-hint="Auto link outs" data-enabled="true">
-								<img src="img/unavailable/externalTools.png"></img>
-							</div>
-
-
-							</div>
+						<div id="navigationContainer" class="hiddenInSpeciesView">
 						</div>
 					</td>
 					<td valign="top">
@@ -174,42 +127,44 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 								</div>
 								<div id="JSmol_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;">
 								</div>
+								<div id="map_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;visibility:hidden;">
+								</div>
+								<div id="dalliance_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;visibility:hidden;">
+								</div>
 								<canvas id="ZUI_canvas" width="900px" height="600px" style="position:absolute;left:0;top:0;outline:none;">
 									Canvas is not supported by your browser, please upgrade.
 								</canvas>
-								<div id="map_container" style="width:900px;height:600px;position:absolute;left:0;top:0;opacity:0.99;visibility:hidden;">
-								</div>
 							</div>
 						</div>
-						<div id="settings_container" style="opacity:0;">
+						<div id="settings_container" class="hiddenInSpeciesView">
 							<table>
 								<tr>
 									<td id="viewSpecificUI">
 									</td>
 									<td id="crossViewUI">
-										<div id="historyBackIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Go back to the previous view" data-enabled="true" style="padding-right:0;width:20px;height:25px;" onclick="Eplant.backViewHistory();">
+										<div id="historyBackIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Go back to the previous view" data-enabled="true" style="padding-right:0;width:20px;height:25px;">
 											<img src="img/available/history-back.png" style="width:20px;height:20px;"></img>
 										</div>
-										<div id="historyIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="History panel" data-enabled="true" style="padding-left:0;padding-right:0;" onclick="Eplant.showViewHistory();">
+										<div id="historyIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="History panel" data-enabled="true" style="padding-left:0;padding-right:0;">
 											<img src="img/history.png"></img>
 										</div>
-										<div id="historyForwardIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Go forward to the next view" data-enabled="true" style="padding-left:0;width:20px;height:25px;" onclick="Eplant.forwardViewHistory();">
+										<div id="historyForwardIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Go forward to the next view" data-enabled="true" style="padding-left:0;width:20px;height:25px;">
 											<img src="img/available/history-forward.png" style="width:20px;height:20px;"></img>
 										</div>
-										<div id="changeViewAnimationIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Toggle zooming animation" data-enabled="true" onclick="Eplant.toggleChangeViewAnimation();">
+										<div id="viewChangeAnimationIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Toggle zooming animation" data-enabled="true">
 											<img src="img/on/zoom.png"></img>
 										</div>
-										<div id="tooltipIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Toggle tooltip" data-enabled="true" onclick="Eplant.toggleTooltip();">
+										<div id="tooltipIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Toggle tooltip" data-enabled="true">
 											<img src="img/on/tooltip.png"></img>
 										</div>
-										<div id="getImageIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Save current screen as high resolution image" data-enabled="true" onclick="Eplant.toImageInWindow();">
+										<div id="getImageIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Save current screen as high resolution image" data-enabled="true">
 											<img src="img/getimage.png"></img>
 										</div>
-										<div id="citationIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Get citation" data-enabled="true" onclick="Eplant.showCitation();">
+										<div id="citationIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Get citation" data-enabled="true">
 											<img src="img/citation.png"></img>
 										</div>
-										<div id="collapseDialogsIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Remove all dialogs" data-enabled="true" onclick="Eplant.collapseElementDialogs();">
-											<img src="img/collapsedialogs.png"></img>
+										<div id="removeDialogsIcon" class="iconSmall hint--top hint--success hint--rounded" data-hint="Remove all dialogs" data-enabled="true">
+											<img src="img/removedialogs.png"></img>
 										</div>
 									</td>
 								</tr>
@@ -217,7 +172,7 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 						</div>
 					</td>
 					<td valign="top">
-						<div id="genePanel_container" style="opacity:0;">
+						<div id="genePanel_container" class="hiddenInSpeciesView">
 							<span id="genePanel_label">Currently loaded genes:</span>
 							<div id="genePanel_content">
 							</div>
@@ -241,45 +196,46 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 					<script type="text/javascript" src="src/ZUI/ZUI.Util.KeySpline.js"></script>
 				<script type="text/javascript" src="src/ZUI/ZUI.Event.js"></script>
 				<script type="text/javascript" src="src/ZUI/ZUI.EventListener.js"></script>
-			<script type="text/javascript" src="src/Eplant/Eplant.js"></script>
-				<script type="text/javascript" src="src/Eplant/Eplant.Color.js"></script>
-				<script type="text/javascript" src="src/Eplant/Eplant.Species.js"></script>
-				<script type="text/javascript" src="src/Eplant/Eplant.Chromosome.js"></script>
-				<script type="text/javascript" src="src/Eplant/Eplant.Centromere.js"></script>
-				<script type="text/javascript" src="src/Eplant/Eplant.Element.js"></script>
-				<script type="text/javascript" src="src/Eplant/Eplant.SpeciesOfInterest.js"></script>
-				<script type="text/javascript" src="src/Eplant/Eplant.ElementOfInterest.js"></script>
-					<script type="text/javascript" src="src/Eplant/Eplant.ElementOfInterest.Tag.js"></script>
-				<script type="text/javascript" src="src/Eplant/Eplant.PopupDialog.js"></script>
-				<script type="text/javascript" src="src/Eplant/Eplant.ElementDialog.js"></script>
-					<script type="text/javascript" src="src/Eplant/Eplant.ElementDialog.Tag.js"></script>
-				<script type="text/javascript" src="src/Eplant/Eplant.InteractionDialog.js"></script>
-				<script type="text/javascript" src="src/Eplant/Eplant.AnnotationDialog.js"></script>
-				<script type="text/javascript" src="src/Eplant/Eplant.Tooltip.js"></script>
-					<script type="text/javascript" src="src/Eplant/Eplant.AnnotationDialog.Tag.js"></script>
-				<script type="text/javascript" src="src/Eplant/Eplant.ViewHistoryDialog.js"></script>
-					<script type="text/javascript" src="src/Eplant/Eplant.ViewHistoryDialog.Item.js"></script>
-				<script type="text/javascript" src="src/SpeciesView/SpeciesView.js"></script>
-					<script type="text/javascript" src="src/SpeciesView/SpeciesView.SpeciesList.js"></script>
-					<script type="text/javascript" src="src/SpeciesView/SpeciesView.SpeciesListItem.js"></script>
-				<script type="text/javascript" src="src/ChromosomeView/ChromosomeView.js"></script>
-					<script type="text/javascript" src="src/ChromosomeView/ChromosomeView.ChromosomeViewObject.js"></script>
-					<script type="text/javascript" src="src/ChromosomeView/ChromosomeView.Annotation.js"></script>
-					<script type="text/javascript" src="src/ChromosomeView/ChromosomeView.ElementListDialog.js"></script>
-					<script type="text/javascript" src="src/ChromosomeView/ChromosomeView.ElementListDialogItem.js"></script>
-				<script type="text/javascript" src="src/InteractionView/InteractionView.js"></script>
-					<script type="text/javascript" src="src/InteractionView/InteractionView.Legend.js"></script>
-					<script type="text/javascript" src="src/InteractionView/InteractionView.Annotation.js"></script>
-				<script type="text/javascript" src="src/MoleculeView/MoleculeView.js"></script>
-				<script type="text/javascript" src="src/PathwayView/PathwayView.js"></script>
-				<script type="text/javascript" src="src/EFPView/EFPView.js"></script>
-					<script type="text/javascript" src="src/EFPView/EFPView.Legend.js"></script>
-					<script type="text/javascript" src="src/EFPView/EFPView.CompareDialog.js"></script>
-				<script type="text/javascript" src="src/PlantView/PlantView.js"></script>
-				<script type="text/javascript" src="src/CellView/CellView.js"></script>
-				<script type="text/javascript" src="src/WorldView/WorldView.js"></script>
-				<script type="text/javascript" src="src/ExperimentView/ExperimentView.js"></script>
-				<script type="text/javascript" src="src/SequenceView/SequenceView.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.Views.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.Color.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.View.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.BaseViews.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.Species.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.Chromosome.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.GeneticElement.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.GeneticElement.AnnotationTag.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.GeneticElementDialog.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.GeneticElementDialog.AnnotationTag.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.ViewSpecificUIButton.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.Tooltip.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.History.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.History.Item.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.HistoryDialog.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.BaseViews/EFPView/Eplant.BaseViews.EFPView.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.BaseViews/EFPView/Eplant.BaseViews.EFPView.Legend.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.BaseViews/EFPView/Eplant.BaseViews.EFPView.CompareDialog.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.BaseViews/EFPView/Eplant.BaseViews.EFPView.MaskDialog.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.BaseViews/EFPView/Eplant.BaseViews.EFPView.PaletteDialog.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.Views/SpeciesView/Eplant.Views.SpeciesView.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.Views/SpeciesView/Eplant.Views.SpeciesView.SelectList.js"></script>
+					<script type="text/javascript" src="src/new_Eplant/Eplant.Views/SpeciesView/Eplant.Views.SpeciesView.SelectList.Choice.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.Views/WorldView/Eplant.Views.WorldView.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.Views/PlantView/Eplant.Views.PlantView.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.Views/CellView/Eplant.Views.CellView.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.Views/ChromosomeView/Eplant.Views.ChromosomeView.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.Views/ChromosomeView/Eplant.Views.ChromosomeView.Chromosome.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.Views/ChromosomeView/Eplant.Views.ChromosomeView.GeneticElementList.js"></script>
+					<script type="text/javascript" src="src/new_Eplant/Eplant.Views/ChromosomeView/Eplant.Views.ChromosomeView.GeneticElementList.Choice.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.Views/ChromosomeView/Eplant.Views.ChromosomeView.Annotation.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.Views/ChromosomeView/Eplant.Views.ChromosomeView.AnnotateDialog.js"></script>
+					<script type="text/javascript" src="src/new_Eplant/Eplant.Views/ChromosomeView/Eplant.Views.ChromosomeView.AnnotateDialog.AnnotationTag.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.Views/InteractionView/Eplant.Views.InteractionView.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.Views/InteractionView/Eplant.Views.InteractionView.Annotation.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.Views/InteractionView/Eplant.Views.InteractionView.Legend.js"></script>
+				<script type="text/javascript" src="src/new_Eplant/Eplant.Views/InteractionView/Eplant.Views.InteractionView.FilterDialog.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.Views/MoleculeView/Eplant.Views.MoleculeView.js"></script>
+			<script type="text/javascript" src="src/new_Eplant/Eplant.Views/SequenceView/Eplant.Views.SequenceView.js"></script>
 			<script type="text/javascript">
 				Eplant.initialize();
 			</script>
@@ -375,6 +331,27 @@ It is based on an earlier version of ePlant by Nicholas Provart: http://bar.utor
 				}
 				function inputBlur(i){
 				    if(i.value==""){ i.value=i.defaultValue; i.style.color="#666"; }
+				}
+			</script>
+
+
+			<script type="text/javascript">
+				function getExample() {
+					if (ZUI.activeView instanceof SpeciesView) {
+						alert("Please choose a plant first!");
+						return;
+					}
+
+					var map = {
+						"Arabidopsis thaliana": "ABI3, ABI5"
+					};
+
+					for (key in map) {
+						if (Eplant.speciesOfFocus.species.scientificName == key) {
+							document.getElementById("enterIdentifier").value = map[key];
+							break;
+						}
+					}
 				}
 			</script>
 

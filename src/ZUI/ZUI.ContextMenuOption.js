@@ -4,10 +4,11 @@
  */
 
 /* Constructor, must specify label and callback function */
-ZUI.ContextMenuOption = function(label, callback, enabled, autoClose) {
+ZUI.ContextMenuOption = function(label, callback, data, enabled, autoClose) {
 	/* Properties */
 	this.label = label;
 	this.callback = callback;
+	this.data = data;
 	this.enabled = (enabled === undefined) ? true : enabled;
 	this.autoClose = (autoClose === undefined) ? true : autoClose;
 	this.contextMenu = null;
@@ -47,8 +48,8 @@ ZUI.ContextMenuOption = function(label, callback, enabled, autoClose) {
 			this.container.style.color = "#B4B4B4";
 		}
 	}).bind(this);
-	this.container.onclick = (function(event){
-		this.callback(event);
+	this.container.onclick = (function(){
+		this.callback(this.data);
 		if (this.autoClose && this.contextMenu.active) {
 			this.contextMenu.close();
 		}
