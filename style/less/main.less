@@ -1,0 +1,69 @@
+// commonly used colours
+// spin: #00FFFF = cyan (center); can spin -180 (red through green) to 180 (red through blue)
+// darken / lighten: 0% (same color) to 50% (black / white)
+// saturate / desaturate: 0% to 100%
+@theme-color: desaturate(spin(#00FFFF, 30), 50%);
+
+// global
+* {
+  margin: 0;
+  padding: 0;
+}
+
+.header {
+  width: 100%;
+  height: 30px;
+  color: lighten(@theme-color, 45%);
+  background-image: linear-gradient(darken(@theme-color, 20%), darken(@theme-color, 5%));
+
+  // wrapper for centering the menu and controlling the width of the menu
+  .wrapper {
+    min-width: 380px;
+    max-width: 980px;
+    height: 30px;
+    margin: 0 auto;
+
+    // buttons in the menu
+    .button {
+      display: inline-block;
+      height: 20px;
+      padding: 5px 10px;
+      font-size: 16px;
+      font-family: "Helvetica";
+
+      &:hover {
+        cursor: pointer;
+        background-color: darken(@theme-color, 25%);
+        color: lighten(@theme-color, 30%);
+      }
+
+      &:active {
+        background-color: darken(@theme-color, 30%);
+      }
+    }
+  }
+}
+
+.content {
+  width: 100%;
+
+  .wrapper {
+    min-width: 380px;
+    max-width: 980px;
+    margin: 30px auto;
+  }
+}
+
+.footer {
+  width: 100%;
+  height: 30px;
+  color: lighten(desaturate(@theme-color, 50%), 43%);
+  background-image: linear-gradient(darken(desaturate(@theme-color, 0%), 45%), darken(desaturate(@theme-color, 50%), 20%));
+
+  .wrapper {
+    min-width: 380px;
+    max-width: 980px;
+    height: 30px;
+    margin: 0 auto;
+  }
+}
