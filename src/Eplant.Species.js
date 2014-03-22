@@ -104,7 +104,7 @@ Eplant.Species.prototype.removeChromosome = function(chromosome) {
  */
 Eplant.Species.prototype.loadChromosomes = function() {
 	if (!this.isLoadedChromosomes) {
-		$.getJSON("cgi-bin/chromosomeinfo.cgi?species=" + this.scientificName.replace(" ", "_"), $.proxy(function(response) {
+		$.getJSON(Eplant.ServiceUrl + 'chromosomeinfo.cgi?species=' + this.scientificName.replace(' ', '_'), $.proxy(function(response) {
 			/* Loop through chromosomes */
 			for (var n = 0; n < response.chromosomes.length; n++) {
 				/* Get data for this chromosome */
@@ -265,7 +265,7 @@ Eplant.Species.prototype.loadGeneticElementByIdentifier = function(identifier, c
 	wrapper.identifier = identifier;
 
 	/* Query */
-	$.getJSON("cgi-bin/querygene.cgi?species=" + this.scientificName.split(" ").join("_") + "&term=" + identifier, $.proxy(function(response) {
+	$.getJSON(Eplant.ServiceUrl + 'querygene.cgi?species=' + this.scientificName.split(' ').join('_') + '&term=' + identifier, $.proxy(function(response) {
 		/* Get Chromosome */
 		var chromosome = this.species.getChromosomeByIdentifier(response.chromosome);
 

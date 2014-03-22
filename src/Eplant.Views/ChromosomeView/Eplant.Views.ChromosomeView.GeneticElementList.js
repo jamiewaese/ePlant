@@ -44,7 +44,7 @@ Eplant.Views.ChromosomeView.GeneticElementList = function(chromosome, vPosition,
 	$(this.domContainer).append(span);
 
 	/* Query GeneticElements */
-	$.getJSON("cgi-bin/querygenesbyposition.cgi?chromosome=" + this.chromosome.chromosome.identifier + "&start=" + this.start + "&end=" + this.end, $.proxy(function(response) {
+	$.getJSON(Eplant.ServiceUrl + 'querygenesbyposition.cgi?chromosome=' + this.chromosome.chromosome.identifier + "&start=" + this.start + "&end=" + this.end, $.proxy(function(response) {
 		/* Clear loading message */
 		$(this.domContainer).empty();
 

@@ -28,7 +28,7 @@ Eplant.Views.CellView = function(geneticElement) {
 	);
 
 	// Call eFP constructor
-	var efpURL = "data/cell/" + geneticElement.species.scientificName.replace(" ", "_") + ".json";
+	var efpURL = Eplant.ServiceUrl + 'data/cell/' + geneticElement.species.scientificName.replace(" ", "_") + ".json";
 	Eplant.BaseViews.EFPView.call(this, geneticElement, efpURL, {
 		isRelativeEnabled: false,
 		isCompareEnabled: false,

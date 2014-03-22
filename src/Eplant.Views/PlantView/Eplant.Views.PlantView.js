@@ -28,7 +28,7 @@ Eplant.Views.PlantView = function(geneticElement) {
 	);
 
 	/* Call eFP constructor */
-	var efpURL = "data/plant/" + geneticElement.species.scientificName.replace(" ", "_") + ".json";
+	var efpURL = Eplant.ServiceUrl + 'data/plant/' + geneticElement.species.scientificName.replace(" ", "_") + ".json";
 	Eplant.BaseViews.EFPView.call(this, geneticElement, efpURL, {
 	});
 };

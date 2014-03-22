@@ -10,6 +10,9 @@
  */
 Eplant = {};
 
+/* Constants */
+Eplant.ServiceUrl = '../cgi-bin/';		// Base services url
+
 /* Attributes */
 Eplant.species = [];				// Array of Species objects
 Eplant.activeSpecies = null;		// Species that is under active study
@@ -446,7 +449,7 @@ Eplant.loadViews = function() {
  */
 Eplant.loadSpecies = function() {
 	if (!this.isLoadedSpecies) {
-		$.getJSON("cgi-bin/speciesinfo.cgi", $.proxy(function(response) {
+		$.getJSON(Eplant.ServiceUrl + 'speciesinfo.cgi', $.proxy(function(response) {
 			/* Loop through species */
 			for (var n = 0; n < response.length; n++) {
 				/* Get data for this species */
