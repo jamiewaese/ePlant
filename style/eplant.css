@@ -732,8 +732,12 @@ greyText {
     display: none;
 }
 .back-top:hover{
+<<<<<<< HEAD
 	background-color: #cbe57a;
 	
+=======
+	background-color: #cbe57c;
+>>>>>>> db409e058d459ef327ed07c44ea4b914972abbbd
 }
 
 
