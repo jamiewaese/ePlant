@@ -35,7 +35,7 @@ Eplant.Views.CellView = function(geneticElement) {
 		isMaskEnabled: false
 	});
 };
-ZUI.Util.inheritClass(Eplant.BaseViews.EFPView, Eplant.Views.CellView);	// Inherit parent prototype
+ZUI.Helper.inheritClass(Eplant.BaseViews.EFPView, Eplant.Views.CellView);	// Inherit parent prototype
 
 Eplant.Views.CellView.viewName = "Cell eFP Viewer";
 Eplant.Views.CellView.hierarchy = "genetic element";

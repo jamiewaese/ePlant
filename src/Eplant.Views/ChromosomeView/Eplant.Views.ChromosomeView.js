@@ -33,7 +33,7 @@ Eplant.Views.ChromosomeView = function(species) {
 	this.annotations = [];		// ChromosomeView.Annotation objects of this View
 	this.geneticElementList = null;		// GeneticElement list dialog
 	this.geneticElementListInfo = null;	// Object for storing GeneticElement list dialog information for delayed creation
-	this.backgroundVO = null;		// Background ViewObject for picking up user inputs
+	this.backgroundRO = null;		// Background ViewObject for picking up user inputs
 	this.eventListeners = [];		// Event listeners
 
 	/* Create view-specific UI buttons */
@@ -43,31 +43,38 @@ Eplant.Views.ChromosomeView = function(species) {
 	this.loadData();
 
 	/* Create background ViewObject */
-	this.backgroundVO = new ZUI.ViewObject({
-		shape: "rect",
-		positionScale: "screen",
-		sizeScale: "screen",
-		x: 0,
-		y: 0,
-		width: ZUI.width,
-		height: ZUI.height,
-		centerAt: "left top",
+	this.backgroundRO = new ZUI.RenderedObject.Rectangle({
+		position: {
+			x: 0,
+			y: 0
+		},
+		positionScale: ZUI.Def.ScreenScale,
 		stroke: false,
 		fill: false,
-		leftClick: $.proxy(function() {
-			/* Close GeneticElementList if open */
-			if (this.geneticElementList) {
-				this.geneticElementList.close();
-				this.geneticElementList = null;
+		centerAt: {
+			horizontal: ZUI.Def.Left,
+			vertical: ZUI.Def.Top
+		},
+		eventListeners: {
+			leftClick: function () {
+				/* Close GeneticElementList if open */
+				if (this.geneticElementList) {
+					this.geneticElementList.close();
+					this.geneticElementList = null;
+				}
 			}
-		}, this)
+		},
+		width: ZUI.width,
+		widthScale: ZUI.Def.ScreenScale,
+		height: ZUI.height,
+		heightScale: ZUI.Def.ScreenScale
 	});
-	this.viewObjects.push(this.backgroundVO);
+	this.backgroundRO.attachToView(this);
 
 	/* Bind events */
 	this.bindEvents();
 };
-ZUI.Util.inheritClass(Eplant.View, Eplant.Views.ChromosomeView);	// Inherit parent prototype
+ZUI.Helper.inheritClass(Eplant.View, Eplant.Views.ChromosomeView);	// Inherit parent prototype
 
 Eplant.Views.ChromosomeView.viewName = "Chromosome Viewer";
 Eplant.Views.ChromosomeView.hierarchy = "species";
@@ -112,9 +119,6 @@ Eplant.Views.ChromosomeView.prototype.inactive = function() {
 Eplant.Views.ChromosomeView.prototype.draw = function() {
 	/* Call parent method */
 	Eplant.View.prototype.draw.call(this);
-
-	/* Draw background */
-	this.backgroundVO.draw();
 
 	/* Draw chromosomes */
 	for (var n = 0; n < this.chromosomes.length; n++) {
@@ -161,8 +165,8 @@ Eplant.Views.ChromosomeView.prototype.mouseMove = function() {
 	/* Check whether mouse is pressed down to determine behaviour */
 	if (ZUI.mouseStatus.leftDown) {		// Down
 		/* Pan camera */
-		ZUI.camera.x -= ZUI.camera.unprojectDistance(ZUI.mouseStatus.x - ZUI.mouseStatus.xLast);
-		ZUI.camera.y -= ZUI.camera.unprojectDistance(ZUI.mouseStatus.y - ZUI.mouseStatus.yLast);
+		ZUI.camera.position.x -= ZUI.camera.unprojectDistance(ZUI.mouseStatus.x - ZUI.mouseStatus.xLast);
+		ZUI.camera.position.y -= ZUI.camera.unprojectDistance(ZUI.mouseStatus.y - ZUI.mouseStatus.yLast);
 	}
 	else {		// Up
 		/* Remove GeneticElementList if appropriate */
@@ -187,9 +191,12 @@ Eplant.Views.ChromosomeView.prototype.mouseMove = function() {
  */
 Eplant.Views.ChromosomeView.prototype.mouseWheel = function(scroll) {
 	/* Zoom at mouse position */
-	var point = ZUI.camera.unprojectPoint(ZUI.mouseStatus.x, ZUI.mouseStatus.y);
-	ZUI.camera.x += (point.x - ZUI.camera.x) * scroll * 0.1;
-	ZUI.camera.y += (point.y - ZUI.camera.y) * scroll * 0.1;
+	var point = ZUI.camera.unprojectPoint({
+		x: ZUI.mouseStatus.x, 
+		y: ZUI.mouseStatus.y
+	});
+	ZUI.camera.position.x += (point.x - ZUI.camera.position.x) * scroll * 0.1;
+	ZUI.camera.position.y += (point.y - ZUI.camera.position.y) * scroll * 0.1;
 	ZUI.camera.distance *= 1 - scroll * 0.1;
 };
 
@@ -203,7 +210,7 @@ Eplant.Views.ChromosomeView.prototype.remove = function() {
 	Eplant.View.prototype.remove.call(this);
 
 	/* Remove background ViewObject */
-	this.backgroundVO.remove();
+	this.backgroundRO.detachFromView(this);
 
 	/* Remove Chromosomes */
 	for (var n = 0; n < this.chromosomes.length; n++) {

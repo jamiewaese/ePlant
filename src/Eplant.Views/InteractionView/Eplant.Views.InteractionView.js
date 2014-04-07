@@ -55,7 +55,7 @@ Eplant.Views.InteractionView = function(geneticElement) {
 	/* Bind events */
 	this.bindEvents();
 };
-ZUI.Util.inheritClass(Eplant.View, Eplant.Views.InteractionView);	// Inherit parent prototype
+ZUI.Helper.inheritClass(Eplant.View, Eplant.Views.InteractionView);	// Inherit parent prototype
 
 Eplant.Views.InteractionView.viewName = "Interaction Viewer";
 Eplant.Views.InteractionView.hierarchy = "genetic element";

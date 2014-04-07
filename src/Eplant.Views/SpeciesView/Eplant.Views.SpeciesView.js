@@ -34,7 +34,7 @@ Eplant.Views.SpeciesView = function() {
 	/* Create SelectList */
 	this.selectList = new Eplant.Views.SpeciesView.SelectList(this);
 };
-ZUI.Util.inheritClass(Eplant.View, Eplant.Views.SpeciesView);		// Inherit parent prototype
+ZUI.Helper.inheritClass(Eplant.View, Eplant.Views.SpeciesView);		// Inherit parent prototype
 
 Eplant.Views.SpeciesView.viewName = "Species Viewer";
 Eplant.Views.SpeciesView.hierarchy = "ePlant";

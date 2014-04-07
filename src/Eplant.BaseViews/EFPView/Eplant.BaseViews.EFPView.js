@@ -70,7 +70,7 @@ Eplant.BaseViews.EFPView = function(geneticElement, efpURL, configs) {
 	/* Bind events */
 	this.bindEvents();
 };
-ZUI.Util.inheritClass(Eplant.View, Eplant.BaseViews.EFPView);	// Inherit parent prototype
+ZUI.Helper.inheritClass(Eplant.View, Eplant.BaseViews.EFPView);	// Inherit parent prototype
 
 /**
  * Active callback method.

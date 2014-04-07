@@ -33,7 +33,7 @@ Eplant.Views.MoleculeView = function(geneticElement) {
 	// Finish loading
 	this.loadFinish();
 };
-ZUI.Util.inheritClass(Eplant.View, Eplant.Views.MoleculeView);	// Inherit parent prototype
+ZUI.Helper.inheritClass(Eplant.View, Eplant.Views.MoleculeView);	// Inherit parent prototype
 
 Eplant.Views.MoleculeView.viewName = "Molecule Viewer";
 Eplant.Views.MoleculeView.hierarchy = "genetic element";

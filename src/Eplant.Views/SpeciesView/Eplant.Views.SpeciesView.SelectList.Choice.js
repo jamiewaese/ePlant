@@ -14,7 +14,7 @@ Eplant.Views.SpeciesView.SelectList.Choice = function(species, selectList) {
 	this.species = species;		// Species associated with this Choice object
 	this.selectList = selectList;	// SelectList object that owns this Choice object
 	this.dom = null;			// DOM element of this Choice
-	this.vo = null;			// ViewObject associated with this Choice object
+	this.ro = null;			// ViewObject associated with this Choice object
 
 	/* Create DOM */
 	this.createDOM();
@@ -23,7 +23,7 @@ Eplant.Views.SpeciesView.SelectList.Choice = function(species, selectList) {
 	$(this.selectList.domContainer).append(this.dom);
 
 	/* Create ViewObject */
-	this.createVO();
+	this.createRO();
 };
 
 /**
@@ -82,14 +82,22 @@ Eplant.Views.SpeciesView.SelectList.Choice.prototype.createDOM = function() {
 /**
  * Creates the ViewObject.
  */
-Eplant.Views.SpeciesView.SelectList.Choice.prototype.createVO = function() {
-	this.vo = new ZUI.ViewObject({
-		shape: "svg",
-		positionScale: "world",
-		sizeScale: "world",
-		centerAt: "center center",
-		x: ZUI.width / 6,
-		y: 0,
+Eplant.Views.SpeciesView.SelectList.Choice.prototype.createRO = function() {
+	this.ro = new ZUI.RenderedObject.SVG({
+		position: {
+			x: ZUI.width / 6,
+			y: 0
+		},
+		positionScale: ZUI.Def.WorldScale,
+		width: 250,
+		widthScale: ZUI.Def.WorldScale,
+		height: 450,
+		heightScale: ZUI.Def.WorldScale,
+		centerAt: {
+			horizontal: ZUI.Def.Center,
+			vertical: ZUI.Def.Center
+		},
+		fill: false,
 		url: Eplant.ServiceUrl + 'data/species/' + this.species.scientificName.replace(' ', '_') + '.svg'
 	});
 };
@@ -103,6 +111,9 @@ Eplant.Views.SpeciesView.SelectList.Choice.prototype.select = function() {
 
 	/* Select this Choice */
 	this.selectList.selected = this;
+
+	// Attach RenderedObject
+	this.ro.attachToView(this.selectList.speciesView);
 };
 
 /**
@@ -114,14 +125,15 @@ Eplant.Views.SpeciesView.SelectList.Choice.prototype.unselect = function() {
 
 	/* Unselect this Choice */
 	if (this.selectList.selected == this) this.selectList.selected = null;
+
+	// Detach RenderedObject
+	this.ro.detachFromView(this.selectList.speciesView);
 };
 
 /**
  * Draws the Choice.
  */
 Eplant.Views.SpeciesView.SelectList.Choice.prototype.draw = function() {
-	/* Draw ViewObject */
-	this.vo.draw();
 };
 
 /**
@@ -129,7 +141,7 @@ Eplant.Views.SpeciesView.SelectList.Choice.prototype.draw = function() {
  */
 Eplant.Views.SpeciesView.SelectList.Choice.prototype.remove = function() {
 	/* Remove ViewObject */
-	this.vo.remove();
+	this.ro.detachFromView(this.selectList.speciesView);
 
 	/* Remove DOM element */
 	$(this.dom).remove();

@@ -33,7 +33,7 @@ Eplant.Views.SequenceView = function(geneticElement) {
 	// Finish loading
 	this.loadFinish();
 };
-ZUI.Util.inheritClass(Eplant.View, Eplant.Views.SequenceView);	// Inherit parent prototype
+ZUI.Helper.inheritClass(Eplant.View, Eplant.Views.SequenceView);	// Inherit parent prototype
 
 Eplant.Views.SequenceView.viewName = "Sequence Viewer";
 Eplant.Views.SequenceView.hierarchy = "genetic element";

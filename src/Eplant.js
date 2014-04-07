@@ -34,8 +34,8 @@ Eplant.initialize = function() {
 		background: "#ffffff",
 		backgroundAlpha: 0,
 		frameRate: 60,
-		cameraMoveRate: 0.25
 	});
+	ZUI.camera.followRate = 0.25;
 
 	/* Initialize View modules */
 	for (var ViewName in Eplant.Views) {

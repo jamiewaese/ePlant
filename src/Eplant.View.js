@@ -40,7 +40,7 @@ Eplant.View = function(name, hierarchy, magnification, description, citation, ac
 	this.species = null;				// Associated Species, must define if appropriate
 	this.geneticElement = null;			// Associated GeneticElement, must define if appropriate
 };
-ZUI.Util.inheritClass(ZUI.View, Eplant.View);	// Inherit parent prototype
+ZUI.Helper.inheritClass(ZUI.View, Eplant.View);	// Inherit parent prototype
 
 /**
  * Default active callback method.

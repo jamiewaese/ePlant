@@ -32,7 +32,7 @@ Eplant.Views.PlantView = function(geneticElement) {
 	Eplant.BaseViews.EFPView.call(this, geneticElement, efpURL, {
 	});
 };
-ZUI.Util.inheritClass(Eplant.BaseViews.EFPView, Eplant.Views.PlantView);	// Inherit parent prototype
+ZUI.Helper.inheritClass(Eplant.BaseViews.EFPView, Eplant.Views.PlantView);	// Inherit parent prototype
 
 Eplant.Views.PlantView.viewName = "Plant Viewer";
 Eplant.Views.PlantView.hierarchy = "genetic element";

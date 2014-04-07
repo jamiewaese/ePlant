@@ -19,189 +19,252 @@ Eplant.Views.ChromosomeView.Chromosome = function(chromosome, hPosition, chromos
 	this.y = -220;				// Y-coordinate of the Chromosome
 	this.width = 10;				// Width of the Chromosome
 	this.perBpHeight = 0.000015;		// Per-base-pair height of the Chromosome
-	this.centromereVO = null;			// ViewObject for the centromeres layer
-	this.chromosomeVOs = [];			// ViewObjects for the chromosome segments minus the centromeres
-	this.inputsVO = null;			// ViewObject layer for picking up input events
-	this.labelVO = null;				// ViewObject for the Chromosome label
-	this.lowerRangeVO = null;			// ViewObject indicating the lower limit of the visible base-pair range
-	this.higherRangeVO = null;			// ViewObject indicating the higher limit of the visible base-pair range
-	this.outerMiniVO = null;			// ViewObject for the outer layer of the mini chromosome
-	this.innerMiniVO = null;			// ViewObject for the inner layer of the mini chromosome
+	this.centromereRO = null;			// ViewObject for the centromeres layer
+	this.chromosomeROs = [];			// ViewObjects for the chromosome segments minus the centromeres
+	this.inputsRO = null;			// ViewObject layer for picking up input events
+	this.labelRO = null;				// ViewObject for the Chromosome label
+	this.lowerRangeRO = null;			// ViewObject indicating the lower limit of the visible base-pair range
+	this.higherRangeRO = null;			// ViewObject indicating the higher limit of the visible base-pair range
+	this.outerMiniRO = null;			// ViewObject for the outer layer of the mini chromosome
+	this.innerMiniRO = null;			// ViewObject for the inner layer of the mini chromosome
 
 	/* Create ViewObjects */
-	this.createVOs();
+	this.createROs();
 };
 
 /**
  * Creates ViewObjects for this Chromosome
  */
-Eplant.Views.ChromosomeView.Chromosome.prototype.createVOs = function() {
+Eplant.Views.ChromosomeView.Chromosome.prototype.createROs = function() {
+	var that = this;
+
 	/* Centromeric layer */
-	this.centromereVO = new ZUI.ViewObject({
-		shape: "rect",
-		positionScale: "world",
-		sizeScale: "world",
-		x: this.x,
-		y: this.y,
-		width: this.width * 0.6,
-		height: this.chromosome.size * this.perBpHeight,
-		radius: this.width * 0.6 / 2,
-		centerAt: "center top",
+	this.centromereRO = new ZUI.RenderedObject.Rectangle({
+		position: {
+			x: this.x,
+			y: this.y
+		},
+		positionScale: ZUI.Def.WorldScale,
+		centerAt: {
+			horizontal: ZUI.Def.Center,
+			vertical: ZUI.Def.Top
+		},
 		stroke: false,
-		fillColor: Eplant.Color.MedGrey
+		fill: true,
+		fillColor: Eplant.Color.MedGrey,
+		radius: this.width * 0.6,
+		radiusScale: ZUI.Def.World,
+		width: this.width * 0.6,
+		widhtScale: ZUI.Def.World,
+		height: this.chromosome.size * this.perBpHeight,
+		heightScale: ZUI.Def.World
 	});
+	this.centromereRO.attachToView(this.chromosomeView);
 
 	/* Non-centromeric layers */
 	var start = 0;
 	var centromeres = this.chromosome.getGeneticElementsByType("centromere");
 	for (var n = 0; n < centromeres.length; n++) {
-		this.chromosomeVOs.push(new ZUI.ViewObject({
-			shape: "rect",
-			positionScale: "world",
-			sizeScale: "world",
-			x: this.x,
-			y: this.y + start * this.perBpHeight,
-			width: this.width,
-			height: (centromeres[n].start - start) * this.perBpHeight,
-			radius: this.width / 2,
-			centerAt: "center top",
+		var chromosomeRO = new ZUI.RenderedObject.Rectangle({
+			position: {
+				x: this.x,
+				y: this.y + start * this.perBpHeight
+			},
+			positionScale: ZUI.Def.WorldScale,
+			centerAt: {
+				horizontal: ZUI.Def.Center,
+				vertical: ZUI.Def.Top
+			},
 			stroke: false,
-			fillColor: Eplant.Color.MedGrey
-		}));
+			fill: true,
+			fillColor: Eplant.Color.MedGrey,
+			width: this.width,
+			widthScale: ZUI.Def.WorldScale,
+			height: (centromeres[n].start - start) * this.perBpHeight,
+			heightScale: ZUI.Def.WorldScale,
+			radius: this.width / 2,
+			radiusScale: ZUI.Def.WorldScale
+		});
+		chromosomeRO.attachToView(this.chromosomeView);
+		this.chromosomeROs.push(chromosomeRO);
+		
 		start = centromeres[n].end;
 	}
-	this.chromosomeVOs.push(new ZUI.ViewObject({
-		shape: "rect",
-		positionScale: "world",
-		sizeScale: "world",
-		x: this.x,
-		y: this.y + start * this.perBpHeight,
-		width: this.width,
-		height: (this.chromosome.size - start) * this.perBpHeight,
-		radius: this.width / 2,
-		centerAt: "center top",
+	var chromosomeRO = new ZUI.RenderedObject.Rectangle({
+		position: {
+			x: this.x,
+			y: this.y + start * this.perBpHeight
+		},
+		positionScale: ZUI.Def.WorldScale,
+		centerAt: {
+			horizontal: ZUI.Def.Center,
+			vertical: ZUI.Def.Top
+		},
 		stroke: false,
-		fillColor: Eplant.Color.MedGrey
-	}));
+		fill: true,
+		fillColor: Eplant.Color.MedGrey,
+		width: this.width,
+		widthScale: ZUI.Def.WorldScale,
+		height: (this.chromosome.size - start) * this.perBpHeight,
+		heightScale: ZUI.Def.WorldScale,
+		radius: this.width / 2,
+		radiusScale: ZUI.Def.WorldScale
+	});
+	chromosomeRO.attachToView(this.chromosomeView);
+	this.chromosomeROs.push(chromosomeRO);
 
 	/* Inputs layer */
-	this.inputsVO = new ZUI.ViewObject({
-		shape: "rect",
-		positionScale: "world",
-		sizeScale: "world",
-		x: this.x,
-		y: this.y,
-		width: this.width,
-		height: this.chromosome.size * this.perBpHeight,
-		radius: this.width / 2,
-		centerAt: "center top",
+	this.inputsRO = new ZUI.RenderedObject.Rectangle({
+		position: {
+			x: this.x,
+			y: this.y
+		},
+		positionScale: ZUI.Def.WorldScale,
+		centerAt: {
+			horizontal: ZUI.Def.Center,
+			vertical: ZUI.Def.Top
+		},
 		stroke: false,
 		fill: false,
-		mouseMove: $.proxy(function() {
-			/* Create new timer for GeneticElementList creation if appropriate */
-			if (!this.chromosomeView.geneticElementListInfo || this.chromosomeView.geneticElementListInfo.vPosition != ZUI.mouseStatus.y) {
-				this.chromosomeView.geneticElementListInfo = {
-					finish: ZUI.appStatus.progress + 500,
-					chromosome: this,
-					vPosition: ZUI.mouseStatus.y,
-					pin: false
-				};
-			}
-		}, this),
-		mouseOver: $.proxy(function() {
-			/* Change cursor */
-			ZUI.container.style.cursor = "pointer";
-		}, this),
-		mouseOut: $.proxy(function() {
-			/* Restore cursor */
-			ZUI.container.style.cursor = "default";
-
-			/* Remove countdown */
-			this.chromosomeView.geneticElementListInfo = null;
-		}, this),
-		leftClick: $.proxy(function() {
-			/* Pin GeneticElementListDialog if created, else create and pin */
-			if (this.chromosomeView.geneticElementList && !this.chromosomeView.geneticElementList.pinned) {
-				this.chromosomeView.geneticElementList.pinned = true;
-			}
-			else {
-				/* Remove old GeneticElementList if not pinned */
-				if (this.chromosomeView.geneticElementList) {
-					this.chromosomeView.geneticElementList.close();
-					this.chromosomeView.geneticElementList = null;
+		width: this.width,
+		widthScale: ZUI.Def.WorldScale,
+		height: this.chromosome.size * this.perBpHeight,
+		heightScale: ZUI.Def.WorldScale,
+		radius: this.width / 2,
+		radiusScale: ZUI.Def.WorldScale,
+		eventListeners: {
+			mouseMove: function () {
+				/* Create new timer for GeneticElementList creation if appropriate */
+				if (!that.chromosomeView.geneticElementListInfo || that.chromosomeView.geneticElementListInfo.vPosition != ZUI.mouseStatus.y) {
+					that.chromosomeView.geneticElementListInfo = {
+						finish: ZUI.appStatus.progress + 500,
+						chromosome: that,
+						vPosition: ZUI.mouseStatus.y,
+						pin: false
+					};
 				}
+			},
+			mouseOver: function() {
+				/* Change cursor */
+				ZUI.container.style.cursor = "pointer";
+			},
+			mouseOut: function() {
+				/* Restore cursor */
+				ZUI.container.style.cursor = "default";
 
-				/* Prepare to create new GeneticElementList */
-				this.chromosomeView.geneticElementListInfo = {
-					finish: ZUI.appStatus.progress,
-					chromosome: this,
-					vPosition: ZUI.mouseStatus.y,
-					pin: true
-				};
+				/* Remove countdown */
+				that.chromosomeView.geneticElementListInfo = null;
+			},
+			leftClick: function() {
+				/* Pin GeneticElementListDialog if created, else create and pin */
+				if (that.chromosomeView.geneticElementList && !that.chromosomeView.geneticElementList.pinned) {
+					that.chromosomeView.geneticElementList.pinned = true;
+				}
+				else {
+					/* Remove old GeneticElementList if not pinned */
+					if (that.chromosomeView.geneticElementList) {
+						that.chromosomeView.geneticElementList.close();
+						that.chromosomeView.geneticElementList = null;
+					}
+
+					/* Prepare to create new GeneticElementList */
+					that.chromosomeView.geneticElementListInfo = {
+						finish: ZUI.appStatus.progress,
+						chromosome: this,
+						vPosition: ZUI.mouseStatus.y,
+						pin: true
+					};
+				}
 			}
-		}, this)
+		}
 	});
-	this.chromosomeView.viewObjects.push(this.inputsVO);
+	this.inputsRO.attachToView(this.chromosomeView);
 
 	/* Chromosome label */
-	this.labelVO = new ZUI.ViewObject({
-		shape: "text",
-		positionScale: "world",
-		sizeScale: "screen",
-		x: this.x - this.width / 2,
-		y: this.y - 10,
-		centerAt: "center bottom",
-		content: this.chromosome.name,
-		strokeColor: Eplant.Color.LightGrey,
+	this.labelRO = new ZUI.RenderedObject.Text({
+		position: {
+			x: this.x - this.width / 2,
+			y: this.y - 10
+		},
+		positionScale: ZUI.Def.WorldScale,
+		centerAt: {
+			horizontal: ZUI.Def.Center,
+			vertical: ZUI.Def.Bottom
+		},
+		stroke: false,
+		fill: true,
 		fillColor: Eplant.Color.LightGrey,
-		size: 14
+		content: this.chromosome.name,
+		size: 14,
+		sizeScale: ZUI.Def.Screen
 	});
+	this.labelRO.attachToView(this.chromosomeView);
 
 	/* Lower limit of the visible base-pair range */
-	this.lowerRangeVO = new ZUI.ViewObject({
-		shape: "text",
-		positionScale: "screen",
-		sizeScale: "screen",
-		centerAt: "left center",
-		strokeColor: Eplant.Color.LightGrey,
+	this.lowerRangeRO = new ZUI.RenderedObject.Text({
+		positionScale: ZUI.Def.ScreenScale,
+		centerAt: {
+			horizontal: ZUI.Def.Left,
+			vertical: ZUI.Def.Center
+		},
+		stroke: false,
+		fill: true,
 		fillColor: Eplant.Color.LightGrey,
-		size: 12
+		size: 12,
+		sizeScale: ZUI.Def.Screen
 	});
+	this.lowerRangeRO.attachToView(this.chromosomeView);
 
 	/* Higher limit of the visible base-pair range */
-	this.higherRangeVO = new ZUI.ViewObject({
-		shape: "text",
-		positionScale: "screen",
-		sizeScale: "screen",
-		centerAt: "left center",
-		strokeColor: Eplant.Color.LightGrey,
+	this.higherRangeRO = new ZUI.RenderedObject.Text({
+		positionScale: ZUI.Def.ScreenScale,
+		centerAt: {
+			horizontal: ZUI.Def.Left,
+			vertical: ZUI.Def.Center
+		},
+		stroke: false,
+		fill: true,
 		fillColor: Eplant.Color.LightGrey,
-		size: 12
+		size: 12,
+		sizeScale: ZUI.Def.Screen
 	});
+	this.higherRangeRO.attachToView(this.chromosomeView);
 
 	/* Outer layer of the mini chromosome */
-	this.outerMiniVO = new ZUI.ViewObject({
-		shape: "rect",
-		positionScale: "screen",
-		sizeScale: "screen",
+	this.outerMiniRO = new ZUI.RenderedObject.Rectangle({
+		positionScale: ZUI.Def.ScreenScale,
+		centerAt: {
+			horizontal: ZUI.Def.Center,
+			vertical: ZUI.Def.Top
+		},
 		width: 10,
+		widthScale: ZUI.Def.Screen,
 		height: 80,
+		heightScale: ZUI.Def.Screen,
 		radius: 5,
-		centerAt: "center top",
+		radiusScale: ZUI.Def.Screen,
+		stroke: true,
 		strokeColor: Eplant.Color.LightGrey,
-		fillColor: Eplant.Color.White
+		fill: true,
+		fill: Eplant.Color.White
 	});
 
 	/* Inner layer of the mini chromosome */
-	this.innerMiniVO = new ZUI.ViewObject({
-		shape: "rect",
-		positionScale: "screen",
-		sizeScale: "screen",
+	this.innerMiniRO = new ZUI.RenderedObject.Rectangle({
+		positionScale: ZUI.Def.ScreenScale,
+		centerAt: {
+			horizontal: ZUI.Def.Center,
+			vertical: ZUI.Def.Top
+		},
 		width: 10,
+		widthScale: ZUI.Def.Screen,
+		heightScale: ZUI.Def.Screen,
 		radius: 5,
-		centerAt: "center top",
-		stroke: false,
-		fillColor: Eplant.Color.LightGrey
+		radiusScale: ZUI.Def.Screen,
+		stroke: true,
+		strokeColor: Eplant.Color.LightGrey,
+		fill: true,
+		fill: Eplant.Color.White
 	});
 };
 
@@ -209,21 +272,6 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.createVOs = function() {
  * Draws this Chromosome and its accessories.
  */
 Eplant.Views.ChromosomeView.Chromosome.prototype.draw = function() {
-	/* Centromere layer */
-	this.centromereVO.draw();
-
-	/* Rest of Chromosome */
-	for (var n = 0; n < this.chromosomeVOs.length; n++) {
-		var chromosomeVO = this.chromosomeVOs[n];
-		chromosomeVO.draw();
-	}
-
-	/* Inputs layer */
-	this.inputsVO.draw();
-
-	/* Chromosome label */
-	this.labelVO.draw();
-
 	/* Get position information of the chromosome */
 	var halfWidth = this.getScreenWidth() / 2;
 	var xPosition = this.getScreenX();
@@ -258,18 +306,16 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.draw = function() {
 
 			/* Draw lower limit */
 			var mb = Math.round(rangeStart / 10000) / 100;
-			this.lowerRangeVO.content = mb + " Mb";
-			this.lowerRangeVO.x = xPosition + halfWidth + 5;
-			this.lowerRangeVO.y = 6;
-			this.lowerRangeVO.draw();
+			this.lowerRangeRO.content = mb + " Mb";
+			this.lowerRangeRO.position.x = xPosition + halfWidth + 5;
+			this.lowerRangeRO.position.y = 6;
 		}
 	}
 	else {
 		/* Draw lower limit */
-		this.lowerRangeVO.content = "0 Mb";
-		this.lowerRangeVO.x = xPosition + halfWidth + 5;
-		this.lowerRangeVO.y = (yTopPosition < 6) ? 6 : yTopPosition;
-		this.lowerRangeVO.draw();
+		this.lowerRangeRO.content = "0 Mb";
+		this.lowerRangeRO.position.x = xPosition + halfWidth + 5;
+		this.lowerRangeRO.position.y = (yTopPosition < 6) ? 6 : yTopPosition;
 	}
 	/* Upper limit */
 	if (yBottomPosition > ZUI.height) {		// Clip
@@ -293,19 +339,17 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.draw = function() {
 
 			/* Draw higher limit */
 			var mb = Math.round(rangeEnd / 10000) / 100;
-			this.higherRangeVO.content = mb + " Mb";
-			this.higherRangeVO.x = xPosition + halfWidth + 5;
-			this.higherRangeVO.y = ZUI.height - 6;
-			this.higherRangeVO.draw();
+			this.higherRangeRO.content = mb + " Mb";
+			this.higherRangeRO.position.x = xPosition + halfWidth + 5;
+			this.higherRangeRO.position.y = ZUI.height - 6;
 		}
 	}
 	else {
 		/* Draw lower limit */
 		var mb = Math.round(this.chromosome.size / 10000) / 100;
-		this.higherRangeVO.content = mb + " Mb";
-		this.higherRangeVO.x = xPosition + halfWidth + 5;
-		this.higherRangeVO.y = (yBottomPosition > ZUI.height - 6) ? ZUI.height - 6 : yBottomPosition;
-		this.higherRangeVO.draw();
+		this.higherRangeRO.content = mb + " Mb";
+		this.higherRangeRO.position.x = xPosition + halfWidth + 5;
+		this.higherRangeRO.position.y = (yBottomPosition > ZUI.height - 6) ? ZUI.height - 6 : yBottomPosition;
 	}
 
 	/* Mini chromosome */
@@ -322,13 +366,25 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.draw = function() {
 		var y2 = y1 + rangeStart / this.chromosome.size * 80;
 		var y3 = y1 + rangeEnd / this.chromosome.size * 80;
 		var y4 = y1 + 80;
-		this.outerMiniVO.x = xPosition + halfWidth + 15;
-		this.outerMiniVO.y = y1;
-		this.outerMiniVO.draw();
-		this.innerMiniVO.x = xPosition + halfWidth + 15;
-		this.innerMiniVO.y = y2;
-		this.innerMiniVO.height = y3 - y2;
-		this.innerMiniVO.draw();
+		this.outerMiniRO.x = xPosition + halfWidth + 15;
+		this.outerMiniRO.y = y1;
+		this.innerMiniRO.position.x = xPosition + halfWidth + 15;
+		this.innerMiniRO.position.y = y2;
+		this.innerMiniRO.height = y3 - y2;
+		if (this.chromosomeView.renderedObjects.indexOf(this.outerMiniRO) < 0) {
+			this.outerMiniRO.attachToView(this.chromosomeView);
+		}
+		if (this.chromosomeView.renderedObjects.indexOf(this.innerMiniRO) < 0) {
+			this.innerMiniRO.attachToView(this.chromosomeView);
+		}
+	}
+	else {
+		if (this.chromosomeView.renderedObjects.indexOf(this.outerMiniRO) >= 0) {
+			this.outerMiniRO.detachFromView(this.chromosomeView);
+		}
+		if (this.chromosomeView.renderedObjects.indexOf(this.innerMiniRO) >= 0) {
+			this.innerMiniRO.detachFromView(this.chromosomeView);
+		}
 	}
 
 	/* Heatmap */
@@ -341,7 +397,7 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.draw = function() {
  * @return {Number} Screen x-coordinate of the Chromosome.
  */
 Eplant.Views.ChromosomeView.Chromosome.prototype.getScreenX = function() {
-	return this.inputsVO.screenX;
+	return this.inputsRO.screenX;
 };
 
 /**
@@ -350,7 +406,7 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.getScreenX = function() {
  * @return {Number} Screen y-coordinate of the Chromosome.
  */
 Eplant.Views.ChromosomeView.Chromosome.prototype.getScreenY = function() {
-	return this.inputsVO.screenY;
+	return this.inputsRO.screenY;
 };
 
 /**
@@ -359,7 +415,7 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.getScreenY = function() {
  * @return {Number} Screen width of the Chromosome.
  */
 Eplant.Views.ChromosomeView.Chromosome.prototype.getScreenWidth = function() {
-	return this.inputsVO.screenWidth;
+	return this.inputsRO.screenWidth;
 };
 
 /**
@@ -368,7 +424,7 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.getScreenWidth = function() {
  * @return {Number} Screen height of the Chromosome.
  */
 Eplant.Views.ChromosomeView.Chromosome.prototype.getScreenHeight = function() {
-	return this.inputsVO.screenHeight;
+	return this.inputsRO.screenHeight;
 };
 
 /**
@@ -377,7 +433,7 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.getScreenHeight = function() {
  * @return {Number} World x-coordinate of the Chromosome.
  */
 Eplant.Views.ChromosomeView.Chromosome.prototype.getX = function() {
-	return this.inputsVO.x;
+	return this.inputsRO.x;
 };
 
 /**
@@ -386,7 +442,7 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.getX = function() {
  * @return {Number} World y-coordinate of the Chromosome.
  */
 Eplant.Views.ChromosomeView.Chromosome.prototype.getY = function() {
-	return this.inputsVO.y;
+	return this.inputsRO.y;
 };
 
 /**
@@ -395,7 +451,7 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.getY = function() {
  * @return {Number} World width of the Chromosome.
  */
 Eplant.Views.ChromosomeView.Chromosome.prototype.getWidth = function() {
-	return this.inputsVO.width;
+	return this.inputsRO.width;
 };
 
 /**
@@ -404,7 +460,7 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.getWidth = function() {
  * @return {Number} World height of the Chromosome.
  */
 Eplant.Views.ChromosomeView.Chromosome.prototype.getHeight = function() {
-	return this.inputsVO.height;
+	return this.inputsRO.height;
 };
 
 /**
@@ -462,27 +518,26 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.bpToPixel = function(bp) {
  */
 Eplant.Views.ChromosomeView.Chromosome.prototype.remove = function() {
 	/* Remove centromere layer */
-	this.centromereVO.remove();
+	this.centromereRO.detachFromView(this.chromosomeView);
 
 	/* Remove rest of Chromosome */
-	for (var n = 0; n < this.chromosomeVOs.length; n++) {
-		var chromosomeVO = this.chromosomeVOs[n];
-		chromosomeVO.remove();
+	for (var n = 0; n < this.chromosomeROs.length; n++) {
+		var chromosomeRO = this.chromosomeROs[n];
+		chromosomeRO.detachFromView(this.chromosomeView);
 	}
 
 	/* Remove inputs layer */
-	this.inputsVO.remove();
+	this.inputsRO.detachFromView(this.chromosomeView);
 
 	/* Remove Chromosome label */
-	this.labelVO.remove();
+	this.labelRO.detachFromView(this.chromosomeView);
 
 	/* Remove limits of the visible base-pair range */
-	this.lowerRangeVO.remove();
-	this.higherRangeVO.remove();
+	this.lowerRangeRO.detachFromView(this.chromosomeView);
 
 	/* Remove mini chromosome */
-	this.outerMiniVO.remove();
-	this.innerMiniVO.remove();
+	this.outerMiniRO.detachFromView(this.chromosomeView);
+	this.innerMiniRO.detachFromView(this.chromosomeView);
 };
 
 })();

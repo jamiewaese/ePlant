@@ -35,7 +35,7 @@ Eplant.Views.WorldView = function(geneticElement) {
 	/* Attributes */
 	this.markerIcon = null;		// Marker icon definition
 };
-ZUI.Util.inheritClass(Eplant.BaseViews.EFPView, Eplant.Views.WorldView);	// Inherit parent prototype
+ZUI.Helper.inheritClass(Eplant.BaseViews.EFPView, Eplant.Views.WorldView);	// Inherit parent prototype
 
 /* Define ePlant View properties */
 Eplant.Views.WorldView.viewName = "World eFP Viewer";		// Name of the View visible to the user
