@@ -23,10 +23,10 @@ Eplant.Views.ChromosomeView.GeneticElementList = function(chromosome, vPosition,
 	this.pinned = false;					// Whether this GeneticElementList is pinned
 	this.choices = [];					// Array of Choices
 	this.domContainer = null;				// DOM container
-	this.whiskerVO = null;				// ViewObject for the whisker that indicates the Chromosome position
-	this.connectorVO = null;				// ViewObject for lines connecting this GeneticElementList to the corresponding Chromosome position
-	this.lowerRangeVO = null;				// ViewObject for the lower-range base-pair value covered by the GeneticElementList
-	this.higherRangeVO = null;				// ViewObject for the higher-range base-pair value covered by the GeneticElementList
+	this.whiskerRO = null;				// ViewObject for the whisker that indicates the Chromosome position
+	this.connectorRO = null;				// ViewObject for lines connecting this GeneticElementList to the corresponding Chromosome position
+	this.lowerRangeRO = null;				// ViewObject for the lower-range base-pair value covered by the GeneticElementList
+	this.higherRangeRO = null;				// ViewObject for the higher-range base-pair value covered by the GeneticElementList
 
 	/* Calculate start and end base-pair positions */
 	var range = this.chromosome.pixelToBp(this.y);
@@ -93,7 +93,7 @@ Eplant.Views.ChromosomeView.GeneticElementList = function(chromosome, vPosition,
 
 		/* Adjust position of connector */
 		var sign = (this.orientation == "left") ? -1 : 1;
-		this.connectorVO.vertices = [
+		this.connectorRO.vertices = [
 			{
 				x: this.xOffset * sign,
 				y: this.yOffset + $(this.domContainer).position().top
@@ -107,10 +107,13 @@ Eplant.Views.ChromosomeView.GeneticElementList = function(chromosome, vPosition,
 				y: this.yOffset + $(this.domContainer).parent().outerHeight() - $(this.domContainer).position().top
 			}
 		];
+		this.connectorRO.forceRender();
 
 		/* Adjust position of range indicators */
-		this.lowerRangeVO.y = this.y + this.yOffset - 2;
-		this.higherRangeVO.y = this.y + this.yOffset - $(this.domContainer).position().top + $(this.domContainer).parent().outerHeight() + 2;
+		this.lowerRangeRO.position.y = this.y + this.yOffset - 2;
+		this.lowerRangeRO.forceRender();
+		this.higherRangeRO.position.y = this.y + this.yOffset - $(this.domContainer).position().top + $(this.domContainer).parent().outerHeight() + 2;
+		this.higherRangeRO.forceRender();
 	}, this));
 
 	/* Create jQuery UI dialog */
@@ -139,12 +142,12 @@ Eplant.Views.ChromosomeView.GeneticElementList = function(chromosome, vPosition,
 	});
 
 	/* Whisker */
-	this.whiskerVO = new ZUI.ViewObject({
-		shape: "path",
-		positionScale: "world",
-		sizeScale: "world",
-		x: this.x,
-		y: this.y,
+	this.whiskerRO = new ZUI.RenderedObject.LinePath({
+		position: {
+			x: this.x,
+			y: this.y
+		},
+		positionScale: ZUI.Def.ScreenScale,
 		vertices: [
 			{
 				x: -5,
@@ -155,17 +158,24 @@ Eplant.Views.ChromosomeView.GeneticElementList = function(chromosome, vPosition,
 				y: 0
 			}
 		],
-		strokeColor: Eplant.Color.DarkGrey
+		verticesScale: [
+			ZUI.Def.ScreenScale,
+			ZUI.Def.ScreenScale
+		],
+		stroke: true,
+		strokeColor: Eplant.Color.DarkGrey,
+		fill: false
 	});
+	this.whiskerRO.attachToView(this.chromosomeView);
 
 	/* Connector */
 	var sign = (this.orientation == "left") ? -1 : 1;
-	this.connectorVO = new ZUI.ViewObject({
-		shape: "path",
-		positionScale: "screen",
-		sizeScale: "screen",
-		x: this.x + halfWidth,
-		y: this.y,
+	this.connectorRO = new ZUI.RenderedObject.LinePath({
+		position: {
+			x: this.x + halfWidth,
+			y: this.y
+		},
+		positionScale: ZUI.Def.ScreenScale,
 		vertices: [
 			{
 				x: this.xOffset * sign,
@@ -180,32 +190,52 @@ Eplant.Views.ChromosomeView.GeneticElementList = function(chromosome, vPosition,
 				y: this.yOffset + $(this.domContainer).parent().outerHeight() - $(this.domContainer).position().top
 			}
 		],
-		strokeColor: Eplant.Color.LightGrey
+		verticesScale: [
+			ZUI.Def.ScreenScale,
+			ZUI.Def.ScreenScale,
+			ZUI.Def.ScreenScale
+		],
+		stroke: true,
+		strokeColor: Eplant.Color.LightGrey,
+		fill: false
 	});
+	this.connectorRO.attachToView(this.chromosomeView);
 
 	/* Range */
-	this.lowerRangeVO = new ZUI.ViewObject({
-		shape: "text",
-		positionScale: "screen",
-		sizeScale: "screen",
-		x: this.x + halfWidth + (this.xOffset + 10) * sign,
-		y: this.y + this.yOffset - 2,
-		centerAt: hPosition + " bottom",
-		content: ZUI.Util.getNumberWithComma(Math.ceil(this.start)),
-		strokeColor: Eplant.Color.LightGrey,
+	this.lowerRangeRO = new ZUI.RenderedObject.Text({
+		position: {
+			x: this.x + halfWidth + (this.xOffset + 10) * sign,
+			y: this.y + this.yOffset - 2
+		},
+		positionScale: ZUI.Def.ScreenScale,
+		sizeScale: ZUI.Def.ScreenScale,
+		centerAt: {
+			horizontal: (hPosition == 'right') ? ZUI.Def.Right : ZUI.Def.Left,
+			vertical: ZUI.Def.Bottom
+		},
+		content: ZUI.Helper.getNumberWithComma(Math.ceil(this.start)),
+		stroke: false,
+		fill: true,
 		fillColor: Eplant.Color.LightGrey
 	});
-	this.higherRangeVO = new ZUI.ViewObject({
-		shape: "text",
-		positionScale: "screen",
-		sizeScale: "screen",
-		x: this.x + halfWidth + (this.xOffset + 10) * sign,
-		y: this.y + this.yOffset - $(this.domContainer).position().top + $(this.domContainer).parent().outerHeight() + 2,
-		centerAt: hPosition + " top",
-		content: ZUI.Util.getNumberWithComma(Math.floor(this.end)),
-		strokeColor: Eplant.Color.LightGrey,
+	this.lowerRangeRO.attachToView(this.chromosomeView);
+	this.higherRangeRO = new ZUI.RenderedObject.Text({
+		position: {
+			x: this.x + halfWidth + (this.xOffset + 10) * sign,
+			y: this.y + this.yOffset - $(this.domContainer).position().top + $(this.domContainer).parent().outerHeight() + 2
+		},
+		positionScale: ZUI.Def.ScreenScale,
+		sizeScale: ZUI.Def.ScreenScale,
+		centerAt: {
+			horizontal: (hPosition == 'right') ? ZUI.Def.Right : ZUI.Def.Left,
+			vertical: ZUI.Def.Top
+		},
+		content: ZUI.Helper.getNumberWithComma(Math.floor(this.end)),
+		stroke: false,
+		fill: true,
 		fillColor: Eplant.Color.LightGrey
 	});
+	this.higherRangeRO.attachToView(this.chromosomeView);
 };
 
 /**
@@ -213,17 +243,11 @@ Eplant.Views.ChromosomeView.GeneticElementList = function(chromosome, vPosition,
  */
 Eplant.Views.ChromosomeView.GeneticElementList.prototype.draw = function() {
 	/* Update whisker thickness */
-	this.whiskerVO.strokeWidth = ZUI.camera.unprojectDistance(1);
-
-	/* Whisker */
-	this.whiskerVO.draw();
-
-	/* Connector */
-	this.connectorVO.draw();
-
-	/* Range */
-	this.lowerRangeVO.draw();
-	this.higherRangeVO.draw();
+	var thickness = ZUI.camera.unprojectDistance(1);
+	if (thickness != this.whiskerRO.strokeWidth) {
+		this.whiskerRO.strokeWidth = thickness;
+		this.whiskerRO.forceRender();
+	}
 };
 
 /**
@@ -291,10 +315,10 @@ Eplant.Views.ChromosomeView.GeneticElementList.prototype.remove = function() {
 	$(this.domContainer).remove();
 
 	/* Clean up ViewObjects */
-	this.whiskerVO.remove();
-	this.connectorVO.remove();
-	this.lowerRangeVO.remove();
-	this.higherRangeVO.remove();
+	this.whiskerRO.detachFromView(this.chromosomeView);
+	this.connectorRO.detachFromView(this.chromosomeView);
+	this.lowerRangeRO.detachFromView(this.chromosomeView);
+	this.higherRangeRO.detachFromView(this.chromosomeView);
 };
 
 })();

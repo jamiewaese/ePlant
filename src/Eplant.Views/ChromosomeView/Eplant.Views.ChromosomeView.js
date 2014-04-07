@@ -56,13 +56,13 @@ Eplant.Views.ChromosomeView = function(species) {
 			vertical: ZUI.Def.Top
 		},
 		eventListeners: {
-			leftClick: function () {
+			leftMouseDown: $.proxy(function () {
 				/* Close GeneticElementList if open */
 				if (this.geneticElementList) {
 					this.geneticElementList.close();
 					this.geneticElementList = null;
 				}
-			}
+			}, this)
 		},
 		width: ZUI.width,
 		widthScale: ZUI.Def.ScreenScale,
@@ -112,6 +112,34 @@ Eplant.Views.ChromosomeView.prototype.inactive = function() {
 };
 
 /**
+ * Update callback method.
+ *
+ * @override
+ */
+Eplant.Views.ChromosomeView.prototype.update = function() {
+	/* Call parent method */
+	Eplant.View.prototype.update.call(this);
+
+	/* Create GeneticElementList if necessary */
+	if (this.geneticElementListInfo && this.geneticElementListInfo.finish <= ZUI.appStatus.progress && !this.geneticElementList) {
+		/* Create GeneticElementList */
+		this.geneticElementList = new Eplant.Views.ChromosomeView.GeneticElementList(
+			this.geneticElementListInfo.chromosome,		// chromosome
+			this.geneticElementListInfo.vPosition,		// vPosition
+			this							// chromosomeView
+		);
+
+		/* Pin if necessary */
+		if (this.geneticElementListInfo.pin) {
+			this.geneticElementList.pinned = true;
+		}
+
+		/* Reset GeneticElementList information container object */
+		this.geneticElementListInfo = null;
+	}
+};
+
+/**
  * Draw callback method.
  *
  * @override
@@ -130,24 +158,6 @@ Eplant.Views.ChromosomeView.prototype.draw = function() {
 	for (var n = 0; n < this.annotations.length; n++) {
 		var annotation = this.annotations[n];
 		annotation.draw();
-	}
-
-	/* Create GeneticElementList if necessary */
-	if (this.geneticElementListInfo && this.geneticElementListInfo.finish <= ZUI.appStatus.progress && !this.geneticElementList) {
-		/* Create GeneticElementList */
-		this.geneticElementList = new Eplant.Views.ChromosomeView.GeneticElementList(
-			this.geneticElementListInfo.chromosome,		// chromosome
-			this.geneticElementListInfo.vPosition,		// vPosition
-			this							// chromosomeView
-		);
-
-		/* Pin if necessary */
-		if (this.geneticElementListInfo.pin) {
-			this.geneticElementList.pinned = true;
-		}
-
-		/* Reset GeneticElementList information container object */
-		this.geneticElementListInfo = null;
 	}
 
 	/* Draw GeneticElementList */

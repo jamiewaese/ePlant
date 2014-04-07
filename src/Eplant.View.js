@@ -48,6 +48,8 @@ ZUI.Helper.inheritClass(ZUI.View, Eplant.View);	// Inherit parent prototype
  * @override
  */
 Eplant.View.prototype.active = function() {
+	ZUI.View.prototype.active.call(this);
+
 	/* Append View to History */
 	if (!Eplant.history.activeItem || Eplant.history.activeItem.view != this) {
 		var historyItem = new Eplant.History.Item(this);
@@ -74,6 +76,8 @@ Eplant.View.prototype.active = function() {
  * @override
  */
 Eplant.View.prototype.inactive = function() {
+	ZUI.View.prototype.inactive.call(this);
+
 	/* Detach ViewSpecificUIButtons */
 	for (var n = 0; n < this.viewSpecificUIButtons.length; n++) {
 		var viewSpecificUIButton = this.viewSpecificUIButtons[n];
@@ -87,8 +91,6 @@ Eplant.View.prototype.inactive = function() {
  * @override
  */
 Eplant.View.prototype.draw = function() {
-	/* Update camera */
-	ZUI.camera.update();
 };
 
 /**
