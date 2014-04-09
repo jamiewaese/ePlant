@@ -30,7 +30,7 @@ Eplant.BaseViews.EFPView = function(geneticElement, efpURL, configs) {
 	this.maskButton = null;			// Mask ViewSpecificUIButton
 	this.isMaskOn = false;			// Whether masking is on
 	this.maskThreshold = 1;			// Masking threshold
-	this.tagVOs = [];				// Array of tag ViewObjects
+	this.tagROs = [];				// Array of tag ViewObjects
 	this.updateAnnotationTagsEventListener	// EventListener for update-annotationTags, for updating tags in this view
 	this.legend = null;				// Legend object
 	this.minColor = "#0000FF";			// Minimum color
@@ -151,9 +151,9 @@ Eplant.BaseViews.EFPView.prototype.draw = function() {
 	}
 
 	/* Draw tags */
-	for (var n = 0; n < this.tagVOs.length; n++) {
-		var tagVO = this.tagVOs[n];
-		tagVO.draw();
+	for (var n = 0; n < this.tagROs.length; n++) {
+		var tagRO = this.tagROs[n];
+		tagRO.draw();
 	}
 
 	/* Create tooltip, if applicable */
@@ -202,9 +202,9 @@ Eplant.BaseViews.EFPView.prototype.remove = function() {
 	Eplant.View.prototype.remove.call(this);
 
 	/* Remove ViewObjects */
-	for (var n = 0; n < this.tagVOs.length; n++) {
-		var tagVO = this.tagVOs[n];
-		tagVO.remove();
+	for (var n = 0; n < this.tagROs.length; n++) {
+		var tagRO = this.tagROs[n];
+		tagRO.detachFromView(this);
 	}
 	this.outlineVO.remove();
 	for (var n = 0; n < this.labels.length; n++) {
@@ -798,11 +798,11 @@ Eplant.BaseViews.EFPView.prototype.updateEFP = function() {
  */
 Eplant.BaseViews.EFPView.prototype.updateTags = function() {
 	/* Remove old tags */
-	for (var n = 0; n < this.tagVOs.length; n++) {
-		var tagVO = this.tagVOs[n];
-		tagVO.remove();
+	for (var n = 0; n < this.tagROs.length; n++) {
+		var tagRO = this.tagROs[n];
+		tagRO.detachFromView(this);
 	}
-	this.tagVOs = [];
+	this.tagROs = [];
 
 	/* Create new tags */
 	var selectedAnnotationTags = [];
@@ -814,17 +814,25 @@ Eplant.BaseViews.EFPView.prototype.updateTags = function() {
 	}
 	for (var n = 0; n < selectedAnnotationTags.length; n++) {
 		var annotationTag = selectedAnnotationTags[n];
-		this.tagVOs.push(new ZUI.ViewObject({
-			shape: "circle",
-			positionScale: "screen",
-			sizeScale: "screen",
-			x: ZUI.width - 20 - (selectedAnnotationTags.length - 1) * 8 + n * 8,
-			y: ZUI.height - 13,
+		var tagRO = new ZUI.RenderedObject.Circle({
+			position: {
+				x: ZUI.width - 20 - (selectedAnnotationTags.length - 1) * 8 + n * 8,
+				y: ZUI.height - 13
+			},
+			positionScale: ZUI.Def.ScreenScale,
 			radius: 3,
-			centerAt: "center center",
+			radiusScale: ZUI.Def.ScreenScale,
+			centerAt: {
+				horizontal: ZUI.Def.Center,
+				vertical: ZUI.Def.Center
+			},
+			stroke: true,
 			strokeColor: annotationTag.color,
+			fill: true,
 			fillColor: annotationTag.color
-		}));
+		});
+		tagRO.attachToView(this);
+		this.tagROs.push(tagRO);
 	}
 };
 

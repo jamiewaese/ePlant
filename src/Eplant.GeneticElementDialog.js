@@ -30,6 +30,7 @@ Eplant.GeneticElementDialog = function(geneticElement, x, y, orientation) {
 	this.domViewIcons = null;				// DOM element for view icons
 	this.domMinimize = null;				// DOM element for the minimize button
 	this.domFocus = null;				// DOM element for the focus button
+	this.pinned = false;
 
 	/* Reference this GeneticElementDialog in the parent GeneticElement */
 	this.geneticElement.geneticElementDialog = this;

@@ -17,13 +17,13 @@ Eplant.Views.ChromosomeView.Annotation = function(geneticElement, color, size, c
 	this.color = color;
 	this.size = size;
 	this.chromosomeView = chromosomeView;	// The ChromosomeView that owns this Annotation
-	this.whiskerVO = null;			// ViewObject for the whisker marking the position of the GeneticElement
-	this.labelVO = null;				// ViewObject for the label of the GeneticElement
-	this.tagVOs = [];				// Array of ViewObjects for GeneticElement tags
+	this.whiskerRO = null;			// ViewObject for the whisker marking the position of the GeneticElement
+	this.labelRO = null;				// ViewObject for the label of the GeneticElement
+	this.tagROs = [];				// Array of ViewObjects for GeneticElement tags
 	this.updateAnnotationTagsEventListener = null;	// EventListener for update-annotationTags targeted at this GeneticElement
 
 	/* Create ViewObjects */
-	this.createVOs();
+	this.createROs();
 
 	/* Bind events */
 	this.bindEvents();
@@ -32,17 +32,17 @@ Eplant.Views.ChromosomeView.Annotation = function(geneticElement, color, size, c
 /**
  * Creates ViewObjects of this Annotation.
  */
-Eplant.Views.ChromosomeView.Annotation.prototype.createVOs = function() {
+Eplant.Views.ChromosomeView.Annotation.prototype.createROs = function() {
 	/* Get ChromosomeView.Chromosome object */
 	var chromosome = this.chromosomeView.getChromosome(this.geneticElement.chromosome);
 
 	/* Whisker */
-	this.whiskerVO = new ZUI.ViewObject({
-		shape: "path",
-		positionScale: "world",
-		sizeScale: "world",
-		x: chromosome.getX() + ((this.geneticElement.strand == "+") ? -1 : 1) * chromosome.getWidth() / 2,
-		y: chromosome.getY() + (this.geneticElement.start + this.geneticElement.end) / 2 * chromosome.perBpHeight,
+	this.whiskerRO = new ZUI.RenderedObject.LinePath({
+		position: {
+			x: chromosome.getX() + ((this.geneticElement.strand == "+") ? -1 : 1) * chromosome.getWidth() / 2,
+			y: chromosome.getY() + (this.geneticElement.start + this.geneticElement.end) / 2 * chromosome.perBpHeight
+		},
+		positionScale: ZUI.Def.WorldScale,
 		vertices: [
 			{
 				x: 0,
@@ -53,65 +53,80 @@ Eplant.Views.ChromosomeView.Annotation.prototype.createVOs = function() {
 				y: 0
 			}
 		],
+		verticesScale: [ ZUI.Def.WorldScale, ZUI.Def.WorldScale ],
+		stroke: true,
 		strokeColor: this.color,
-		fillColor: this.color
+		fill: false
 	});
+	this.whiskerRO.attachToView(this.chromosomeView);
 
 	/* Label */
-	this.labelVO = new ZUI.ViewObject({
-		shape: "text",
-		positionScale: "world",
-		sizeScale: "screen",
-		x: chromosome.getX() + ((this.geneticElement.strand == "+") ? -1 : 1) * chromosome.getWidth() / 2,
-		y: chromosome.getY() + (this.geneticElement.start + this.geneticElement.end) / 2 * chromosome.perBpHeight,
+	this.labelRO = new ZUI.RenderedObject.Text({
+		position: {
+			x: chromosome.getX() + ((this.geneticElement.strand == "+") ? -1 : 1) * chromosome.getWidth() / 2,
+			y: chromosome.getY() + (this.geneticElement.start + this.geneticElement.end) / 2 * chromosome.perBpHeight
+		},
+		positionScale: ZUI.Def.WorldScale,
+		positionOffset: {
+			x: ((this.geneticElement.strand == "+") ? -1 : 1) * (this.size + 3),
+			y: 0
+		},
+		positionOffsetScale: ZUI.Def.ScreenScale,
+		centerAt: {
+			horizontal: (this.geneticElement.strand == "+") ? ZUI.Def.Right : ZUI.Def.Left,
+			vertical: ZUI.Def.Center
+		},
 		size: 12,
-		offsetX: ((this.geneticElement.strand == "+") ? -1 : 1) * (this.size + 3),
-		centerAt: ((this.geneticElement.strand == "+") ? "right" : "left") + " center",
-		content: this.geneticElement.identifier,
-		strokeColor: "#E6F9AF",
+		sizeScale: ZUI.Def.ScreenScale,
 		stroke: false,
-		strokeWidth: 5,
+		strokeColor: "#E6F9AF",
+		strokeThickness: 30,
+		strokeThicknessScale: ZUI.Def.ScreenScale,
+		fill: true,
 		fillColor: this.color,
-		mouseOver: $.proxy(function() {
-			/* Change cursor */
-			ZUI.container.style.cursor = "pointer";
+		content: this.geneticElement.identifier,
+		eventListeners: {
+			mouseOver: $.proxy(function() {
+				/* Change cursor */
+				ZUI.canvas.style.cursor = "pointer";
 
-			/* Highlight */
-			this.labelVO.bold = true;
+				/* Change label bold */
+				this.labelRO.isBold = true;
+				this.labelRO.forceRender();
 
-			/* Create element dialog */
-			if (!this.geneticElement.geneticElementDialog) {
-				var x = this.labelVO.screenX + ((this.geneticElement.strand == "+") ? -1 : 1) * this.labelVO.screenWidth / 2;
-				var orientation = (x < ZUI.width / 2) ? "right" : "left";
-				this.geneticElement.geneticElementDialog = new Eplant.GeneticElementDialog(
-					this.geneticElement,			// geneticElement
-					x + ((orientation == "left") ? -1 : 1) * this.labelVO.screenWidth / 2,		// x
-					this.labelVO.screenY,		// y
-					orientation				// orientation
-				);
-			}
-		}, this),
-		mouseOut: $.proxy(function() {
-			/* Restore cursor */
-			ZUI.container.style.cursor = "default";
+				/* Create element dialog */
+				if (!this.geneticElement.geneticElementDialog) {
+					var x = this.labelRO.renderedPosition.x + ((this.geneticElement.strand == "+") ? -1 : 1) * this.labelRO.renderedWidth / 2;
+					var orientation = (x < ZUI.width / 2) ? "right" : "left";
+					var x = x + ((orientation == "left") ? -1 : 1) * this.labelRO.renderedWidth / 2;
+					var y = this.labelRO.renderedPosition.y;
+					this.geneticElement.geneticElementDialog = new Eplant.GeneticElementDialog(this.geneticElement, x, y);
+				}
+			}, this),
+			mouseOut: $.proxy(function() {
+				/* Restore cursor */
+				ZUI.canvas.style.cursor = "default";
 
-			/* Restore highlight */
-			this.labelVO.bold = false;
+				/* Restore label bold */
+				this.labelRO.isBold = false;
+				this.labelRO.forceRender();
 
-			/* Close element dialog */
-			if (this.geneticElement.geneticElementDialog && !this.geneticElement.geneticElementDialog.pinned) {
-				this.geneticElement.geneticElementDialog.close();
-			}
-		}, this),
-		leftClick: $.proxy(function() {
-			/* Pin element dialog */
-			if (this.geneticElement.geneticElementDialog) {
-				this.geneticElement.geneticElementDialog.pinned = true;
-			}
-			this.geneticElement.species.setActiveGeneticElement(this.geneticElement);
-		}, this)
+				/* Close element dialog */
+				if (this.geneticElement.geneticElementDialog && !this.geneticElement.geneticElementDialog.pinned) {
+					this.geneticElement.geneticElementDialog.close();
+					this.geneticElement.geneticElementDialog = null;
+				}
+			}, this),
+			leftClick: $.proxy(function() {
+				/* Pin element dialog */
+				if (this.geneticElement.geneticElementDialog) {
+					this.geneticElement.geneticElementDialog.pinned = true;
+				}
+				this.geneticElement.species.setActiveGeneticElement(this.geneticElement);
+			}, this)
+		}
 	});
-	this.chromosomeView.viewObjects.push(this.labelVO);
+	this.labelRO.attachToView(this.chromosomeView);
 
 	/* Tags */
 	this.updateTags();
@@ -151,11 +166,11 @@ Eplant.Views.ChromosomeView.Annotation.prototype.bindEvents = function() {
  */
 Eplant.Views.ChromosomeView.Annotation.prototype.updateTags = function() {
 	/* Remove old tags */
-	for (var n = 0; n < this.tagVOs.length; n++) {
-		var tagVO = this.tagVOs[n];
-		tagVO.remove();
+	for (var n = 0; n < this.tagROs.length; n++) {
+		var tagRO = this.tagROs[n];
+		tagRO.detachFromView(this.chromosomeView);
 	}
-	this.tagVOs = [];
+	this.tagROs = [];
 
 	/* Create new tags */
 	var offset = 5;
@@ -169,19 +184,30 @@ Eplant.Views.ChromosomeView.Annotation.prototype.updateTags = function() {
 		}
 
 		/* Create tag */
-		var tagVO = new ZUI.ViewObject({
-			shape: "circle",
-			positionScale: "world",
-			sizeScale: "screen",
-			x: this.labelVO.x,
-			y: this.labelVO.y,
-			offsetX: this.labelVO.offsetX + ((this.geneticElement.strand == "+") ? -1 : 1) * (this.labelVO.width + offset),
+		var tagRO = new ZUI.RenderedObject.Circle({
+			position: {
+				x: this.labelRO.position.x,
+				y: this.labelRO.position.y
+			},
+			positionScale: ZUI.Def.WorldScale,
+			positionOffset: {
+				x: this.labelRO.positionOffset.x + ((this.geneticElement.strand == "+") ? -1 : 1) * (this.labelRO.width + offset),
+				y: 0
+			},
+			positionOffsetScale: ZUI.Def.ScreenScale,
 			radius: 3,
-			centerAt: "center center",
+			radiusScale: ZUI.Def.ScreenScale,
+			centerAt: {
+				horizontal: ZUI.Def.Center,
+				vertical: ZUI.Def.Center
+			},
+			stroke: true,
 			strokeColor: annotationTag.color,
+			fill: true,
 			fillColor: annotationTag.color
 		});
-		this.tagVOs.push(tagVO);
+		tagRO.attachToView(this.chromosomeView);
+		this.tagROs.push(tagRO);
 
 		/* Increase offset */
 		offset += 8;
@@ -193,12 +219,15 @@ Eplant.Views.ChromosomeView.Annotation.prototype.updateTags = function() {
  */
 Eplant.Views.ChromosomeView.Annotation.prototype.update = function() {
 	/* Update size */
-	this.labelVO.offsetX = ((this.geneticElement.strand == "+") ? -1 : 1) * (this.size + 3);
+	this.labelRO.positionOffset.x = ((this.geneticElement.strand == "+") ? -1 : 1) * (this.size + 3);
 
 	/* Update color */
-	this.whiskerVO.strokeColor = this.color;
-	this.whiskerVO.fillColor = this.color;
-	this.labelVO.fillColor = this.color;
+	this.whiskerRO.strokeColor = this.color;
+	this.whiskerRO.fillColor = this.color;
+	this.labelRO.fillColor = this.color;
+
+	this.whiskerRO.forceRender();
+	this.labelRO.forceRender();
 };
 
 /**
@@ -209,31 +238,31 @@ Eplant.Views.ChromosomeView.Annotation.prototype.draw = function() {
 	var chromosome = this.chromosomeView.getChromosome(this.geneticElement.chromosome);
 
 	/* Update whisker */
-	this.whiskerVO.vertices[0].x = ((this.geneticElement.strand == "+") ? -1 : 1) * ZUI.camera.unprojectDistance(this.size);
-	this.whiskerVO.strokeWidth = (this.geneticElement.end - this.geneticElement.start) * chromosome.perBpHeight;
+	this.whiskerRO.vertices[0].x = ((this.geneticElement.strand == "+") ? -1 : 1) * ZUI.camera.unprojectDistance(this.size);
+	this.whiskerRO.strokeThickness = (this.geneticElement.end - this.geneticElement.start) * chromosome.perBpHeight;
 	var unitWidth = ZUI.camera.unprojectDistance(1);
-	if (this.whiskerVO.strokeWidth < unitWidth) {
-		this.whiskerVO.strokeWidth = unitWidth;
+	if (this.whiskerRO.strokeThickness < unitWidth) {
+		this.whiskerRO.strokeThickness = unitWidth;
 	}
 
 	/* Draw whisker */
-	this.whiskerVO.draw();
+	this.whiskerRO.forceRender();
 
 	/* Draw label */
-	this.labelVO.draw();
+	this.labelRO.forceRender();
 
 	/* Draw tags */
 	var offset = 5;
-	for (var n = 0; n < this.tagVOs.length; n++) {
+	for (var n = 0; n < this.tagROs.length; n++) {
 		/* Get tag ViewObject */
-		var tagVO = this.tagVOs[n];
+		var tagRO = this.tagROs[n];
 
 		/* Update x-offset */
-		tagVO.offsetX = this.labelVO.offsetX + ((this.geneticElement.strand == "+") ? -1 : 1) * (this.labelVO.width + offset);
+		tagRO.positionOffset.x = this.labelRO.positionOffset.x + ((this.geneticElement.strand == "+") ? -1 : 1) * (this.labelRO.renderedWidth + offset);
 		offset += 8;
 
 		/* Draw */
-		tagVO.draw();
+		tagRO.forceRender();
 	}
 };
 
@@ -242,18 +271,18 @@ Eplant.Views.ChromosomeView.Annotation.prototype.draw = function() {
  */
 Eplant.Views.ChromosomeView.Annotation.prototype.remove = function() {
 	/* Clean up ViewObjects */
-	this.whiskerVO.remove();
-	this.labelVO.remove();
-	for (var n = 0; n < this.tagVOs.length; n++) {
-		var tagVO = this.tagVOs[n];
-		tagVO.remove();
+	this.whiskerRO.detachFromView(this.chromosomeView);
+	this.labelRO.detachFromView(this.chromosomeView);
+	for (var n = 0; n < this.tagROs.length; n++) {
+		var tagRO = this.tagROs[n];
+		tagRO.detachFromView(this.chromosomeView);
 	}
 
 	/* Remove event listeners */
 	ZUI.removeEventListener(this.updateAnnotationTagsEventListener);
 
 	/* Remove label from ViewObjects array */
-	var index = this.chromosomeView.viewObjects.indexOf(this.labelVO);
+	var index = this.chromosomeView.viewObjects.indexOf(this.labelRO);
 	if (index >= 0) {
 		this.chromosomeView.viewObjects.splice(index, 1);
 	}

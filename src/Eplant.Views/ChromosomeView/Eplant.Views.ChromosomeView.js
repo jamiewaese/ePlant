@@ -166,6 +166,15 @@ Eplant.Views.ChromosomeView.prototype.draw = function() {
 	}
 };
 
+/** Draw things that have to be rendered on top */
+Eplant.Views.ChromosomeView.prototype.postDraw = function () {
+	/* Draw chromosomes */
+	for (var n = 0; n < this.chromosomes.length; n++) {
+		var chromosome = this.chromosomes[n];
+		chromosome.postDraw();
+	}
+};
+
 /**
  * MouseMove callback method.
  *
@@ -385,13 +394,15 @@ Eplant.Views.ChromosomeView.prototype.bindEvents = function() {
 		/* Restore Annotation label for the previous active GeneticElement */
 		var annotation = listenerData.chromosomeView.getAnnotation(eventData.previousActiveGeneticElement);
 		if (annotation) {
-			annotation.labelVO.stroke = false;
+			annotation.labelRO.stroke = false;
+			annotation.labelRO.forceRender();
 		}
 
 		/* Highlight Annotation label for the current active GeneticElement */
 		var annotation = listenerData.chromosomeView.getAnnotation(event.target.activeGeneticElement);
 		if (annotation) {
-			annotation.labelVO.stroke = true;
+			annotation.labelRO.stroke = true;
+			annotation.labelRO.forceRender();
 		}
 	}, {
 		chromosomeView: this
@@ -405,7 +416,8 @@ Eplant.Views.ChromosomeView.prototype.bindEvents = function() {
 		if (listenerData.chromosomeView.species == event.target.species) {	// Yes
 			/* Highlight annotation */
 			var annotation = listenerData.chromosomeView.getAnnotation(event.target);
-			annotation.labelVO.bold = true;
+			annotation.labelRO.isBold = true;
+			annotation.labelRO.forceRender();
 		}
 	}, {
 		chromosomeView: this
@@ -419,7 +431,8 @@ Eplant.Views.ChromosomeView.prototype.bindEvents = function() {
 		if (listenerData.chromosomeView.species == event.target.species) {	// Yes
 			/* Restore annotation */
 			var annotation = listenerData.chromosomeView.getAnnotation(event.target);
-			annotation.labelVO.bold = false;
+			annotation.labelRO.isBold = false;
+			annotation.labelRO.forceRender();
 		}
 	}, {
 		chromosomeView: this

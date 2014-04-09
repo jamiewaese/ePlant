@@ -51,11 +51,11 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.createROs = function() {
 		fill: true,
 		fillColor: Eplant.Color.MedGrey,
 		radius: this.width * 0.6,
-		radiusScale: ZUI.Def.World,
+		radiusScale: ZUI.Def.WorldScale,
 		width: this.width * 0.6,
-		widhtScale: ZUI.Def.World,
+		widhtScale: ZUI.Def.WorldScale,
 		height: this.chromosome.size * this.perBpHeight,
-		heightScale: ZUI.Def.World
+		heightScale: ZUI.Def.WorldScale
 	});
 	this.centromereRO.attachToView(this.chromosomeView);
 
@@ -194,7 +194,7 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.createROs = function() {
 		fillColor: Eplant.Color.LightGrey,
 		content: this.chromosome.name,
 		size: 14,
-		sizeScale: ZUI.Def.Screen
+		sizeScale: ZUI.Def.ScreenScale
 	});
 	this.labelRO.attachToView(this.chromosomeView);
 
@@ -209,7 +209,7 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.createROs = function() {
 		fill: true,
 		fillColor: Eplant.Color.LightGrey,
 		size: 12,
-		sizeScale: ZUI.Def.Screen
+		sizeScale: ZUI.Def.ScreenScale
 	});
 	this.lowerRangeRO.attachToView(this.chromosomeView);
 
@@ -224,7 +224,7 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.createROs = function() {
 		fill: true,
 		fillColor: Eplant.Color.LightGrey,
 		size: 12,
-		sizeScale: ZUI.Def.Screen
+		sizeScale: ZUI.Def.ScreenScale
 	});
 	this.higherRangeRO.attachToView(this.chromosomeView);
 
@@ -236,13 +236,14 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.createROs = function() {
 			vertical: ZUI.Def.Top
 		},
 		width: 10,
-		widthScale: ZUI.Def.Screen,
+		widthScale: ZUI.Def.ScreenScale,
 		height: 80,
-		heightScale: ZUI.Def.Screen,
+		heightScale: ZUI.Def.ScreenScale,
 		radius: 5,
-		radiusScale: ZUI.Def.Screen,
+		radiusScale: ZUI.Def.ScreenScale,
 		stroke: true,
 		strokeColor: Eplant.Color.LightGrey,
+		strokeThicknessScale: ZUI.Def.ScreenScale,
 		fill: true,
 		fillColor: Eplant.Color.White
 	});
@@ -255,12 +256,13 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.createROs = function() {
 			vertical: ZUI.Def.Top
 		},
 		width: 10,
-		widthScale: ZUI.Def.Screen,
-		heightScale: ZUI.Def.Screen,
+		widthScale: ZUI.Def.ScreenScale,
+		heightScale: ZUI.Def.ScreenScale,
 		radius: 5,
-		radiusScale: ZUI.Def.Screen,
+		radiusScale: ZUI.Def.ScreenScale,
 		stroke: true,
 		strokeColor: Eplant.Color.LightGrey,
+		strokeThicknessScale: ZUI.Def.ScreenScale,
 		fill: true,
 		fillColor: Eplant.Color.LightGrey
 	});
@@ -270,6 +272,101 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.createROs = function() {
  * Draws this Chromosome and its accessories.
  */
 Eplant.Views.ChromosomeView.Chromosome.prototype.draw = function() {
+	/* Get position information of the chromosome */
+	var halfWidth = this.getScreenWidth() / 2;
+	var xPosition = this.getScreenX();
+	var yTopPosition = this.getScreenY();
+	var yBottomPosition = yTopPosition + this.getScreenHeight();
+
+	// Visible base-pair range
+	var rangeStart = 0;
+	var rangeEnd = this.chromosome.size;
+	var bpPerPixel = this.getBpPerPixel();
+	var clipHeight = halfWidth;
+	if (clipHeight > 20) clipHeight = 20;
+	// Lower limit
+	if (yTopPosition < 0) {		// Clip
+		rangeStart = (0 - yTopPosition) * bpPerPixel;
+		if (rangeStart < this.chromosome.size) {	// Chromosome is in visible range
+			// Draw lower limit
+			var mb = Math.round(rangeStart / 10000) / 100;
+			this.lowerRangeRO.content = mb + " Mb";
+			this.lowerRangeRO.position.x = xPosition + halfWidth + 5;
+			this.lowerRangeRO.position.y = 6;
+			this.lowerRangeRO.render();
+		}
+	}
+	else {
+		// Draw lower limit
+		this.lowerRangeRO.content = "0 Mb";
+		this.lowerRangeRO.position.x = xPosition + halfWidth + 5;
+		this.lowerRangeRO.position.y = (yTopPosition < 6) ? 6 : yTopPosition;
+		this.lowerRangeRO.render();
+	}
+	// Upper limit
+	if (yBottomPosition > ZUI.height) {		// Clip
+		rangeEnd = (ZUI.height - yTopPosition) * bpPerPixel;
+		if (rangeEnd >= 0) {		// Chromosome is in visible range
+			// Draw higher limit
+			var mb = Math.round(rangeEnd / 10000) / 100;
+			this.higherRangeRO.content = mb + " Mb";
+			this.higherRangeRO.position.x = xPosition + halfWidth + 5;
+			this.higherRangeRO.position.y = ZUI.height - 6;
+			this.higherRangeRO.render();
+		}
+	}
+	else {
+		// Draw lower limit
+		var mb = Math.round(this.chromosome.size / 10000) / 100;
+		this.higherRangeRO.content = mb + " Mb";
+		this.higherRangeRO.position.x = xPosition + halfWidth + 5;
+		this.higherRangeRO.position.y = (yBottomPosition > ZUI.height - 6) ? ZUI.height - 6 : yBottomPosition;
+		this.higherRangeRO.render();
+	}
+
+	/* Mini chromosome */
+	var bitmask = 0;
+	if (rangeStart > 0) bitmask += 1;
+	if (rangeEnd < this.chromosome.size) bitmask += 2;
+	if (bitmask > 0) {
+		if (rangeStart > this.chromosome.size) rangeStart = this.chromosome.size;
+		if (rangeEnd < 0) rangeEnd = 0;
+		var y1;
+		if (bitmask == 1) y1 = 15;
+		else if (bitmask == 2) y1 = ZUI.height - 95;
+		else y1 = ZUI.height / 2 - 40;
+		var y2 = y1 + rangeStart / this.chromosome.size * 80;
+		var y3 = y1 + rangeEnd / this.chromosome.size * 80;
+		var y4 = y1 + 80;
+		this.outerMiniRO.position.x = xPosition + halfWidth + 15;
+		this.outerMiniRO.position.y = y1;
+		this.innerMiniRO.position.x = xPosition + halfWidth + 15;
+		this.innerMiniRO.position.y = y2;
+		this.innerMiniRO.height = y3 - y2;
+		this.outerMiniRO.render();
+		this.innerMiniRO.render();
+		if (this.chromosomeView.renderedObjects.indexOf(this.outerMiniRO) < 0) {
+			this.outerMiniRO.attachToView(this.chromosomeView);
+		}
+		if (this.chromosomeView.renderedObjects.indexOf(this.innerMiniRO) < 0) {
+			this.innerMiniRO.attachToView(this.chromosomeView);
+		}
+	}
+	else {
+		if (this.chromosomeView.renderedObjects.indexOf(this.outerMiniRO) >= 0) {
+			this.outerMiniRO.detachFromView(this.chromosomeView);
+		}
+		if (this.chromosomeView.renderedObjects.indexOf(this.innerMiniRO) >= 0) {
+			this.innerMiniRO.detachFromView(this.chromosomeView);
+		}
+	}
+
+	/* Heatmap */
+	// TODO
+};
+
+/** Draw things that have to be rendered on the top */
+Eplant.Views.ChromosomeView.Chromosome.prototype.postDraw = function() {
 	/* Get position information of the chromosome */
 	var halfWidth = this.getScreenWidth() / 2;
 	var xPosition = this.getScreenX();
@@ -301,19 +398,7 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.draw = function() {
 			ZUI.context.stroke();
 			ZUI.context.fill();
 			ZUI.context.restore();
-
-			/* Draw lower limit */
-			var mb = Math.round(rangeStart / 10000) / 100;
-			this.lowerRangeRO.content = mb + " Mb";
-			this.lowerRangeRO.position.x = xPosition + halfWidth + 5;
-			this.lowerRangeRO.position.y = 6;
 		}
-	}
-	else {
-		/* Draw lower limit */
-		this.lowerRangeRO.content = "0 Mb";
-		this.lowerRangeRO.position.x = xPosition + halfWidth + 5;
-		this.lowerRangeRO.position.y = (yTopPosition < 6) ? 6 : yTopPosition;
 	}
 	/* Upper limit */
 	if (yBottomPosition > ZUI.height) {		// Clip
@@ -334,61 +419,8 @@ Eplant.Views.ChromosomeView.Chromosome.prototype.draw = function() {
 			ZUI.context.stroke();
 			ZUI.context.fill();
 			ZUI.context.restore();
-
-			/* Draw higher limit */
-			var mb = Math.round(rangeEnd / 10000) / 100;
-			this.higherRangeRO.content = mb + " Mb";
-			this.higherRangeRO.position.x = xPosition + halfWidth + 5;
-			this.higherRangeRO.position.y = ZUI.height - 6;
 		}
 	}
-	else {
-		/* Draw lower limit */
-		var mb = Math.round(this.chromosome.size / 10000) / 100;
-		this.higherRangeRO.content = mb + " Mb";
-		this.higherRangeRO.position.x = xPosition + halfWidth + 5;
-		this.higherRangeRO.position.y = (yBottomPosition > ZUI.height - 6) ? ZUI.height - 6 : yBottomPosition;
-	}
-
-	/* Mini chromosome */
-	var bitmask = 0;
-	if (rangeStart > 0) bitmask += 1;
-	if (rangeEnd < this.chromosome.size) bitmask += 2;
-	if (bitmask > 0) {
-		if (rangeStart > this.chromosome.size) rangeStart = this.chromosome.size;
-		if (rangeEnd < 0) rangeEnd = 0;
-		var y1;
-		if (bitmask == 1) y1 = 15;
-		else if (bitmask == 2) y1 = ZUI.height - 95;
-		else y1 = ZUI.height / 2 - 40;
-		var y2 = y1 + rangeStart / this.chromosome.size * 80;
-		var y3 = y1 + rangeEnd / this.chromosome.size * 80;
-		var y4 = y1 + 80;
-		this.outerMiniRO.position.x = xPosition + halfWidth + 15;
-		this.outerMiniRO.position.y = y1;
-		this.innerMiniRO.position.x = xPosition + halfWidth + 15;
-		this.innerMiniRO.position.y = y2;
-		this.innerMiniRO.height = y3 - y2;
-		if (this.chromosomeView.renderedObjects.indexOf(this.outerMiniRO) < 0) {
-			this.outerMiniRO.render();
-			this.outerMiniRO.attachToView(this.chromosomeView);
-		}
-		if (this.chromosomeView.renderedObjects.indexOf(this.innerMiniRO) < 0) {
-			this.innerMiniRO.render();
-			this.innerMiniRO.attachToView(this.chromosomeView);
-		}
-	}
-	else {
-		if (this.chromosomeView.renderedObjects.indexOf(this.outerMiniRO) >= 0) {
-			this.outerMiniRO.detachFromView(this.chromosomeView);
-		}
-		if (this.chromosomeView.renderedObjects.indexOf(this.innerMiniRO) >= 0) {
-			this.innerMiniRO.detachFromView(this.chromosomeView);
-		}
-	}
-
-	/* Heatmap */
-	// TODO
 };
 
 /**

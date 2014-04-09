@@ -119,7 +119,7 @@ Eplant.Views.ChromosomeView.GeneticElementList = function(chromosome, vPosition,
 	/* Create jQuery UI dialog */
 	var hPosition = (this.orientation == "left") ? "right" : "left";
 	var xOffset = (this.orientation == "left") ? -this.xOffset + 1 : this.xOffset - 1;
-	var halfWidth = ((this.orientation == "left") ? -1 : 1) * this.chromosome.getWidth() / 2;
+	var halfWidth = ((this.orientation == "left") ? -1 : 1) * this.chromosome.getScreenWidth() / 2;
 	$(this.domContainer).dialog({
 		dialogClass: "ui-dialog-noTitleBar",
 		width: 180,
@@ -159,11 +159,12 @@ Eplant.Views.ChromosomeView.GeneticElementList = function(chromosome, vPosition,
 			}
 		],
 		verticesScale: [
-			ZUI.Def.ScreenScale,
-			ZUI.Def.ScreenScale
+			ZUI.Def.WorldScale,
+			ZUI.Def.WorldScale
 		],
 		stroke: true,
 		strokeColor: Eplant.Color.DarkGrey,
+		strokeThicknessScale: ZUI.Def.ScreenScale,
 		fill: false
 	});
 	this.whiskerRO.attachToView(this.chromosomeView);
@@ -197,6 +198,7 @@ Eplant.Views.ChromosomeView.GeneticElementList = function(chromosome, vPosition,
 		],
 		stroke: true,
 		strokeColor: Eplant.Color.LightGrey,
+		strokeThicknessScale: ZUI.Def.ScreenScale,
 		fill: false
 	});
 	this.connectorRO.attachToView(this.chromosomeView);
